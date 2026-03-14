@@ -439,3 +439,66 @@
   .right { padding: 60px 8% 40px; border-left: none; }
   .logoWrap { left: 24px; top: 24px; }
 }
+
+@media (max-width: 640px) {
+  .right {
+    padding: 80px 18px 32px;
+    box-shadow: none;
+  }
+
+  .page {
+    background: var(--bg-main);
+  }
+
+  .formHeader {
+    margin-bottom: 24px;
+  }
+
+  .btnGoogle {
+    height: 46px;
+    border-radius: 999px;
+  }
+
+  .field input {
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .btnSubmit {
+    height: 50px;
+    border-radius: 999px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoWrap {
+    left: 18px;
+    top: 18px;
+  }
+}
+
+/* RTL tweaks for form layout */
+[dir="rtl"] .right {
+  text-align: right;
+}
+
+[dir="rtl"] .field label,
+[dir="rtl"] .optionsRow,
+[dir="rtl"] .signupDivider {
+  text-align: right;
+}
+
+[dir="rtl"] .field input {
+  padding-left: 16px;
+  padding-right: 44px;
+}
+
+[dir="rtl"] .inputIcon {
+  left: auto;
+  right: 15px;
+}
+
+[dir="rtl"] .toggleEye {
+  right: auto;
+  left: 14px;
+}

@@ -133,13 +133,40 @@ export default function LanguageSwitcher() {
             document.cookie = `${name}=${value}${expires}; path=/; domain=.${domain}`;
         };
 
+        const langPair = lang.code === 'fr' ? 'fr|fr' : `fr|${lang.code}`;
+
         if (lang.code === 'fr') {
             document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-            window.doGTranslate('fr|fr');
         } else {
             setCookie('googtrans', `/fr/${lang.code}`);
-            window.doGTranslate(`fr|${lang.code}`);
         }
+
+        const triggerTranslate = () => {
+            if (typeof window !== 'undefined' && typeof window.doGTranslate === 'function') {
+                window.doGTranslate(langPair);
+                return true;
+            }
+            return false;
+        };
+
+        // Try to trigger the translation a few times first
+        let fired = triggerTranslate();
+        setTimeout(() => {
+            if (!fired) fired = triggerTranslate();
+        }, 400);
+        setTimeout(() => {
+            if (!fired) fired = triggerTranslate();
+        }, 1200);
+
+        // As a last resort (React/Next.js edge cases), if after a short delay
+        // the Google Translate combo is still not available, reload once so
+        // the widget can read the cookie and apply translation automatically.
+        setTimeout(() => {
+            const hasCombo = document.querySelector('select.goog-te-combo');
+            if (!hasCombo && typeof window !== 'undefined') {
+                window.location.reload();
+            }
+        }, 1800);
     }
 
     return (

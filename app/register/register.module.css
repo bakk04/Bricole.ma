@@ -684,3 +684,64 @@
   .logoWrap { left: 24px; top: 24px; }
   .domaineGrid { grid-template-columns: repeat(3, 1fr); }
 }
+
+@media (max-width: 640px) {
+  .right {
+    padding: 80px 18px 32px;
+    box-shadow: none;
+  }
+
+  .page {
+    background: var(--bg-main);
+  }
+
+  .fieldRow {
+    grid-template-columns: 1fr;
+  }
+
+  .btnSubmit {
+    height: 50px;
+    border-radius: 999px;
+  }
+
+  .field input,
+  .field select {
+    height: 48px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoWrap {
+    left: 18px;
+    top: 18px;
+  }
+}
+
+/* RTL adjustments for auth layout */
+[dir="rtl"] .right {
+  text-align: right;
+}
+
+[dir="rtl"] .field label,
+[dir="rtl"] .stepLabel,
+[dir="rtl"] .formHeader,
+[dir="rtl"] .loginDivider {
+  text-align: right;
+}
+
+[dir="rtl"] .field input,
+[dir="rtl"] .field select {
+  padding-left: 16px;
+  padding-right: 44px;
+}
+
+[dir="rtl"] .inputIcon {
+  left: auto;
+  right: 15px;
+}
+
+[dir="rtl"] .toggleEye {
+  right: auto;
+  left: 14px;
+}

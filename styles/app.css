@@ -2156,6 +2156,55 @@ label.error {
   gap: 0.35em;
   line-height: 1.25;
 }
+
+/* Mobile-first refinements for header layout and interactions */
+@media (max-width: 768px) {
+  .header .navigation {
+    padding: 10px 0;
+  }
+
+  .header .navigation .header-logo-link {
+    flex: 0 0 auto;
+  }
+
+  .header .navigation .main-menu__nav {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .header .navigation .main-menu__right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Keep language switcher taps isolated from the burger on small screens */
+  .header .navigation .main-menu__right .lang-switcher-container {
+    position: relative;
+    z-index: 11;
+  }
+
+  .header .main-menu__toggler {
+    position: relative;
+    z-index: 10;
+  }
+}
+
+/* Basic RTL alignment for header on all devices (layout-only) */
+[dir="rtl"] .header .navigation {
+  direction: rtl;
+}
+
+[dir="rtl"] .header .navigation .main-menu__nav {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .header .navigation .main-menu__right {
+  margin-left: 0;
+  margin-right: auto;
+}
 /* Icônes des liens (Home, About Us) - même taille */
 .header .navigation .main-menu__nav .main-menu__list > li > a.nav-link-item .nav-icon {
   width: 15px;
@@ -2340,6 +2389,36 @@ label.error {
   visibility: hidden;
   transform: translateX(-100%);
   transition: opacity 500ms ease 0ms, visibility 500ms ease 0ms, transform 500ms ease 0ms;
+}
+
+/* RTL-aware mobile drawer and list structure */
+[dir="rtl"] .mobile-nav__wrapper .mobile-nav__content {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .mobile-nav__nav .main-menu__list {
+  text-align: right;
+}
+
+[dir="rtl"] .mobile-nav__link {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .mobile-nav__sublist a {
+  padding: 10px 44px 10px 12px;
+}
+
+/* Make sure mobile nav never visually merges with header content */
+@media (max-width: 768px) {
+  .mobile-nav__wrapper .mobile-nav__content {
+    margin-top: 8px;
+    border-radius: 20px;
+  }
+
+  .header {
+    background-color: #ffffff;
+  }
 }
 @media (max-width: 490px) {
   .mobile-nav__wrapper .mobile-nav__content {
