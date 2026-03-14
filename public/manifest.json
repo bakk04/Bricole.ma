@@ -1,0 +1,51 @@
+{
+  "name": "Bricole.ma",
+  "short_name": "Bricole",
+  "description": "Plateforme des artisans au Maroc - Trouvez le meilleur artisan pour vos travaux.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2c3e50",
+  "icons": [
+    {
+      "src": "/assets/media/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/media/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/media/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/media/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explorer les artisans",
+      "url": "/explore",
+      "icons": [{ "src": "/assets/media/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Contactez-nous",
+      "url": "/contact",
+      "icons": [{ "src": "/assets/media/favicon.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["business", "services", "lifestyle"],
+  "lang": "fr-FR",
+  "dir": "ltr"
+}

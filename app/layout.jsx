@@ -10,40 +10,52 @@ import '../styles/unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css'
 
 import Script from 'next/script'
 import { Providers } from './providers'
+import PWAClient from '../components/pwa/PWAClient'
 
+/** @type {import('next').Metadata} */
 export const metadata = {
-    title: 'Bricole.ma',
-    description: 'Bricole.ma',
+    title: {
+        default: 'Bricole.ma',
+        template: '%s | Bricole.ma'
+    },
+    description: 'Plateforme des artisans au Maroc - Trouvez le meilleur artisan pour vos travaux.',
+    manifest: '/manifest.json',
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: 'default',
+        title: 'Bricole.ma',
+    },
+    formatDetection: {
+        telephone: false,
+    },
+    icons: {
+        icon: '/assets/media/favicon.png',
+        shortcut: '/assets/media/favicon.png',
+        apple: '/assets/media/favicon.png',
+    },
+}
+
+export const viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false, // Maintain for native-like feel as requested
+    viewportFit: 'cover',
+    themeColor: '#2c3e50',
 }
 
 export default function RootLayout({ children }) {
     return (
         <html lang="fr">
-
         <head>
             <meta charSet="UTF-8"/>
             <meta httpEquiv="X-UA-Compatible" content="IE=edge"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-            <meta name="description" content="Finder || Directory Listing Template"/>
-
-            <title>Bricole.ma</title>
-
-            <link rel="shortcut icon" type="image/x-icon" href="../styles/media/favicon.webp"/>
-            <link rel="apple-touch-icon" sizes="180x180" href="../styles/media/favicon.png"/>
-            <link rel="stylesheet" href="../styles/vendor/font-awesome.css"/>
-            <link rel="stylesheet" href="../styles/vendor/bootstrap.min.css"/>
-            <link rel="stylesheet" href="../styles/vendor/slick.css"/>
-            <link rel="stylesheet" href="../styles/vendor/slick-theme.css"/>
-            <link rel="stylesheet" href="../styles/vendor/wow.min.css"/>
-            <link rel="stylesheet" href="../styles/unpkg.com/leaflet%401.9.4/dist/leaflet.css"/>
-            <link rel="stylesheet" href="../styles/unpkg.com/leaflet-geosearch%403.11.0/dist/geosearch.css"/>
-            <link rel="stylesheet" href="../styles/app.css"/>
-
         </head>
         <body>
         
-        {/* Contenu de la page */}
         <Providers>
+            {/* PWA logic and global UI */}
+            <PWAClient />
             {children}
         </Providers>
 
