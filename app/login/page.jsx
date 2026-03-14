@@ -151,10 +151,10 @@ export default function LoginPage() {
                 <div className={`${styles.leftInner} ${styles.animateUp} ${styles.delay1}`}>
                     <div className={styles.glassCard}>
                         <h1 className={styles.leftTagline}>
-                            L'excellence artisanale à <span>portée de main.</span>
+                            Bienvenue sur <span>Bricole.ma</span>
                         </h1>
                         <p className={styles.leftSub}>
-                            Accédez au premier réseau national d'artisans marocains vérifiés. Une interface fluide pour gérer vos projets en temps réel.
+                            Connectez-vous pour accéder à votre espace et gérer vos projets.
                         </p>
 
                         <div style={{ display: 'flex', alignItems: 'center' }}>

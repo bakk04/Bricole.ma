@@ -103,7 +103,7 @@
 }
 .zelijOverlay {
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(248,250,252,0.97) 0%, rgba(239,246,255,0.82) 45%, rgba(37,99,235,0.25) 100%);
+  background: linear-gradient(135deg, rgba(248,250,252,0.8) 0%, rgba(239,246,255,0.6) 45%, rgba(37,99,235,0.12) 100%);
 }
 .glowOrb {
   position: absolute;
@@ -687,27 +687,104 @@
 
 @media (max-width: 640px) {
   .right {
-    padding: 80px 18px 32px;
+    padding: 60px 20px 32px;
     box-shadow: none;
+    background: #ffffff;
+    border-radius: 30px 30px 0 0;
+    margin-top: -30px;
+    position: relative;
+    max-height: none;
+    overflow: visible;
   }
 
   .page {
-    background: var(--bg-main);
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .left {
+    display: block;
+    height: 20vh;
+    padding: 0;
+    min-height: 180px;
+  }
+
+  .glassCard {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .leftTagline {
+    font-size: 1.4rem;
+    color: #1e293b;
+    margin-top: 30px;
+  }
+  
+  .leftSub, .floatingBadge, .floatingBadge2, .leftInner {
+    display: none !important;
+  }
+
+  .formHeader {
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .roleGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .roleCard {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    gap: 16px;
+    border-radius: 12px;
+  }
+
+  .roleIconWrap {
+    margin: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .roleName {
+    margin-bottom: 2px;
+    font-size: 1rem;
+  }
+
+  .domaineGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .fieldRow {
     grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .field input, .field select {
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1rem;
   }
 
   .btnSubmit {
     height: 50px;
-    border-radius: 999px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 15px;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
   }
 
-  .field input,
-  .field select {
-    height: 48px;
-    border-radius: 14px;
+  .typeSelector {
+    grid-template-columns: 1fr;
   }
 }
 

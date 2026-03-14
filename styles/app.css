@@ -135,6 +135,7 @@ ol.list-style li::marker {
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -151,6 +152,40 @@ body {
   line-height: 28px;
   height: 100% !important;
   overflow-x: hidden;
+  /* Safe area for mobile notch */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* RTL Support */
+[dir="rtl"] body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fallback for Arabic */
+  text-align: right;
+}
+
+/* App-like feel: prevent text selection on buttons and nav items */
+button, 
+.cus-btn, 
+.nav-link-item, 
+.mobile-nav__link {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Improved tap highlights for mobile */
+a, button {
+  outline: none !important;
+}
+
+@media (max-width: 768px) {
+  /* Hide scrollbar but allow scrolling for a cleaner look on mobile */
+  body::-webkit-scrollbar {
+    display: none;
+  }
+  body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 body::-webkit-scrollbar {
   width: 4px;

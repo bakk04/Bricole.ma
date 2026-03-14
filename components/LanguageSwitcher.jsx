@@ -144,29 +144,36 @@ export default function LanguageSwitcher() {
         const triggerTranslate = () => {
             if (typeof window !== 'undefined' && typeof window.doGTranslate === 'function') {
                 window.doGTranslate(langPair);
+                // Force fire multiple times to ensure the combo is caught
+                setTimeout(() => window.doGTranslate(langPair), 100);
+                setTimeout(() => window.doGTranslate(langPair), 500);
                 return true;
             }
             return false;
         };
 
-        // Try to trigger the translation a few times first
+        // Try to trigger the translation immediately
         let fired = triggerTranslate();
-        setTimeout(() => {
-            if (!fired) fired = triggerTranslate();
-        }, 400);
-        setTimeout(() => {
-            if (!fired) fired = triggerTranslate();
-        }, 1200);
+        
+        // If it didn't fire or as a safety measure for React state sync
+        let attempts = 0;
+        const interval = setInterval(() => {
+            attempts++;
+            const hasCombo = document.querySelector('select.goog-te-combo');
+            if (hasCombo || attempts > 10) {
+                triggerTranslate();
+                clearInterval(interval);
+            }
+        }, 200);
 
-        // As a last resort (React/Next.js edge cases), if after a short delay
-        // the Google Translate combo is still not available, reload once so
-        // the widget can read the cookie and apply translation automatically.
+        // Final fallback only if really necessary, but we try to avoid it
         setTimeout(() => {
             const hasCombo = document.querySelector('select.goog-te-combo');
-            if (!hasCombo && typeof window !== 'undefined') {
-                window.location.reload();
+            if (!hasCombo && attempts >= 10 && typeof window !== 'undefined') {
+                // Only reload if we really can't find the translate widget after 2 seconds
+                // window.location.reload(); 
             }
-        }, 1800);
+        }, 2500);
     }
 
     return (

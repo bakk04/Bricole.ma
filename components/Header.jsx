@@ -111,8 +111,10 @@ export default function Header() {
                         </ul>
                     </div>
                     <div className="main-menu__right">
-                        <div className="d-sm-flex gap-24 d-flex align-items-center">
-                            <LanguageSwitcher />
+                        <div className="d-flex align-items-center gap-3">
+                            <div className="d-none d-sm-block">
+                                <LanguageSwitcher />
+                            </div>
                             <Link href="/login" className="rigister-btn d-none d-sm-flex">
                                 <FaUser style={{ color: '#1478f1', flexShrink: 0 }} size={20} />
                                 <span className="text">Login / Register</span>
@@ -121,16 +123,17 @@ export default function Header() {
                                 <span className="text">Add Listing</span>
                                 <FaPlus size={20} className="cus-btn-icon" aria-hidden />
                             </Link>
+                            <button
+                                type="button"
+                                className="d-xl-none d-flex main-menu__toggler mobile-nav__toggler"
+                                onClick={() => setMobileNavOpen(true)}
+                                aria-label="Open menu"
+                                aria-expanded={mobileNavOpen}
+                                style={{ background: 'rgba(20, 120, 241, 0.05)', border: 'none', padding: '8px', borderRadius: '10px' }}
+                            >
+                                <FaBars size={22} color="#1478f1" aria-hidden />
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            className="d-xl-none d-flex main-menu__toggler mobile-nav__toggler"
-                            onClick={() => setMobileNavOpen(true)}
-                            aria-label="Open menu"
-                            aria-expanded={mobileNavOpen}
-                        >
-                            <FaBars size={24} color="#1478f1" aria-hidden />
-                        </button>
                     </div>
                 </nav>
             </div>
@@ -146,18 +149,32 @@ export default function Header() {
                     aria-label="Close menu"
                 />
                 <div className="mobile-nav__content">
-                    <button
-                        type="button"
-                        className="mobile-nav__close"
-                        onClick={() => setMobileNavOpen(false)}
-                        aria-label="Close menu"
-                    >
-                        <FaXmark size={24} aria-hidden />
-                    </button>
-                    <div className="logo-box">
-                        <Link href="/" onClick={() => setMobileNavOpen(false)} aria-label="Bricole.ma">
-                            <img src="/assets/media/images/logo.webp" alt="Bricole.ma" />
+                    <div className="mobile-nav__header d-flex align-items-center justify-content-between w-100 px-3 py-3 border-bottom" style={{ minHeight: '65px', background: '#fff' }}>
+                        <Link href="/" onClick={() => setMobileNavOpen(false)} aria-label="Bricole.ma" className="d-flex align-items-center">
+                            <img src="/assets/media/images/logo.png" alt="Bricole.ma" style={{ height: '46px', width: 'auto', objectFit: 'contain' }} />
                         </Link>
+                        <div className="d-flex align-items-center gap-1">
+                            <div className="mobile-lang-wrap" style={{ transform: 'scale(0.8)', transformOrigin: 'right center' }}>
+                                <LanguageSwitcher />
+                            </div>
+                            <button
+                                type="button"
+                                className="mobile-nav__close-btn"
+                                onClick={() => setMobileNavOpen(false)}
+                                aria-label="Close menu"
+                                style={{ 
+                                    background: 'rgba(15, 23, 42, 0.05)', 
+                                    border: 'none', 
+                                    padding: '8px', 
+                                    borderRadius: '10px', 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <FaXmark size={18} color="#0F172A" aria-hidden />
+                            </button>
+                        </div>
                     </div>
                     <nav className="mobile-nav__nav main-menu__nav">
                         <ul className="main-menu__list">

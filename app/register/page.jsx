@@ -252,8 +252,8 @@ export default function RegisterPage() {
                 </div>
                 <div className={`${styles.leftInner} ${styles.animateUp} ${styles.delay1}`}>
                     <div className={styles.glassCard}>
-                        <h1 className={styles.leftTagline}>Rejoignez la <span>communauté</span> des professionnels marocains.</h1>
-                        <p className={styles.leftSub}>Créez votre compte gratuitement et accédez à des milliers d'opportunités.</p>
+                        <h1 className={styles.leftTagline}>Rejoignez <span>Bricole.ma</span></h1>
+                        <p className={styles.leftSub}>Créez votre compte gratuitement et accédez à notre réseau d'artisans.</p>
                         <div style={{display: 'flex', alignItems: 'center'}}>
                             {[1, 2, 3, 4].map(i => (
                                 <div key={i} style={{
