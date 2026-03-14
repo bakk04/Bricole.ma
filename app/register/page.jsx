@@ -1,0 +1,507 @@
+'use client';
+import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useAuth } from '../api/context/AuthContext';
+import { 
+    User, Briefcase, Building2, Wrench, Zap, Paintbrush, 
+    Axe, Wind, LayoutGrid, TreePalm, Key, HelpCircle, 
+    Phone, MapPin, Mail, Lock, Eye, EyeOff, ArrowLeft, 
+    CheckCircle2, Building, Trash2, Plus, Info
+} from 'lucide-react';
+import styles from './register.module.css';
+
+const DOMAINES = [
+    { key: 'plomberie', label: 'Plomberie', icon: <Wrench size={18} /> },
+    { key: 'electricite', label: 'Électricité', icon: <Zap size={18} /> },
+    { key: 'maconnerie', label: 'Maçonnerie', icon: <Building size={18} /> },
+    { key: 'peinture', label: 'Peinture', icon: <Paintbrush size={18} /> },
+    { key: 'menuiserie', label: 'Menuiserie', icon: <Axe size={18} /> },
+    { key: 'climatisation', label: 'Climatisation', icon: <Wind size={18} /> },
+    { key: 'carrelage', label: 'Carrelage', icon: <LayoutGrid size={18} /> },
+    { key: 'jardinage', label: 'Jardinage', icon: <TreePalm size={18} /> },
+    { key: 'serrurerie', label: 'Serrurerie', icon: <Key size={18} /> },
+    { key: 'autre', label: 'Autre', icon: <HelpCircle size={18} /> },
+];
+
+function getPwStrength(pw) {
+    if (!pw) return { level: 0, label: '', cls: '' };
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    if (score <= 1) return { level: 1, label: 'Faible', cls: styles.weak };
+    if (score <= 2) return { level: 2, label: 'Moyen', cls: styles.medium };
+    return { level: 3, label: 'Fort', cls: styles.strong };
+}
+
+export default function RegisterPage() {
+    const router = useRouter();
+    const { status } = useSession();
+    const { state: globalState, dispatch: globalDispatch } = useAuth();
+    
+    const [step, setStep] = useState(1); // 1: Role, 2: Info
+    const [role, setRole] = useState(''); // 'CLIENT' | 'ARTISAN'
+    const [artisanType, setArtisanType] = useState('INDIVIDUAL'); // 'INDIVIDUAL' | 'COMPANY'
+    const [domaine, setDomaine] = useState('');
+    const [customDomaine, setCustomDomaine] = useState('');
+    
+    const [showPw, setShowPw] = useState(false);
+    const [showPw2, setShowPw2] = useState(false);
+    const [agreed, setAgreed] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const [logoError, setLogoError] = useState(false);
+
+    // LOCAL FORM ERRORS to fix lag (global context updates are slow on every keystroke)
+    const [localErrors, setLocalErrors] = useState({});
+
+    const [form, setForm] = useState({
+        prenom: '', 
+        nom: '', 
+        nomEntreprise: '',
+        email: '', 
+        telephone: '', 
+        ville: '', 
+        password: '', 
+        confirm: ''
+    });
+
+    useEffect(() => { 
+        setMounted(true); 
+    }, []);
+
+    // Effect to handle redirection if already authenticated
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.replace('/');
+        }
+    }, [status, router]);
+
+    const pwStrength = getPwStrength(form.password);
+
+    const updateForm = useCallback((k, v) => {
+        setForm(f => ({ ...f, [k]: v }));
+        
+        // Clear field-specific error locally
+        if (localErrors[k]) {
+            setLocalErrors(prev => {
+                const next = { ...prev };
+                delete next[k];
+                return next;
+            });
+        }
+    }, [localErrors]);
+
+    const validateStep1 = () => {
+        const errs = {};
+        if (!role) errs.role = 'Veuillez choisir un profil.';
+        if (role === 'ARTISAN') {
+            if (!domaine) errs.domaine = 'Veuillez choisir votre domaine.';
+            if (domaine === 'autre' && !customDomaine.trim()) errs.customDomaine = 'Précisez votre domaine.';
+        }
+        
+        if (Object.keys(errs).length > 0) {
+            setLocalErrors(errs);
+            return false;
+        }
+        return true;
+    };
+
+    const validateStep2 = () => {
+        const errs = {};
+        if (!form.prenom.trim()) errs.prenom = 'Prénom requis';
+        if (!form.nom.trim()) errs.nom = 'Nom requis';
+        if (role === 'ARTISAN' && artisanType === 'COMPANY' && !form.nomEntreprise.trim()) errs.nomEntreprise = 'Nom de l\'entreprise requis';
+        if (!form.email.includes('@')) errs.email = 'Email invalide';
+        if (!form.telephone.trim()) errs.telephone = 'Téléphone requis';
+        if (form.password.length < 6) errs.password = 'Min. 6 caractères';
+        if (form.password !== form.confirm) errs.confirm = 'Les mots de passe ne correspondent pas';
+        if (!agreed) errs.agreed = 'Veuillez accepter les conditions';
+        
+        if (Object.keys(errs).length > 0) {
+            setLocalErrors(errs);
+            return false;
+        }
+        return true;
+    };
+
+    const handleNext = () => {
+        if (validateStep1()) {
+            setLocalErrors({});
+            setStep(2);
+        }
+    };
+
+    const handleBack = () => {
+        setStep(1);
+        setLocalErrors({});
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validateStep2()) return;
+
+        globalDispatch({ type: "REGISTER_START" });
+
+        try {
+            // Simulation d'API
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const userData = {
+                ...form,
+                role,
+                artisanType: role === 'ARTISAN' ? artisanType : null,
+                domaine: role === 'ARTISAN' ? (domaine === 'autre' ? customDomaine : domaine) : null
+            };
+
+            globalDispatch({ 
+                type: "REGISTER_SUCCESS", 
+                payload: userData 
+            });
+
+        } catch (error) {
+            globalDispatch({ 
+                type: "REGISTER_FAILURE", 
+                payload: "Erreur lors de la création du compte. Veuillez réessayer." 
+            });
+        }
+    };
+
+    if (!mounted) return null;
+
+    if (globalState.isSuccess) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.right} style={{ maxWidth: '600px', margin: 'auto', padding: '40px' }}>
+                    <div className={styles.successState}>
+                        <div className={styles.successIcon}>
+                            <CheckCircle2 size={40} color="white" />
+                        </div>
+                        <h2 className={styles.successTitle}>Compte créé ! 🎉</h2>
+                        <p className={styles.successDesc}>
+                            Bienvenue sur bricole.ma, <strong>{form.prenom}</strong> ! Votre compte a été créé avec succès.
+                        </p>
+                        
+                        <div className={styles.dataTableWrap}>
+                            <div className={styles.dataTableTitle}>📋 Récapitulatif</div>
+                            <div className={styles.dataRow}>
+                                <span className={styles.dataKey}>Utilisateur</span>
+                                <span className={styles.dataVal}>{form.prenom} {form.nom}</span>
+                            </div>
+                            {role === 'ARTISAN' && artisanType === 'COMPANY' && (
+                                <div className={styles.dataRow}>
+                                    <span className={styles.dataKey}>Entreprise</span>
+                                    <span className={styles.dataVal}>{form.nomEntreprise}</span>
+                                </div>
+                            )}
+                            <div className={styles.dataRow}>
+                                <span className={styles.dataKey}>Email</span>
+                                <span className={styles.dataVal}>{form.email}</span>
+                            </div>
+                            <div className={styles.dataRow}>
+                                <span className={styles.dataKey}>Profil</span>
+                                <span className={`${styles.dataBadge} ${role === 'ARTISAN' ? styles.artisan : ''}`}>
+                                    {role === 'ARTISAN' ? 'Professionnel' : 'Client'}
+                                </span>
+                            </div>
+                            {role === 'ARTISAN' && (
+                                <div className={styles.dataRow}>
+                                    <span className={styles.dataKey}>Domaine</span>
+                                    <span className={styles.dataVal}>{domaine === 'autre' ? customDomaine : DOMAINES.find(d => d.key === domaine)?.label}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <Link href="/" className={styles.btnSubmit} style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
+                            Aller à l'accueil
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.page}>
+            {/* LOGO */}
+            <div className={styles.logoWrap}>
+                {!logoError ? (
+                  <Link href={'/'}>
+                      <img src="/assets/media/images/logo.png" alt="Logo" onError={() => setLogoError(true)} />
+                  </Link>
+                ) : (
+                    <Link href="/" className={styles.logoFallback}>
+                        <div className={styles.logoIcon}><Building2 size={18} color="white" /></div>
+                        <span className={styles.logoText}>bricole<span>.ma</span></span>
+                    </Link>
+                )}
+            </div>
+
+            {/* LEFT SIDE */}
+            <div className={styles.left}>
+                <div className={styles.zelijWrapper}>
+                    <div className={styles.zelijBg}/><div className={styles.zelijOverlay}/><div className={styles.glowOrb}/><div className={styles.glowOrb2}/>
+                </div>
+                <div className={`${styles.floatingBadge} ${styles.animateIn} ${styles.delay3}`}>
+                    <CheckCircle2 size={16} /> Inscription Gratuite
+                </div>
+                <div className={`${styles.floatingBadge2} ${styles.animateIn} ${styles.delay4}`}>
+                    <User size={15} /> +12K Membres
+                </div>
+                <div className={`${styles.leftInner} ${styles.animateUp} ${styles.delay1}`}>
+                    <div className={styles.glassCard}>
+                        <h1 className={styles.leftTagline}>Rejoignez la <span>communauté</span> des professionnels marocains.</h1>
+                        <p className={styles.leftSub}>Créez votre compte gratuitement et accédez à des milliers d'opportunités.</p>
+                        <div style={{display: 'flex', alignItems: 'center'}}>
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} style={{
+                                    width: '34px', height: '34px', borderRadius: '50%',
+                                    border: '2px solid white',
+                                    background: `hsl(${210 + i * 12}, 60%, ${70 + i * 3}%)`,
+                                    marginLeft: i > 1 ? '-10px' : '0',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}/>
+                            ))}
+                            <span style={{ marginLeft: '14px', fontSize: '0.83rem', fontWeight: '600', color: '#334155' }}>
+                                +12K Professionnels
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className={styles.right}>
+                {step < 3 && (
+                    <div className={styles.animateUp}>
+                        <div className={styles.stepLabel}>Étape <span>{step}</span> sur 2</div>
+                        <div className={styles.progressWrap}>
+                            <div className={`${styles.progressStep} ${step >= 1 ? (step > 1 ? styles.done : styles.active) : ''}`}/>
+                            <div className={`${styles.progressStep} ${step >= 2 ? styles.active : ''}`}/>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 1: ROLE */}
+                {step === 1 && (
+                    <div className={styles.animateUp}>
+                        <div className={styles.formHeader}>
+                            <p className={styles.formTitle}>Quel est votre profil ?</p>
+                            <p className={styles.formDesc}>Choisissez le type de compte qui correspond à votre activité.</p>
+                        </div>
+
+                        <div className={styles.roleGrid}>
+                            <div className={`${styles.roleCard} ${role === 'CLIENT' ? styles.selected : ''}`} onClick={() => setRole('CLIENT')}>
+                                <div className={styles.roleCheck}><CheckCircle2 size={11} color="white" /></div>
+                                <div className={styles.roleIconWrap}><User size={24} color={role === 'CLIENT' ? 'white' : '#64748B'} /></div>
+                                <div className={styles.roleName}>Client</div>
+                                <div className={styles.roleDesc}>Je cherche des artisans qualifiés</div>
+                            </div>
+
+                            <div className={`${styles.roleCard} ${role === 'ARTISAN' ? styles.selected : ''}`} onClick={() => setRole('ARTISAN')}>
+                                <div className={styles.roleCheck}><CheckCircle2 size={11} color="white" /></div>
+                                <div className={styles.roleIconWrap}><Wrench size={24} color={role === 'ARTISAN' ? 'white' : '#64748B'} /></div>
+                                <div className={styles.roleName}>Professionnel</div>
+                                <div className={styles.roleDesc}>Je propose mes services</div>
+                            </div>
+                        </div>
+
+                        {localErrors.role && <p className={styles.fieldError}>{localErrors.role}</p>}
+
+                        {role === 'ARTISAN' && (
+                            <div className={styles.artisanExtras + " " + styles.animateIn}>
+                                <div className={styles.typeSelectorLabel}>
+                                    <Info size={14} />
+                                    <span>Vous exercez en tant que :</span>
+                                </div>
+                                <div className={styles.typeSelector}>
+                                    <div 
+                                        className={`${styles.typeOption} ${artisanType === 'INDIVIDUAL' ? styles.typeActive : ''}`} 
+                                        onClick={() => setArtisanType('INDIVIDUAL')}
+                                    >
+                                        <div className={styles.typeRadio} />
+                                        <div className={styles.typeInfo}>
+                                            <span className={styles.typeTitle}>Individuel</span>
+                                            <span className={styles.typeDescription}>Artisan indépendant ou auto-entrepreneur</span>
+                                        </div>
+                                    </div>
+                                    <div 
+                                        className={`${styles.typeOption} ${artisanType === 'COMPANY' ? styles.typeActive : ''}`} 
+                                        onClick={() => setArtisanType('COMPANY')}
+                                    >
+                                        <div className={styles.typeRadio} />
+                                        <div className={styles.typeInfo}>
+                                            <span className={styles.typeTitle}>Entreprise</span>
+                                            <span className={styles.typeDescription}>SARL, Auto-entreprise avec marque, etc.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <label className={styles.domaineLabel}>Votre domaine d'expertise *</label>
+                                <div className={styles.domaineGrid}>
+                                    {DOMAINES.map(d => (
+                                        <div key={d.key} className={`${styles.domaineChip} ${domaine === d.key ? styles.selected : ''}`} onClick={() => setDomaine(d.key)}>
+                                            <span className={styles.domaineIcon}>{d.icon}</span>
+                                            <span className={styles.domaineName}>{d.label}</span>
+                                            <div className={styles.domaineDot} />
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {domaine === 'autre' && (
+                                    <div className={styles.field + " " + styles.animateIn} style={{ marginTop: '15px' }}>
+                                        <div className={styles.inputWrap}>
+                                            <Plus size={18} className={styles.inputIcon} />
+                                            <input 
+                                                placeholder="Précisez votre métier..." 
+                                                value={customDomaine} 
+                                                onChange={(e) => setCustomDomaine(e.target.value)} 
+                                            />
+                                        </div>
+                                        {localErrors.customDomaine && <p className={styles.fieldError}>{localErrors.customDomaine}</p>}
+                                    </div>
+                                )}
+                                {localErrors.domaine && <p className={styles.fieldError}>{localErrors.domaine}</p>}
+                            </div>
+                        )}
+
+                        <button className={styles.btnSubmit} onClick={handleNext}>Continuer →</button>
+                        <div className={styles.loginDivider}>Déjà un compte ?<Link href="/login">Se connecter</Link></div>
+                    </div>
+                )}
+
+                {/* STEP 2: INFO */}
+                {step === 2 && (
+                    <div className={styles.animateUp}>
+                        <button className={styles.btnBack} onClick={handleBack}>
+                            <ArrowLeft size={16} /> Retour
+                        </button>
+
+                        <div className={styles.formHeader}>
+                            <p className={styles.formTitle}>Vos informations</p>
+                            <p className={styles.formDesc}>Remplissez vos informations pour finaliser votre inscription.</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} autoComplete="off">
+                            {role === 'ARTISAN' && artisanType === 'COMPANY' && (
+                                <div className={styles.field + " " + styles.animateIn}>
+                                    <label>Nom de l'entreprise *</label>
+                                    <div className={`${styles.inputWrap} ${localErrors.nomEntreprise ? styles.inputError : ''}`}>
+                                        <Building2 className={styles.inputIcon} size={18} />
+                                        <input 
+                                            placeholder="Ex: Bricole Maroc SARL" 
+                                            value={form.nomEntreprise} 
+                                            onChange={e => updateForm('nomEntreprise', e.target.value)} 
+                                            autoComplete="organization"
+                                        />
+                                    </div>
+                                    {localErrors.nomEntreprise && <p className={styles.fieldError}>{localErrors.nomEntreprise}</p>}
+                                </div>
+                            )}
+
+                            <div className={styles.fieldRow}>
+                                <div className={styles.field}>
+                                    <label>Prénom *</label>
+                                    <div className={`${styles.inputWrap} ${localErrors.prenom ? styles.inputError : ''}`}>
+                                        <User className={styles.inputIcon} size={18} />
+                                        <input placeholder="Mohammed" value={form.prenom} onChange={e => updateForm('prenom', e.target.value)} autoComplete="given-name" />
+                                    </div>
+                                    {localErrors.prenom && <p className={styles.fieldError}>{localErrors.prenom}</p>}
+                                </div>
+                                <div className={styles.field}>
+                                    <label>Nom *</label>
+                                    <div className={`${styles.inputWrap} ${localErrors.nom ? styles.inputError : ''}`}>
+                                        <User className={styles.inputIcon} size={18} />
+                                        <input placeholder="Benali" value={form.nom} onChange={e => updateForm('nom', e.target.value)} autoComplete="family-name" />
+                                    </div>
+                                    {localErrors.nom && <p className={styles.fieldError}>{localErrors.nom}</p>}
+                                </div>
+                            </div>
+
+                            <div className={styles.field}>
+                                <label>Adresse e-mail *</label>
+                                <div className={`${styles.inputWrap} ${localErrors.email ? styles.inputError : ''}`}>
+                                    <Mail className={styles.inputIcon} size={18} />
+                                    <input type="email" placeholder="contact@exemple.ma" value={form.email} onChange={e => updateForm('email', e.target.value)} autoComplete="email" />
+                                </div>
+                                {localErrors.email && <p className={styles.fieldError}>{localErrors.email}</p>}
+                            </div>
+
+                            <div className={styles.fieldRow}>
+                                <div className={styles.field}>
+                                    <label>Téléphone *</label>
+                                    <div className={`${styles.inputWrap} ${localErrors.telephone ? styles.inputError : ''}`}>
+                                        <Phone className={styles.inputIcon} size={18} />
+                                        <input placeholder="06 XX XX XX XX" value={form.telephone} onChange={e => updateForm('telephone', e.target.value)} autoComplete="tel" />
+                                    </div>
+                                    {localErrors.telephone && <p className={styles.fieldError}>{localErrors.telephone}</p>}
+                                </div>
+                                <div className={styles.field}>
+                                    <label>Ville</label>
+                                    <div className={styles.inputWrap}>
+                                        <MapPin className={styles.inputIcon} size={18} />
+                                        <input placeholder="Casablanca" value={form.ville} onChange={e => updateForm('ville', e.target.value)} autoComplete="address-level2" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={styles.field}>
+                                <label>Mot de passe *</label>
+                                <div className={`${styles.inputWrap} ${localErrors.password ? styles.inputError : ''}`}>
+                                    <Lock className={styles.inputIcon} size={18} />
+                                    <input type={showPw ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={e => updateForm('password', e.target.value)} autoComplete="new-password" />
+                                    <button type="button" className={styles.toggleEye} onClick={() => setShowPw(!showPw)}>
+                                        {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                                {form.password && (
+                                    <div className={styles.pwStrengthWrap}>
+                                        <div className={styles.pwStrengthBar}>
+                                            {[1, 2, 3].map(i => <div key={i} className={`${styles.pwBarSeg} ${i <= pwStrength.level ? pwStrength.cls : ''}`}/>)}
+                                        </div>
+                                        <span className={`${styles.pwStrengthText} ${pwStrength.cls}`}>{pwStrength.label}</span>
+                                    </div>
+                                )}
+                                {localErrors.password && <p className={styles.fieldError}>{localErrors.password}</p>}
+                            </div>
+
+                            <div className={styles.field}>
+                                <label>Confirmer le mot de passe *</label>
+                                <div className={`${styles.inputWrap} ${localErrors.confirm ? styles.inputError : ''}`}>
+                                    <Lock className={styles.inputIcon} size={18} />
+                                    <input type={showPw2 ? 'text' : 'password'} placeholder="••••••••" value={form.confirm} onChange={e => updateForm('confirm', e.target.value)} autoComplete="new-password" />
+                                    <button type="button" className={styles.toggleEye} onClick={() => setShowPw2(!showPw2)}>
+                                        {showPw2 ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                                {localErrors.confirm && <p className={styles.fieldError}>{localErrors.confirm}</p>}
+                            </div>
+
+                            <label className={styles.checkWrap}>
+                                <input type="checkbox" checked={agreed} onChange={e => {
+                                    setAgreed(e.target.checked);
+                                    if (localErrors.agreed) {
+                                        setLocalErrors(prev => {
+                                            const next = { ...prev };
+                                            delete next.agreed;
+                                            return next;
+                                        });
+                                    }
+                                }}/>
+                                <span className={styles.checkBox}><CheckCircle2 size={11} color="white" /></span>
+                                <span className={styles.checkLabel}>J'accepte les conditions d'utilisation</span>
+                            </label>
+                            {localErrors.agreed && <p className={styles.fieldError}>{localErrors.agreed}</p>}
+
+                            <button type="submit" className={`${styles.btnSubmit} ${globalState.loading ? styles.loading : ''}`} disabled={globalState.loading}>
+                                {globalState.loading ? 'Création du compte...' : 'Créer mon compte →'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
