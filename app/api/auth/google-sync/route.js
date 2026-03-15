@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import jwt from "jsonwebtoken";
 import redis from "@/lib/redis";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
-export async function POST() {
+export async function POST(req) {
   try {
-    const headerStore = headers();
-    const authHeader = headerStore.get("authorization");
+    const authHeader =
+      req.headers.get("authorization") || req.headers.get("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -107,7 +106,8 @@ export async function POST() {
     return NextResponse.json(
       {
         success: false,
-        message: "Erreur serveur lors de la synchronisation Google.",
+        message:
+          error?.message || "Erreur serveur lors de la synchronisation Google.",
       },
       { status: 500 }
     );

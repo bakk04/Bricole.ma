@@ -100,10 +100,16 @@ export default function LoginPage() {
                 return;
             }
 
-            // Succès : le backend a posé le cookie auth_token (JWT + Redis)
-            // On rafraîchit la navigation pour que les composants protégés se mettent à jour
             router.refresh();
-            router.replace('/profile');
+            const role = data.user?.role;
+
+            const roleRoutes = {
+                ADMIN: "/admin/dashboard",
+                ARTISAN: "/dashboard",
+                CLIENT: "/profile"
+            };
+
+            router.replace(roleRoutes[role] || "/profile");
         } catch (err) {
             console.error('Erreur de connexion:', err);
             setError("Erreur serveur lors de la connexion.");

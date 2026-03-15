@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { 
     ChevronDown, User, Plus, Home, Info, 
     List, BookOpen, FolderOpen, X, Menu, 
-    Mail, Phone, LogOut, Compass, Settings2, LayoutDashboard,ShieldCheck,
+    Mail, Phone, LogOut, Compass, Settings2, LayoutDashboard,ShieldCheck,Settings,
     CircleUserRound, BarChart3, SlidersHorizontal, PowerOff, ChevronRight, Fingerprint
 } from "lucide-react";
 import LanguageSwitcher from './LanguageSwitcher';
@@ -31,7 +31,10 @@ export default function Header() {
         }
     }, [authState.user, sessionStatus]);
 
-    const user = authState.user || session?.user;
+    // Si une session NextAuth existe (Google, etc.), on la privilégie pour l'avatar (image)
+    // Ainsi, pour un compte Google, on utilise toujours session.user (qui contient l'image)
+    // et on ne revient pas au user du contexte sans image.
+    const user = session?.user || authState.user;
     const isLoggedIn = !!user;
     // Plus de délai artificiel : si on a un user, on n'est plus en loading
     const isLoading = !isLoggedIn && (sessionStatus === 'loading' || authState.loading);
@@ -86,6 +89,7 @@ export default function Header() {
         if (!val || val === "null" || val === "undefined") return null;
         return val;
     };
+
     return (
         <header className="header container-fluid">
             <div className="main-menu">
@@ -186,81 +190,86 @@ export default function Header() {
                                     </button>
 
                                     {showProfileMenu && (
-                                        <div className="orbit-panel">
+                                        <div className="orbit-panel" style={{ width: '230px', padding: '10px', zIndex: 9999 }}>
 
                                             {/* Header user */}
-                                            <div className="orbit-panel-top">
-                                            <div className="orbit-panel-avatar">
-                                                {getAvatarUrl(user) ? (
-                                                    <img src={getAvatarUrl(user)} alt={user.name} />
-                                                ) : (
-                                                    <span>{getInitials(user.name)}</span>
-                                                )}
-                                            </div>
-                                                <div className="orbit-panel-meta">
-                                                    <p className="orbit-panel-name">{user.name}</p>
-                                                    <p className="orbit-panel-email">{user.email}</p>
+                                            <div className="orbit-panel-top" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', padding: '0 4px' }}>
+                                                <div className="orbit-panel-avatar" style={{ width: '38px', height: '38px', flexShrink: 0 }}>
+                                                    {getAvatarUrl(user) ? (
+                                                        <img src={getAvatarUrl(user)} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                    ) : (
+                                                        <span style={{ fontSize: '13px' }}>{getInitials(user.name)}</span>
+                                                    )}
+                                                </div>
+                                                <div className="orbit-panel-meta" style={{ display: 'flex', flexDirection: 'column', gap: '2px', justifyContent: 'center', overflow: 'hidden' }}>
+                                                    <p className="orbit-panel-name" style={{ margin: 0, padding: 0, fontSize: '14px', fontWeight: 'bold', color: '#111', lineHeight: '1.2', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{user.name}</p>
+                                                    <p className="orbit-panel-email" style={{ margin: 0, padding: 0, fontSize: '12px', color: '#666', lineHeight: '1.2', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{user.email}</p>
                                                 </div>
                                             </div>
 
-                                            <div className="orbit-panel-divider" />
+                                            <div className="orbit-panel-divider" style={{ margin: '6px 0', backgroundColor: '#eee', height: '1px' }} />
 
                                             {/* Nav selon rôle */}
-                                            <nav className="orbit-nav">
+                                            <nav className="orbit-nav" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+
                                                 {user.role === 'CLIENT' && (
                                                     <>
-                                                        <Link href="/profile" className="orbit-nav-item" onClick={() => setShowProfileMenu(false)}>
-                                                            <span>Mon Espace</span>
+                                                        <Link href="/profile" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                            <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><User size={14} /></div>
+                                                            <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Mon Espace</span>
                                                         </Link>
-                                                        <Link href="/profile/settings" className="orbit-nav-item" onClick={() => setShowProfileMenu(false)}>
-                                                            <span>Paramètres</span>
+                                                        <Link href="/profile" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                            <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><Settings size={14} /></div>
+                                                            <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                         </Link>
                                                     </>
                                                 )}
+
                                                 {user.role === 'ARTISAN' && (
                                                     <>
-                                                        <Link href="/profile/dashboard" className="orbit-nav-item" onClick={() => setShowProfileMenu(false)}>
-                                                            <div className="orbit-nav-icon"><BarChart3 size={13} /></div>
-                                                            <span>Mon Dashboard</span>
-                                                            <ChevronRight size={11} className="orbit-nav-arrow" />
+                                                        <Link href="/dashboard" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                            <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><BarChart3 size={14} /></div>
+                                                            <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Mon Dashboard</span>
+                                                            <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
-                                                        <Link href="/profile/settings" className="orbit-nav-item" onClick={() => setShowProfileMenu(false)}>
-                                                            <div className="orbit-nav-icon"><SlidersHorizontal size={13} /></div>
-                                                            <span>Paramètres</span>
-                                                            <ChevronRight size={11} className="orbit-nav-arrow" />
+                                                        <Link href="/dashboard" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                            <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><SlidersHorizontal size={14} /></div>
+                                                            <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
+                                                            <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
                                                     </>
                                                 )}
+
                                                 {user.role === 'ADMIN' && (
                                                     <>
-                                                        <Link href="/admin" className="orbit-nav-item" onClick={() => setShowProfileMenu(false)}>
-                                                            <div className="orbit-nav-icon"><ShieldCheck size={13} /></div>
-                                                            <span>Administration</span>
-                                                            <ChevronRight size={11} className="orbit-nav-arrow" />
+                                                        <Link href="/admin" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                            <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><ShieldCheck size={14} /></div>
+                                                            <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Administration</span>
+                                                            <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
-                                                        <Link href="/profile/settings" className="orbit-nav-item" onClick={() => setShowProfileMenu(false)}>
-                                                            <div className="orbit-nav-icon"><SlidersHorizontal size={13} /></div>
-                                                            <span>Paramètres</span>
-                                                            <ChevronRight size={11} className="orbit-nav-arrow" />
+                                                        <Link href="/profile/settings" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                            <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><SlidersHorizontal size={14} /></div>
+                                                            <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
+                                                            <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
                                                     </>
                                                 )}
                                             </nav>
 
-                                            <div className="orbit-panel-divider" />
+                                            <div className="orbit-panel-divider" style={{ margin: '6px 0', backgroundColor: '#eee', height: '1px' }} />
 
-                                            <button onClick={handleLogout} className="orbit-logout-btn">
-                                                <div className="orbit-nav-icon logout-icon"><PowerOff size={12} /></div>
-                                                <span>Déconnexion</span>
+                                            <button onClick={handleLogout} className="orbit-logout-btn hover-animate-red" style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', background: 'transparent', border: 'none', cursor: 'pointer', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                <div className="orbit-nav-icon logout-icon" style={{ color: '#e53935', display: 'flex', alignItems: 'center' }}><PowerOff size={14} /></div>
+                                                <span style={{ color: '#e53935', fontWeight: '600', fontSize: '13px', flex: 1, textAlign: 'left' }}>Déconnexion</span>
                                             </button>
 
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <Link href="/login" className="rigister-btn d-none d-sm-flex">
-                                    <FaUser style={{ color: '#1478f1', flexShrink: 0 }} size={20} />
-                                    <span className="text">Login / Register</span>
+                                <Link href="/login" className="rigister-btn d-none d-sm-flex" style={{ textDecoration: 'none' }}>
+                                    <FaUser style={{ color: '#1478f1', flexShrink: 0 }} size={18} />
+                                    <span className="text" style={{ fontSize: '14px' }}>Login / Register</span>
                                 </Link>
                             )}
 

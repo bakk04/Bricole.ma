@@ -108,7 +108,6 @@ export async function POST(req) {
         );
     } catch (redisError) {
         console.error("Redis storage error:", redisError);
-        // On continue même si Redis échoue, le JWT dans le cookie suffit pour beaucoup de cas
     }
 
     // Création réponse avec cookie
