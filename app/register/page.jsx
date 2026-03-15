@@ -1,16 +1,17 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useAuth } from '../api/context/AuthContext';
 import { 
     User, Briefcase, Building2, Wrench, Zap, Paintbrush, 
     Axe, Wind, LayoutGrid, TreePalm, Key, HelpCircle, 
     Phone, MapPin, Mail, Lock, Eye, EyeOff, ArrowLeft, 
-    CheckCircle2, Building, Trash2, Plus, Info
+    CheckCircle2, Building, Trash2, Plus, Info, Home, LogIn, Share2, Search, MessageCircle, Megaphone, SkipForward
 } from 'lucide-react';
 import styles from './register.module.css';
+import axios from "axios";
+
 
 const DOMAINES = [
     { key: 'plomberie', label: 'Plomberie', icon: <Wrench size={18} /> },
@@ -25,6 +26,20 @@ const DOMAINES = [
     { key: 'autre', label: 'Autre', icon: <HelpCircle size={18} /> },
 ];
 
+const TYPING_LINES = [
+    'Vérification des informations...',
+    'Création du profil sécurisé...',
+    'Configuration de votre espace...',
+    'Finalisation du compte...',
+];
+
+const Q_OPTIONS = [
+    { label: 'Réseaux sociaux', icon: Share2 },
+    { label: 'Google',          icon: Search },
+    { label: 'Bouche à oreille',icon: MessageCircle },
+    { label: 'Publicité',       icon: Megaphone },
+];
+
 function getPwStrength(pw) {
     if (!pw) return { level: 0, label: '', cls: '' };
     let score = 0;
@@ -37,9 +52,190 @@ function getPwStrength(pw) {
     return { level: 3, label: 'Fort', cls: styles.strong };
 }
 
+function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntreprise, artisanType }) {
+    const [step, setStep]         = useState(1);
+    const [typingText, setTyping] = useState('');
+    const [selected, setSelected] = useState(null);
+    const [thankMsg, setThank]    = useState('');
+    const lineIdx = useRef(0), charIdx = useRef(0);
+
+    // Typing animation
+    useEffect(() => {
+        if (step !== 1) return;
+        let t;
+        const tick = () => {
+            if (lineIdx.current >= TYPING_LINES.length) {
+                setStep(2);
+                return;
+            }
+            const line = TYPING_LINES[lineIdx.current];
+            if (charIdx.current <= line.length) {
+                setTyping(line.slice(0, charIdx.current++));
+                t = setTimeout(tick, 38);
+            } else {
+                t = setTimeout(() => {
+                    charIdx.current = 0;
+                    lineIdx.current++;
+                    if (lineIdx.current >= TYPING_LINES.length) setStep(2);
+                    else tick();
+                }, 700);
+            }
+        };
+        t = setTimeout(tick, 600);
+        return () => clearTimeout(t);
+    }, [step]);
+
+    const domaineLabel = domaine === 'autre' ? customDomaine : DOMAINES.find(d => d.key === domaine)?.label;
+    const progress = { 1: 25, 2: 50, 3: 75, 4: 100 }[step] || 0;
+
+    return (
+        <div className={styles.scene}>
+            {/* Background Layers */}
+            <div className={styles.bgLayer} />
+            <div className={styles.bgGrid} />
+            <div className={`${styles.shape} ${styles.sh1}`} />
+            <div className={`${styles.shape} ${styles.sh2}`} />
+            <div className={`${styles.shape} ${styles.sh3}`} />
+
+            {/* Main Card */}
+            <div className={styles.card}>
+                <div className={styles.surface}>
+                    {/* Progress Bar */}
+                    <div className={styles.progTrack}>
+                        <div className={styles.progFill} style={{ width: `${progress}%` }} />
+                    </div>
+
+                    {/* STEP 1 — Loading/Typing */}
+                    <div className={`${styles.step} ${step === 1 ? styles.stepOn : ''}`}>
+                        <div className={styles.logoRow}>
+                            <div className={styles.logoGem}>
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <path d="M3 9h4M9 3v4M9 11v4M11 9h4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                                    <circle cx="9" cy="9" r="2" fill="white"/>
+                                </svg>
+                            </div>
+                            <span className={styles.logoText}>bricole<span>.ma</span></span>
+                        </div>
+                        
+                        <div className={styles.arcWrap}>
+                            <svg viewBox="0 0 56 56">
+                                <circle cx="28" cy="28" r="22" className={styles.arcTrack} />
+                                <path d="M28 6 A22 22 0 0 1 50 28" className={styles.arcLine} />
+                                <defs>
+                                    <linearGradient id="ag" x1="28" y1="6" x2="50" y2="28" gradientUnits="userSpaceOnUse">
+                                        <stop stopColor="#3b82f6"/><stop offset="1" stopColor="#60a5fa"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div className={styles.arcCenter}><div className={styles.arcDot} /></div>
+                        </div>
+                        
+                        <div className={styles.loadLabel}>Initialisation</div>
+                        <div className={styles.typeLine}>{typingText}</div>
+                        
+                        <div className={styles.loadDots}>
+                            {[0, 1, 2, 3].map(i => (
+                                <div key={i} className={`${styles.loadDot} ${lineIdx.current > i ? styles.loadDotDone : ''}`} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* STEP 2 — Success Welcome */}
+                    <div className={`${styles.step} ${step === 2 ? styles.stepOn : ''}`}>
+                        <div className={styles.burstWrap}>
+                            <div className={styles.burstRing} /><div className={styles.burstRing} /><div className={styles.burstRing} />
+                            <div className={styles.checkBall}>
+                                <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+                                    <path className={styles.checkPath} d="M8 16l6 6 10-10"
+                                          stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div className={styles.wPill}>Inscription réussie</div>
+                        <h2 className={styles.wTitle}>Bienvenue, <em>{prenom}</em></h2>
+                        <p className={styles.wDesc}>
+                            Votre compte professionnel a été créé. Vous faites maintenant partie de la plus grande communauté d'artisans au Maroc.
+                        </p>
+                        <button className={styles.wBtn} onClick={() => setStep(3)}>
+                            Continuer →
+                        </button>
+                    </div>
+
+                    {/* STEP 3 — Summary */}
+                    <div className={`${styles.step} ${step === 3 ? styles.stepOn : ''}`}>
+                        <div className={styles.s3Head}>
+                            <h3>Récapitulatif</h3>
+                            <p>Voici les détails de votre nouveau compte</p>
+                        </div>
+                        
+                        <div className={styles.dataTable}>
+                            {[
+                                { k: 'Utilisateur', v: `${prenom} ${nom}` },
+                                { k: 'Email',      v: email },
+                                { k: 'Type',       v: null, badge: role === 'ARTISAN' ? 'pro' : 'client' },
+                                ...(role === 'ARTISAN' ? [{ k: 'Domaine', v: domaineLabel }] : []),
+                                ...(role === 'ARTISAN' && artisanType === 'COMPANY' ? [{ k: 'Entreprise', v: nomEntreprise }] : []),
+                            ].map((row, i) => (
+                                <div className={styles.dataRow} key={i} style={{ animationDelay: `${i * 0.1}s` }}>
+                                    <span className={styles.dataKey}>{row.k}</span>
+                                    <span className={styles.dataVal}>
+                                        {row.badge ? (
+                                            <span className={row.badge === 'pro' ? styles.badgePro : styles.badgeClient}>
+                                                {row.badge === 'pro' ? 'Professionnel' : 'Client'}
+                                            </span>
+                                        ) : row.v}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className={styles.btnPair}>
+                            <Link href="/login" className={styles.btnGhost}><LogIn size={14}/> Connexion</Link>
+                            <Link href="/"      className={styles.btnPrim}> <Home size={14}/> Accueil</Link>
+                        </div>
+                        
+                        <button className={styles.btnNext} onClick={() => setStep(4)}>
+                            Petite question ? (facultatif)
+                        </button>
+                    </div>
+
+                    {/* STEP 4 — Post-signup Question */}
+                    <div className={`${styles.step} ${step === 4 ? styles.stepOn : ''}`}>
+                        <div className={styles.qIcon}>
+                            <Search size={24} color="#3b82f6" />
+                        </div>
+                        <h3 className={styles.qTitle}>Une dernière chose...</h3>
+                        <p className={styles.qSub}>Comment avez-vous connu Bricole.ma ?</p>
+                        
+                        <div className={styles.qGrid}>
+                            {Q_OPTIONS.map(({ label, icon: Icon }) => (
+                                <button 
+                                    key={label}
+                                    className={`${styles.qOpt} ${selected === label ? styles.qOptSel : ''}`}
+                                    onClick={() => { setSelected(label); setThank(`Merci !`); }}
+                                >
+                                    <Icon size={14}/> {label}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        {thankMsg && <p className={styles.thankMsg}>{thankMsg}</p>}
+                        
+                        <span className={styles.skipLink} onClick={() => setStep(3)}>Retour au récapitulatif</span>
+                        
+                        <div className={styles.btnPair}>
+                            <Link href="/login" className={styles.btnGhost}><LogIn size={14}/> Connexion</Link>
+                            <Link href="/"      className={styles.btnPrim}> <Home size={14}/> Accueil</Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function RegisterPage() {
     const router = useRouter();
-    const { status } = useSession();
     const { state: globalState, dispatch: globalDispatch } = useAuth();
     
     const [step, setStep] = useState(1); // 1: Role, 2: Info
@@ -71,13 +267,6 @@ export default function RegisterPage() {
     useEffect(() => { 
         setMounted(true); 
     }, []);
-
-    // Effect to handle redirection if already authenticated
-    useEffect(() => {
-        if (status === 'authenticated') {
-            router.replace('/');
-        }
-    }, [status, router]);
 
     const pwStrength = getPwStrength(form.password);
 
@@ -141,85 +330,75 @@ export default function RegisterPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!validateStep2()) return;
 
-        globalDispatch({ type: "REGISTER_START" });
+            globalDispatch({ type: "REGISTER_START" });
 
-        try {
-            // Simulation d'API
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            const userData = {
-                ...form,
-                role,
-                artisanType: role === 'ARTISAN' ? artisanType : null,
-                domaine: role === 'ARTISAN' ? (domaine === 'autre' ? customDomaine : domaine) : null
-            };
+            try {
 
-            globalDispatch({ 
-                type: "REGISTER_SUCCESS", 
-                payload: userData 
-            });
+                const userData = {
+                    prenom: form.prenom,
+                    nom: form.nom,
+                    nomEntreprise: form.nomEntreprise,
+                    email: form.email,
+                    telephone: form.telephone,
+                    ville: form.ville,
+                    password: form.password,
+                    role: role,
+                    artisanType: role === "ARTISAN" ? artisanType : null,
+                    domaine: role === "ARTISAN"
+                    ? (domaine === "autre" ? customDomaine : domaine)
+                    : null
+                };
 
-        } catch (error) {
-            globalDispatch({ 
-                type: "REGISTER_FAILURE", 
-                payload: "Erreur lors de la création du compte. Veuillez réessayer." 
-            });
-        }
-    };
+                const res = await axios.post("/api/register", userData);
+
+                if (res.data?.success) {
+
+                    globalDispatch({
+                        type: "REGISTER_SUCCESS",
+                        payload: res.data.user
+                    });
+
+                } else {
+
+                    globalDispatch({
+                        type: "REGISTER_FAILURE",
+                        payload: res.data?.message || "Erreur lors de l'inscription."
+                    });
+
+                }
+
+            } catch (error) {
+
+                const message =
+                    error.response?.data?.message ||
+                    "Erreur serveur lors de l'inscription.";
+
+                globalDispatch({
+                    type: "REGISTER_FAILURE",
+                    payload: message
+                });
+
+            }
+        };
+
 
     if (!mounted) return null;
 
     if (globalState.isSuccess) {
         return (
-            <div className={styles.page}>
-                <div className={styles.right} style={{ maxWidth: '600px', margin: 'auto', padding: '40px' }}>
-                    <div className={styles.successState}>
-                        <div className={styles.successIcon}>
-                            <CheckCircle2 size={40} color="white" />
-                        </div>
-                        <h2 className={styles.successTitle}>Compte créé ! 🎉</h2>
-                        <p className={styles.successDesc}>
-                            Bienvenue sur bricole.ma, <strong>{form.prenom}</strong> ! Votre compte a été créé avec succès.
-                        </p>
-                        
-                        <div className={styles.dataTableWrap}>
-                            <div className={styles.dataTableTitle}>📋 Récapitulatif</div>
-                            <div className={styles.dataRow}>
-                                <span className={styles.dataKey}>Utilisateur</span>
-                                <span className={styles.dataVal}>{form.prenom} {form.nom}</span>
-                            </div>
-                            {role === 'ARTISAN' && artisanType === 'COMPANY' && (
-                                <div className={styles.dataRow}>
-                                    <span className={styles.dataKey}>Entreprise</span>
-                                    <span className={styles.dataVal}>{form.nomEntreprise}</span>
-                                </div>
-                            )}
-                            <div className={styles.dataRow}>
-                                <span className={styles.dataKey}>Email</span>
-                                <span className={styles.dataVal}>{form.email}</span>
-                            </div>
-                            <div className={styles.dataRow}>
-                                <span className={styles.dataKey}>Profil</span>
-                                <span className={`${styles.dataBadge} ${role === 'ARTISAN' ? styles.artisan : ''}`}>
-                                    {role === 'ARTISAN' ? 'Professionnel' : 'Client'}
-                                </span>
-                            </div>
-                            {role === 'ARTISAN' && (
-                                <div className={styles.dataRow}>
-                                    <span className={styles.dataKey}>Domaine</span>
-                                    <span className={styles.dataVal}>{domaine === 'autre' ? customDomaine : DOMAINES.find(d => d.key === domaine)?.label}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <Link href="/" className={styles.btnSubmit} style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
-                            Aller à l'accueil
-                        </Link>
-                    </div>
-                </div>
-            </div>
+            <SuccessFlow
+                prenom={form.prenom}
+                nom={form.nom}
+                email={form.email}
+                role={role}
+                domaine={domaine}
+                customDomaine={customDomaine}
+                nomEntreprise={form.nomEntreprise}
+                artisanType={artisanType}
+            />
         );
     }
 
@@ -274,6 +453,12 @@ export default function RegisterPage() {
 
             {/* RIGHT SIDE */}
             <div className={styles.right}>
+                {globalState.error && (
+                    <div className={styles.errorBanner}>
+                        <CheckCircle2 size={18} />
+                        <span>{globalState.error}</span>
+                    </div>
+                )}
                 {step < 3 && (
                     <div className={styles.animateUp}>
                         <div className={styles.stepLabel}>Étape <span>{step}</span> sur 2</div>

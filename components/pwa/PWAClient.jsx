@@ -4,15 +4,24 @@ import { usePWA } from "../../hooks/usePWA";
 import { useEffect, useState } from "react";
 
 export default function PWAClient() {
-  const { isOnline, deferredPrompt, installApp, isUpdateAvailable, updateApp } = usePWA();
+  const { isOnline, isInstalled, deferredPrompt, installApp, isUpdateAvailable, updateApp } = usePWA();
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
-    // Show install banner only if prompt is available and not already installed
-    if (deferredPrompt) {
+    if (typeof window === "undefined") return;
+
+    // Do not show if app is already installed
+    if (isInstalled) {
+      setShowInstallBanner(false);
+      return;
+    }
+
+    // Respect previous dismissal in this browser
+    const dismissed = window.localStorage.getItem("bricole_pwa_install_dismissed") === "1";
+    if (deferredPrompt && !dismissed) {
       setShowInstallBanner(true);
     }
-  }, [deferredPrompt]);
+  }, [deferredPrompt, isInstalled]);
 
   return (
     <>
@@ -59,7 +68,7 @@ export default function PWAClient() {
           <div className="container d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-3">
               <img 
-                src="/assets/media/favicon.png" 
+                src="/media/images/android-chrome-192x192.png"
                 alt="Bricole.ma" 
                 width="48" 
                 height="48" 
@@ -73,7 +82,12 @@ export default function PWAClient() {
             <div className="d-flex gap-2">
               <button 
                 className="btn btn-sm btn-light border rounded-pill px-3"
-                onClick={() => setShowInstallBanner(false)}
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.localStorage.setItem("bricole_pwa_install_dismissed", "1");
+                  }
+                  setShowInstallBanner(false);
+                }}
               >
                 Plus tard
               </button>

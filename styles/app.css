@@ -30,20 +30,8 @@ STYLE SHEET INDEXING
     Fonts
 -------------------------*/
 /* FONT ==> Luxora Grotesk <== */
-@font-face {
-  font-family: "Luxora Grotesk";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("fonts/luxora-grotesk/luxoragrotesk-bold.html") format("truetype");
-}
-@font-face {
-  font-family: "Luxora Grotesk";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("fonts/luxora-grotesk/luxoragrotesk-medium.html") format("truetype");
-}
+/* Disabled self-hosted Luxora fonts for now because the font files are not present.
+   The app will fall back to the primary web font ("Nunito Sans"). */
 /*-------------------------
     Variables
 -------------------------*/

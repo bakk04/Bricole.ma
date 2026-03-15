@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import jwt from "jsonwebtoken";
 
 const handler = NextAuth({
   providers: [
@@ -11,48 +12,113 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account.provider === "google") {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
         try {
           await connectDB();
-          
-          // Chercher si l'utilisateur existe déjà
-          const userExists = await User.findOne({ email: user.email });
 
-          if (!userExists) {
-            // Créer un nouvel utilisateur avec le rôle CLIENT par défaut
-            await User.create({
-              email: user.email,
-              name: user.name, // Nom de Google
-              image: user.image, // Image de Google
+          const email = user?.email?.toLowerCase().trim();
+          if (!email) {
+            return true;
+          }
+
+          let existingUser = await User.findOne({ email });
+
+          if (!existingUser) {
+            existingUser = await User.create({
+              email,
+              name:
+                user.name ||
+                profile?.name ||
+                (email.includes("@") ? email.split("@")[0] : email),
+              image: user.image || profile?.picture || null,
               role: "CLIENT",
               status: "ACTIVE",
             });
+          } else {
+            const updates = {};
+
+            if (!existingUser.name && user.name) {
+              updates.name = user.name;
+            }
+
+            const newImage = user.image || profile?.picture;
+            if (!existingUser.image && newImage) {
+              updates.image = newImage;
+            }
+
+            if (!existingUser.role) {
+              updates.role = "CLIENT";
+            }
+
+            if (Object.keys(updates).length > 0) {
+              existingUser.set(updates);
+              await existingUser.save();
+            }
           }
-          return true;
-        } catch (error) {
-          console.error("Error checking/creating user during Google Login:", error);
-          return false;
+
+          user.id = existingUser._id.toString();
+          user.role = existingUser.role || "CLIENT";
+          user.image =
+            existingUser.image || user.image || profile?.picture || null;
+        } catch (err) {
+          console.error("Erreur lors du signIn Google:", err);
         }
       }
+
       return true;
     },
-    async session({ session }) {
-      // Ajouter l'ID et le rôle de l'utilisateur à la session pour un usage facile côté client
-      await connectDB();
-      const user = await User.findOne({ email: session.user.email });
+    async jwt({ token, user }) {
       if (user) {
-        session.user.id = user._id.toString();
-        session.user.role = user.role;
+        token.id = user.id || token.sub;
+        token.role = user.role || "CLIENT";
+        token.image = user.image;
+      }
+
+      // Générer un token JWT applicatif (différent des tokens Google)
+      if (process.env.JWT_SECRET && token.id) {
+        try {
+          token.bricoleToken = jwt.sign(
+            { userId: token.id, role: token.role || "CLIENT" },
+            process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+          );
+        } catch (e) {
+          console.error("Erreur de génération du bricoleToken:", e);
+        }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.image = token.image;
+        if (token.bricoleToken) {
+          session.user.bricoleToken = token.bricoleToken;
+        }
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Si l'utilisateur venait de /login avec Google, on le renvoie vers /profile avec un token court
+      const isCallbackToProfile =
+        url.startsWith(baseUrl) &&
+        (url === `${baseUrl}/` || url.startsWith(`${baseUrl}/login`));
+
+      if (isCallbackToProfile) {
+        // On ne peut pas lire le token ici, donc on redirige simplement vers /profile
+        // Le token court (bricoleToken) est disponible côté client via useSession()
+        return `${baseUrl}/profile`;
+      }
+
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: "/login",
-    error: "/auth/error",
-  },
+  session: { strategy: "jwt" },
+  pages: { signIn: "/login" },
 });
 
 export { handler as GET, handler as POST };

@@ -4,8 +4,18 @@ import mongoose, { Schema, model, models, Document } from "mongoose";
 export interface IUser extends Document {
   email: string;
   password?: string;
+  name?: string;
+  prenom?: string;
+  nom?: string;
+  nomEntreprise?: string;
+  telephone?: string;
+  ville?: string;
   role: "ADMIN" | "ARTISAN" | "CLIENT";
   status: "ACTIVE" | "SUSPENDED" | "PENDING";
+  image?: string;
+  profileImage?: string;
+  artisanType?: string;
+  domaine?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,10 +30,42 @@ const UserSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
+    name: {
+      type: String,
+      required: false,
+    },
+    prenom: {
+        type: String,
+        required: false,
+    },
+    nom: {
+        type: String,
+        required: false,
+    },
+    nomEntreprise: {
+        type: String,
+        required: false,
+    },
+    telephone: {
+        type: String,
+        required: false,
+    },
+    ville: {
+        type: String,
+        required: false,
+    },
+    image: {
+      type: String,
+      required: false,
+    },
+    profileImage: {
+        type: String,
+        required: false,
+    },
     password: {
       type: String,
-      required: [true, "Le mot de passe est requis"],
-      select: false, // Ne pas renvoyer le mot de passe par défaut
+      required: false,
+      select: false,
     },
     role: {
       type: String,
@@ -35,9 +77,19 @@ const UserSchema = new Schema<IUser>(
       enum: ["ACTIVE", "SUSPENDED", "PENDING"],
       default: "PENDING",
     },
+    artisanType: {
+        type: String,
+        required: false,
+    },
+    domaine: {
+        type: String,
+        required: false,
+    },
   },
   {
     timestamps: true, // Gère automatiquement createdAt et updatedAt
+    collection: "Users", // Forcer le nom de la collection pour correspondre à l'existant
+    strict: false, // Permettre d'autres champs si nécessaire
   }
 );
 

@@ -3,13 +3,13 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
   swMinify: true,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
-    skipWaiting: false, // Set to false to allow manual update control in UI
+    skipWaiting: true,
     clientsClaim: true,
     runtimeCaching: [
       {
@@ -27,13 +27,16 @@ const withPWA = withPWAInit({
         },
       },
       {
-        urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+        urlPattern: /^https:\/\/(?:fonts\.(?:googleapis|gstatic)\.com|code\.jquery\.com|cdn\.jsdelivr\.net|unpkg\.com)\/.*/i,
         handler: "CacheFirst",
         options: {
-          cacheName: "google-fonts",
+          cacheName: "external-assets",
           expiration: {
-            maxEntries: 10,
+            maxEntries: 50,
             maxAgeSeconds: 60 * 60 * 24 * 365, // 1 Year
+          },
+          cacheableResponse: {
+            statuses: [0, 200],
           },
         },
       },
@@ -49,21 +52,10 @@ const withPWA = withPWAInit({
           },
         },
       },
-      {
-        urlPattern: /.*/i,
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "others",
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 60 * 60 * 24, // 24 Hours
-          },
-        },
-      },
     ],
   },
   fallbacks: {
-    document: "/offline", // Default fallback page when offline and page not cached
+    document: "/offline",
   },
 });
 

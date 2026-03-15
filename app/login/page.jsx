@@ -2,115 +2,134 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn, useSession } from 'next-auth/react';
-import { useAuth } from '../api/context/AuthContext';
+import { signIn } from 'next-auth/react';
 import styles from './login.module.css';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { data: session, status } = useSession();
-    const { state, dispatch } = useAuth();
-    
+
+    // États locaux pour remplacer le AuthContext
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     const [showPw, setShowPw] = useState(false);
     const [remember, setRemember] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [logoError, setLogoError] = useState(false);
 
-    // Form data state (local to avoid excessive reducer updates during typing)
+    // États pour le toast et les champs vides
+    const [showToast, setShowToast] = useState(false);
+    const [toastClosing, setToastClosing] = useState(false);
+    const [emptyFields, setEmptyFields] = useState({ email: false, password: false });
+
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
 
-    useEffect(() => { 
-        setMounted(true); 
+    useEffect(() => {
+        setMounted(true);
     }, []);
 
-    // Effect to handle redirection if already authenticated
+    // Gestion de l'affichage du Toast
     useEffect(() => {
-        if (status === 'authenticated') {
-            router.replace('/');
+        if (error) {
+            setShowToast(true);
+            setToastClosing(false);
+
+            const timer = setTimeout(() => {
+                setToastClosing(true);
+                setTimeout(() => {
+                    setShowToast(false);
+                    setError(null);
+                }, 400);
+            }, 4000);
+
+            return () => clearTimeout(timer);
         }
-    }, [status, router]);
+    }, [error]);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
-        
-        // Clear field-specific error when user starts typing
-        if (state.formErrors[id]) {
-            const newFormErrors = { ...state.formErrors };
-            delete newFormErrors[id];
-            dispatch({ type: 'SET_FORM_ERRORS', payload: newFormErrors });
-        }
-    };
 
-    const validateForm = () => {
-        const errors = {};
-        if (!formData.email) errors.email = "L'adresse email est requise";
-        else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Format d'email invalide";
-        
-        if (!formData.password) errors.password = "Le mot de passe est requis";
-        else if (formData.password.length < 6) errors.password = "Le mot de passe doit contenir au moins 6 caractères";
-        
-        return errors;
+        if (emptyFields[id]) {
+            setEmptyFields(prev => ({ ...prev, [id]: false }));
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            dispatch({ type: 'SET_FORM_ERRORS', payload: errors });
+
+        // Vérification des champs vides
+        const newEmptyFields = {
+            email: !formData.email.trim(),
+            password: !formData.password.trim()
+        };
+
+        setEmptyFields(newEmptyFields);
+
+        if (newEmptyFields.email || newEmptyFields.password) {
+            setError("Veuillez remplir tous les champs pour vous connecter.");
             return;
         }
 
-        dispatch({ type: "LOGIN_START" });
+        setLoading(true);
 
         try {
-            // Simulation d'une vérification avancée (le user demande de ne pas toucher à la DB pour l'instant)
-            // On peut quand même simuler un délai
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Simulation d'un succès (on pourra brancher l'API plus tard)
-            // Pour l'instant, on laisse le reducer gérer l'état
-            dispatch({ 
-                type: "LOGIN_SUCCESS", 
-                payload: { email: formData.email, name: "Utilisateur Test" } 
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                }),
             });
-            
-            // On peut aussi utiliser NextAuth credentials ici si configuré
-            /* const res = await signIn('credentials', {
-                redirect: false,
-                email: formData.email,
-                password: formData.password
-            }); */
 
-        } catch (error) {
-            dispatch({ 
-                type: "LOGIN_FAILURE", 
-                payload: "Une erreur inattendue est survenue lors de la connexion." 
-            });
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || !data?.success) {
+                setError(
+                    data?.message ||
+                    "Email ou mot de passe incorrect."
+                );
+                setLoading(false);
+                return;
+            }
+
+            // Succès : le backend a posé le cookie auth_token (JWT + Redis)
+            // On rafraîchit la navigation pour que les composants protégés se mettent à jour
+            router.refresh();
+            router.replace('/profile');
+        } catch (err) {
+            console.error('Erreur de connexion:', err);
+            setError("Erreur serveur lors de la connexion.");
+            setLoading(false);
         }
-    };
-
-    const handleGoogleLogin = () => {
-        signIn('google', { callbackUrl: '/' });
     };
 
     if (!mounted) return null;
 
     return (
         <div className={styles.page}>
+            {/* TOAST D'ERREUR */}
+            {showToast && (
+                <div className={`${styles.toastError} ${toastClosing ? styles.closing : ''}`}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>{error}</span>
+                </div>
+            )}
+
             {/* LOGO */}
             <div className={styles.logoWrap}>
                 {!logoError ? (
-                    <Link href={'/'}>  
-                        <img
-                            src="/assets/media/images/logo.png"
-                            alt="Logo"
-                            onError={() => setLogoError(true)}
-                        />
+                    <Link href={'/'}>
+                        <img src="/assets/media/images/logo.png" alt="Logo" onError={() => setLogoError(true)} />
                     </Link>
                 ) : (
                     <Link href="/" className={styles.logoFallback}>
@@ -183,11 +202,16 @@ export default function LoginPage() {
                 </div>
 
                 <div className={`${styles.animateUp} ${styles.delay2}`}>
-                    <button 
-                        className={styles.btnGoogle} 
-                        type="button" 
-                        onClick={handleGoogleLogin}
-                        disabled={state.loading}
+                    <button
+                        className={styles.btnGoogle}
+                        type="button"
+                        disabled={loading}
+                        onClick={() => {
+                            // Redirige vers /profile avec un token court disponible côté client via NextAuth
+                            signIn('google', {
+                                callbackUrl: '/profile',
+                            });
+                        }}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -203,55 +227,39 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                {state.error && (
-                    <div className={styles.errorBanner}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        {state.error}
-                    </div>
-                )}
-
-                <form 
-                    onSubmit={handleSubmit} 
-                    className={`${styles.animateUp} ${styles.delay3}`}
-                    autoComplete="off"
-                >
+                <form onSubmit={handleSubmit} className={`${styles.animateUp} ${styles.delay3}`} autoComplete="off">
                     <div className={styles.field}>
                         <label htmlFor="email">Adresse e-mail</label>
-                        <div className={`${styles.inputWrap} ${state.formErrors.email ? styles.inputError : ''}`}>
+                        <div className={`${styles.inputWrap} ${emptyFields.email ? styles.inputError : ''}`}>
                             <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/>
                             </svg>
-                            <input 
-                                id="email" 
+                            <input
+                                id="email"
                                 name="email"
-                                type="email" 
-                                placeholder="contact@bricole.ma" 
+                                type="email"
+                                placeholder="contact@bricole.ma"
                                 value={formData.email}
                                 onChange={handleChange}
                                 autoComplete="none"
-                                required 
                             />
                         </div>
-                        {state.formErrors.email && <span className={styles.fieldError}>{state.formErrors.email}</span>}
                     </div>
 
                     <div className={styles.field}>
                         <label htmlFor="password">Mot de passe</label>
-                        <div className={`${styles.inputWrap} ${state.formErrors.password ? styles.inputError : ''}`}>
+                        <div className={`${styles.inputWrap} ${emptyFields.password ? styles.inputError : ''}`}>
                             <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                             </svg>
-                            <input 
-                                id="password" 
+                            <input
+                                id="password"
                                 name="password"
-                                type={showPw ? 'text' : 'password'} 
-                                placeholder="••••••••" 
+                                type={showPw ? 'text' : 'password'}
+                                placeholder="••••••••"
                                 value={formData.password}
                                 onChange={handleChange}
                                 autoComplete="new-password"
-                                required 
                             />
                             <button type="button" className={styles.toggleEye} onClick={() => setShowPw(!showPw)}>
                                 {showPw
@@ -260,7 +268,6 @@ export default function LoginPage() {
                                 }
                             </button>
                         </div>
-                        {state.formErrors.password && <span className={styles.fieldError}>{state.formErrors.password}</span>}
                     </div>
 
                     <div className={styles.optionsRow}>
@@ -276,12 +283,8 @@ export default function LoginPage() {
                         <Link href="#" className={styles.forgot}>Mot de passe oublié ?</Link>
                     </div>
 
-                    <button 
-                        type="submit" 
-                        className={`${styles.btnSubmit} ${state.loading ? styles.loading : ''}`}
-                        disabled={state.loading}
-                    >
-                        {state.loading
+                    <button type="submit" className={`${styles.btnSubmit} ${loading ? styles.loading : ''}`} disabled={loading}>
+                        {loading
                             ? <span style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
                                 <svg className={styles.spin} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
                                     <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
@@ -292,7 +295,6 @@ export default function LoginPage() {
                         }
                     </button>
 
-                    {/* Sign up link */}
                     <div className={`${styles.signupDivider} ${styles.animateUp} ${styles.delay5}`}>
                         Vous n'avez pas de compte ?
                         <Link href="/register">Créer un compte</Link>

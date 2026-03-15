@@ -11,6 +11,7 @@ import '../styles/unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css'
 import Script from 'next/script'
 import { Providers } from './providers'
 import PWAClient from '../components/pwa/PWAClient'
+import GlobalInteractions from '../components/GlobalInteractions'
 
 /** @type {import('next').Metadata} */
 export const metadata = {
@@ -29,9 +30,9 @@ export const metadata = {
         telephone: false,
     },
     icons: {
-        icon: '/assets/media/favicon.png',
-        shortcut: '/assets/media/favicon.png',
-        apple: '/assets/media/favicon.png',
+        icon: '/media/images/android-chrome-192x192.png',
+        shortcut: '/media/images/android-chrome-192x192.png',
+        apple: '/media/images/android-chrome-192x192.png',
     },
 }
 
@@ -54,21 +55,44 @@ export default function RootLayout({ children }) {
         <body>
         
         <Providers>
-            {/* PWA logic and global UI */}
-            <PWAClient />
             {children}
         </Providers>
-
-        {/* Scripts JS */}
-        <Script src="../lib/vendor/bootstrap.min.js" strategy="afterInteractive"/>
-        <Script src="../lib/vendor/jquery-3.6.3.min.html" strategy="afterInteractive"/>
-        <Script src="../lib/vendor/jquery-validator.html" strategy="afterInteractive"/>
-        <Script src="../lib/vendor/wow.html" strategy="afterInteractive"/>
-        <Script src="../styles/unpkg.com/leaflet%401.9.4/dist/leaflet.js" strategy="afterInteractive"/>
-        <Script src="../styles/unpkg.com/leaflet-geosearch%403.11.0/dist/bundle.min.js" strategy="afterInteractive"/>
-        <Script src="../lib/vendor/countrymap.html" strategy="afterInteractive"/>
-        <Script src="../lib/vendor/slick.min.html" strategy="afterInteractive"/>
-        <Script src="../lib/app.html" strategy="afterInteractive"/>
+        <GlobalInteractions />
+        
+        {/* Global Scripts - load after hydration for PWA safety */}
+        <Script 
+          src="https://code.jquery.com/jquery-3.6.3.min.js" 
+          strategy="afterInteractive"
+        />
+        <Script 
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+          strategy="afterInteractive"
+        />
+        <Script 
+          src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js" 
+          strategy="afterInteractive"
+        />
+        <Script 
+          src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js" 
+          strategy="afterInteractive"
+        />
+        
+        {/* Leaflet & Map Scripts from public/vendor */}
+        <Script 
+          src="/vendor/unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+          strategy="afterInteractive"
+        />
+        <Script 
+          src="/vendor/unpkg.com/leaflet-geosearch@3.11.0/dist/bundle.min.js" 
+          strategy="afterInteractive"
+        />
+        <Script 
+          src="/vendor/unpkg.com/leaflet-control-geocoder@3.3.1/dist/Control.Geocoder.js" 
+          strategy="afterInteractive"
+        />
+        
+        {/* PWA Lifecycle Logic */}
+        <PWAClient />
         </body>
         </html>
     )

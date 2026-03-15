@@ -95,24 +95,22 @@ export default function LanguageSwitcher() {
         }
 
         const checkLang = () => {
-            const getCookie = (name) => {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-                return null;
-            }
-            const googtrans = getCookie('googtrans');
-            let langCode = 'fr';
-            if (googtrans) {
-                langCode = googtrans.split('/').pop();
-            } else {
-                langCode = document.documentElement.lang || 'fr';
-            }
-            const active = LANGUAGES.find(l => langCode.includes(l.code)) || LANGUAGES[0];
-            if (currentLang.code !== active.code) {
-                setCurrentLang(active);
-                document.documentElement.lang = active.code;
-                document.documentElement.dir = active.code === 'ar' ? 'rtl' : 'ltr';
+            try {
+                // On ne fait confiance qu'à notre propre préférence, pas au cookie GTranslate brut
+                const stored = typeof window !== 'undefined'
+                    ? window.localStorage.getItem('bricole_lang')
+                    : null;
+
+                let langCode = stored || document.documentElement.lang || 'fr';
+
+                const active = LANGUAGES.find(l => langCode.includes(l.code)) || LANGUAGES[0];
+                if (currentLang.code !== active.code) {
+                    setCurrentLang(active);
+                    document.documentElement.lang = active.code;
+                    document.documentElement.dir = active.code === 'ar' ? 'rtl' : 'ltr';
+                }
+            } catch (e) {
+                // en cas de problème (mode privé strict), on reste en FR
             }
         }
         const interval = setInterval(checkLang, 2000)
@@ -127,53 +125,37 @@ export default function LanguageSwitcher() {
         document.documentElement.dir = lang.code === 'ar' ? 'rtl' : 'ltr';
         setIsOpen(false);
 
+        // Mémoriser la préférence côté app (notre source de vérité)
+        try {
+            window.localStorage.setItem('bricole_lang', lang.code);
+        } catch (e) {}
+
         const setCookie = (name, value) => {
             const expires = "; expires=" + new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
             document.cookie = `${name}=${value}${expires}; path=/`;
             document.cookie = `${name}=${value}${expires}; path=/; domain=.${domain}`;
         };
 
-        const langPair = lang.code === 'fr' ? 'fr|fr' : `fr|${lang.code}`;
-
+        // Gestion des cookies GTranslate
         if (lang.code === 'fr') {
+            // Retour au français natif : on nettoie tous les cookies GTranslate pertinents
             document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        } else {
-            setCookie('googtrans', `/fr/${lang.code}`);
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain}`;
+
+            // Très important : recharger la page pour restaurer le DOM original en français
+            if (typeof window !== 'undefined') {
+                window.location.reload();
+            }
+            return; // on NE déclenche PAS doGTranslate pour le français
         }
 
-        const triggerTranslate = () => {
-            if (typeof window !== 'undefined' && typeof window.doGTranslate === 'function') {
-                window.doGTranslate(langPair);
-                // Force fire multiple times to ensure the combo is caught
-                setTimeout(() => window.doGTranslate(langPair), 100);
-                setTimeout(() => window.doGTranslate(langPair), 500);
-                return true;
-            }
-            return false;
-        };
+        // Pour l'arabe, on laisse GTranslate gérer via son cookie
+        setCookie('googtrans', `/fr/${lang.code}`);
 
-        // Try to trigger the translation immediately
-        let fired = triggerTranslate();
-        
-        // If it didn't fire or as a safety measure for React state sync
-        let attempts = 0;
-        const interval = setInterval(() => {
-            attempts++;
-            const hasCombo = document.querySelector('select.goog-te-combo');
-            if (hasCombo || attempts > 10) {
-                triggerTranslate();
-                clearInterval(interval);
-            }
-        }, 200);
-
-        // Final fallback only if really necessary, but we try to avoid it
-        setTimeout(() => {
-            const hasCombo = document.querySelector('select.goog-te-combo');
-            if (!hasCombo && attempts >= 10 && typeof window !== 'undefined') {
-                // Only reload if we really can't find the translate widget after 2 seconds
-                // window.location.reload(); 
-            }
-        }, 2500);
+        // Auto-refresh uniquement pour l'arabe afin de stabiliser la traduction
+        if (lang.code === 'ar' && typeof window !== 'undefined') {
+            window.location.reload();
+        }
     }
 
     return (
