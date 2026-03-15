@@ -1,55 +1,55 @@
 /* ═══════════════════════════════════════════════════════════════
-   ARTISAN DASHBOARD — DARK PROFESSIONAL THEME
+   ARTISAN DASHBOARD — LIGHT PROFESSIONAL THEME
    Font: Cabinet Grotesk (display) + DM Sans (body)
-   Aesthetic: Refined dark studio / atelier premium
+   Aesthetic: Clair, moderne, studio premium
 ═══════════════════════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
 
-/* ── Root tokens ── */
+/* ── Root tokens (light) ── */
 .dash {
     /* Brand */
     --cobalt:        #1a4fd6;
     --cobalt-l:      #3b6ef8;
-    --cobalt-xl:     #6d94fb;
-    --cobalt-10:     rgba(59,110,248,0.10);
-    --cobalt-20:     rgba(59,110,248,0.18);
+    --cobalt-xl:     #2349c5;
+    --cobalt-10:     rgba(35,73,197,0.08);
+    --cobalt-20:     rgba(35,73,197,0.16);
 
-    --gold:          #e8a830;
-    --gold-dim:      rgba(232,168,48,0.15);
-    --sage:          #29a87a;
-    --sage-dim:      rgba(41,168,122,0.13);
-    --rose:          #e05470;
-    --rose-dim:      rgba(224,84,112,0.13);
-    --amber:         #f59e0b;
-    --amber-dim:     rgba(245,158,11,0.13);
-    --violet:        #8b5cf6;
-    --violet-dim:    rgba(139,92,246,0.13);
+    --gold:          #c38a1f;
+    --gold-dim:      rgba(195,138,31,0.14);
+    --sage:          #1d8f66;
+    --sage-dim:      rgba(29,143,102,0.12);
+    --rose:          #d13b5e;
+    --rose-dim:      rgba(209,59,94,0.12);
+    --amber:         #e28a07;
+    --amber-dim:     rgba(226,138,7,0.12);
+    --violet:        #7b4ce6;
+    --violet-dim:    rgba(123,76,230,0.12);
 
-    /* Surface scale — dark */
-    --bg:            #0c0f1a;
-    --s0:            #111520;
-    --s1:            #161b2e;
-    --s2:            #1c2238;
-    --s3:            #232b44;
-    --s4:            #2c3554;
+    /* Surface scale — light */
+    --bg:            #f5f5f9;
+    --s0:            #ffffff;
+    --s1:            #ffffff;
+    --s2:            #f3f4f9;
+    --s3:            #e4e7f2;
+    --s4:            #d5daec;
 
     /* Text */
-    --t1:            #f0f3ff;
-    --t2:            #bcc5e8;
-    --t3:            #7a87b8;
-    --t4:            #4a5580;
+    --t1:            #0f172a;
+    --t2:            #1f2937;
+    --t3:            #6b7280;
+    --t4:            #9ca3af;
 
     /* Border */
-    --bd:            rgba(255,255,255,0.06);
-    --bd2:           rgba(255,255,255,0.10);
+    --bd:            rgba(15,23,42,0.06);
+    --bd2:           rgba(15,23,42,0.10);
 
     /* Shadows */
-    --sh-sm: 0 2px 8px  rgba(0,0,0,0.25);
-    --sh-md: 0 6px 20px rgba(0,0,0,0.30);
-    --sh-lg: 0 12px 40px rgba(0,0,0,0.40);
-    --sh-xl: 0 20px 60px rgba(0,0,0,0.50);
-    --sh-glow-blue: 0 0 20px rgba(59,110,248,0.25);
-    --sh-glow-gold: 0 0 20px rgba(232,168,48,0.20);
+    --sh-sm: 0 2px 8px  rgba(15,23,42,0.06);
+    --sh-md: 0 8px 24px rgba(15,23,42,0.08);
+    --sh-lg: 0 16px 40px rgba(15,23,42,0.10);
+    --sh-xl: 0 24px 60px rgba(15,23,42,0.12);
+    --sh-glow-blue: 0 0 22px rgba(35,73,197,0.22);
+    --sh-glow-gold: 0 0 20px rgba(195,138,31,0.18);
 
     /* Radii */
     --r-sm: 8px;
