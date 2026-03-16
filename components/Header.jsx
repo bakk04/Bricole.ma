@@ -54,7 +54,12 @@ export default function Header() {
 
     useEffect(() => {
         if (!mobileNavOpen) setMobileSubmenu(null)
+        if (mobileNavOpen) setShowProfileMenu(false); // Close profile menu when mobile nav opens
     }, [mobileNavOpen])
+
+    useEffect(() => {
+        if (showProfileMenu) setMobileNavOpen(false); // Close mobile nav when profile menu opens
+    }, [showProfileMenu])
 
     function toggleDropdown(name) {
         setOpenDropdown((prev) => (prev === name ? null : name))
@@ -296,51 +301,51 @@ export default function Header() {
                 <div className="mobile-nav__content">
                     <div className="mobile-nav__header">
                         <Link href="/" onClick={() => setMobileNavOpen(false)}>
-                            <img src="/assets/media/images/logo.png" alt="Bricole.ma" style={{ height: '40px' }} />
+                            <img src="/assets/media/images/logo.png" alt="Bricole.ma" style={{ height: '32px' }} />
                         </Link>
-                        <button className="mobile-nav__close-btn" onClick={() => setMobileNavOpen(false)}>
+                        <button className="mobile-nav__close" onClick={() => setMobileNavOpen(false)}>
                             <X size={20} />
                         </button>
                     </div>
 
                     <div className="mobile-nav__body">
-                        {isLoggedIn ? (
-                            <div className="mobile-user-card-v5">
-                                <div className="m5-header">
-                                    <div className="m5-avatar">
-                                        {getAvatarUrl(user) ? (
-                                            <img src={getAvatarUrl(user)} alt={user.name} referrerPolicy="no-referrer" />
-                                        ) : (
-                                            <span>{getInitials(user.name)}</span>
-                                        )}
-                                    </div>
-                                    <div className="m5-meta">
-                                        <div className="m5-name">{user.name}</div>
-                                        <div className="m5-email">{user.email}</div>
-                                    </div>
-                                </div>
-                                <div className="m5-links">
-                                    <Link href="/profile" className="m5-item" onClick={() => setMobileNavOpen(false)}>
-                                        <User size={18} /> Profil
-                                    </Link>
-                                    <Link href="/profile/dashboard" className="m5-item" onClick={() => setMobileNavOpen(false)}>
-                                        <LayoutDashboard size={18} /> Dashboard
-                                    </Link>
-                                    <Link href="/profile/settings" className="m5-item" onClick={() => setMobileNavOpen(false)}>
-                                        <Settings2 size={18} /> Paramètres
-                                    </Link>
-                                    <button onClick={handleLogout} className="m5-item m5-logout">
-                                        <LogOut size={18} /> Déconnexion
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <Link href="/login" className="m-link secondary" onClick={() => setMobileNavOpen(false)}>
-                                <User /> Login / Register
+                        {!isLoggedIn && (
+                            <Link href="/login" className="mobile-nav__btn mobile-nav__btn--secondary" onClick={() => setMobileNavOpen(false)} style={{ width: '100%', marginBottom: '20px' }}>
+                                <User size={18} /> <span>Login / Register</span>
                             </Link>
                         )}
-                        <Link href="/listing/add" className="m-link primary mt-3" onClick={() => setMobileNavOpen(false)}>
-                            <Plus /> Add Listing
+                        
+                        <div className="mobile-nav__nav">
+                            <ul className="main-menu__list">
+                                <li>
+                                    <Link href="/" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
+                                        <Home className="mobile-nav__icon" size={18} /> <span>Home</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/about" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
+                                        <Info className="mobile-nav__icon" size={18} /> <span>About Us</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/explore" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
+                                        <List className="mobile-nav__icon" size={18} /> <span>Explore</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/contact" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
+                                        <Mail className="mobile-nav__icon" size={18} /> <span>Contact</span>
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div style={{ margin: '20px 0' }}>
+                            <LanguageSwitcher />
+                        </div>
+
+                        <Link href="/listing/add" className="mobile-nav__btn mobile-nav__btn--primary" onClick={() => setMobileNavOpen(false)} style={{ width: '100%' }}>
+                            <Plus size={18} /> Add Listing
                         </Link>
                     </div>
                 </div>
@@ -666,6 +671,17 @@ export default function Header() {
                     color: #e53e3e;
                     border-top: 1px solid #eee;
                     border-radius: 0;
+                }
+                /* Mobile Navigation Adjustments */
+                .mobile-nav__divider {
+                    height: 1px;
+                    background: #eee;
+                    margin: 15px 0;
+                }
+
+                @media (max-width: 576px) {
+                    .d-sm-flex.rigister-btn { display: none !important; }
+                    .d-sm-flex.cus-btn { display: none !important; }
                 }
             `}</style>
         </header>
