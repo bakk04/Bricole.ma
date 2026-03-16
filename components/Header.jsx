@@ -2,9 +2,9 @@
 // components/Header.jsx
 import Link from 'next/link'
 import React, { useState, useRef, useEffect } from 'react'
-import { 
-    ChevronDown, User, Plus, Home, Info, 
-    List, BookOpen, FolderOpen, X, Menu, 
+import {
+    ChevronDown, User, Plus, Home, Info,
+    List, BookOpen, FolderOpen, X, Menu,
     Mail, Phone, LogOut, Compass, Settings2, LayoutDashboard,ShieldCheck,Settings,
     CircleUserRound, BarChart3, SlidersHorizontal, PowerOff, ChevronRight, Fingerprint
 } from "lucide-react";
@@ -19,7 +19,7 @@ export default function Header() {
     const { state: authState, dispatch: authDispatch, checkAuth } = useAuth();
     const [openDropdown, setOpenDropdown] = useState(null)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
-    const [mobileSubmenu, setMobileSubmenu] = useState(null) 
+    const [mobileSubmenu, setMobileSubmenu] = useState(null)
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const navRef = useRef(null)
     const profileRef = useRef(null);
@@ -181,7 +181,7 @@ export default function Header() {
                                         <div className="orbit-ring" />
                                         <div className="orbit-avatar">
                                             {getAvatarUrl(user) ? (
-                                                <img src={getAvatarUrl(user)} alt={user.name} />
+                                                <img src={getAvatarUrl(user)} alt={user.name} referrerPolicy="no-referrer" />
                                             ) : (
                                                 <span className="orbit-initials">{getInitials(user.name)}</span>
                                             )}
@@ -196,7 +196,7 @@ export default function Header() {
                                             <div className="orbit-panel-top" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', padding: '0 4px' }}>
                                                 <div className="orbit-panel-avatar" style={{ width: '38px', height: '38px', flexShrink: 0 }}>
                                                     {getAvatarUrl(user) ? (
-                                                        <img src={getAvatarUrl(user)} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                        <img src={getAvatarUrl(user)} alt={user.name} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                                     ) : (
                                                         <span style={{ fontSize: '13px' }}>{getInitials(user.name)}</span>
                                                     )}
@@ -302,14 +302,14 @@ export default function Header() {
                             <X size={20} />
                         </button>
                     </div>
-                    
+
                     <div className="mobile-nav__body">
                         {isLoggedIn ? (
                             <div className="mobile-user-card-v5">
                                 <div className="m5-header">
                                     <div className="m5-avatar">
                                         {getAvatarUrl(user) ? (
-                                            <img src={getAvatarUrl(user)} alt={user.name} />
+                                            <img src={getAvatarUrl(user)} alt={user.name} referrerPolicy="no-referrer" />
                                         ) : (
                                             <span>{getInitials(user.name)}</span>
                                         )}

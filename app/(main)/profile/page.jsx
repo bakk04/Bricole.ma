@@ -60,7 +60,7 @@ function Avatar({ name, image, size = 88 }) {
     const [err, setErr] = useState(false);
     const st = { width: size, height: size, fontSize: size * 0.35 };
     if (image && !err)
-        return <img src={image} alt={name} className={styles.avatar} style={st} onError={() => setErr(true)} />;
+        return <img src={image} alt={name} className={styles.avatar} style={st} referrerPolicy="no-referrer" onError={() => setErr(true)} />;
     return <div className={styles.avatarFallback} style={st}>{initials(name)}</div>;
 }
 
@@ -138,7 +138,7 @@ function FavsPanel() {
                 <a key={f.id} href={`/artisans/${f.artisanId}`} className={styles.favCard}
                    style={{ animationDelay: `${i * 40}ms`, textDecoration: "none", color: "inherit" }}>
                     {f.image
-                        ? <img src={f.image} alt={f.name} style={{ width: "100%", height: 140, objectFit: "cover" }} />
+                        ? <img src={f.image} alt={f.name} style={{ width: "100%", height: 140, objectFit: "cover" }} referrerPolicy="no-referrer" />
                         : <div style={{ width: "100%", height: 140, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <ImageOff size={22} color="var(--ink-400)" />
                         </div>

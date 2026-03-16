@@ -473,7 +473,7 @@ export default function ArtisanDashboard() {
                     {/* User */}
                     <div className={styles.sidebarUser}>
                         {profile?.photoProfil
-                            ? <img src={profile.photoProfil} className={styles.sidebarAvatar} alt="" />
+                            ? <img src={profile.photoProfil} className={styles.sidebarAvatar} alt="" referrerPolicy="no-referrer" />
                             : <div className={styles.sidebarAvatarFallback}>{initials(profile?.nomComplet)}</div>
                         }
                         <div className={styles.sidebarUserInfo}>
@@ -614,7 +614,7 @@ export default function ArtisanDashboard() {
                                                 <div key={s._id} className={styles.serviceRow}>
                                                     <span className={styles.serviceRank}>#{i + 1}</span>
                                                     {s.images?.[0]
-                                                        ? <img src={s.images[0]} className={styles.serviceThumb} alt="" />
+                                                        ? <img src={s.images[0]} className={styles.serviceThumb} alt="" referrerPolicy="no-referrer" />
                                                         : <div className={styles.serviceThumb} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                                                             <Image size={14} color="var(--t4)" />
                                                         </div>
@@ -685,7 +685,7 @@ export default function ArtisanDashboard() {
 
                                                 <div className={styles.catCardImg}>
                                                     {p.images?.[0]
-                                                        ? <img src={p.images[0]} alt={p.titre} />
+                                                        ? <img src={p.images[0]} alt={p.titre} referrerPolicy="no-referrer" />
                                                         : <div className={styles.catCardImgEmpty}><Image size={24} /></div>
                                                     }
                                                     {p.images?.length > 1 && (
