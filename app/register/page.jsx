@@ -71,17 +71,17 @@ function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntr
             const line = TYPING_LINES[lineIdx.current];
             if (charIdx.current <= line.length) {
                 setTyping(line.slice(0, charIdx.current++));
-                t = setTimeout(tick, 38);
+                t = setTimeout(tick, 15); // Faster typing
             } else {
                 t = setTimeout(() => {
                     charIdx.current = 0;
                     lineIdx.current++;
                     if (lineIdx.current >= TYPING_LINES.length) setStep(2);
                     else tick();
-                }, 700);
+                }, 300); // Shorter pause between lines
             }
         };
-        t = setTimeout(tick, 600);
+        t = setTimeout(tick, 300); // Shorter initial delay
         return () => clearTimeout(t);
     }, [step]);
 
@@ -154,7 +154,7 @@ function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntr
                         <div className={styles.wPill}>Inscription réussie</div>
                         <h2 className={styles.wTitle}>Bienvenue, <em>{prenom}</em></h2>
                         <p className={styles.wDesc}>
-                            Votre compte professionnel a été créé. Vous faites maintenant partie de la plus grande communauté d'artisans au Maroc.
+                            Votre compte a été créé avec succès. <strong>Veuillez vérifier votre boîte de réception</strong> pour activer votre compte via l'e-mail que nous venons de vous envoyer.
                         </p>
                         <button className={styles.wBtn} onClick={() => setStep(3)}>
                             Continuer →

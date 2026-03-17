@@ -77,6 +77,18 @@ export async function POST(req) {
         );
     }
 
+    // Vérifier si le compte est activé
+    if (user.status === "PENDING" || !user.isVerified) {
+        return NextResponse.json(
+            { 
+              success: false, 
+              message: "Votre compte n'est pas encore activé. Veuillez vérifier votre boîte de réception pour confirmer votre adresse e-mail.",
+              isPending: true
+            },
+            { status: 403 }
+        );
+    }
+
     // Création du token JWT
     if (!process.env.JWT_SECRET) {
         console.error("JWT_SECRET is not defined in environment variables");

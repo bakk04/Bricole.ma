@@ -12,6 +12,8 @@ export interface IUser extends Document {
   ville?: string;
   role: "ADMIN" | "ARTISAN" | "CLIENT";
   status: "ACTIVE" | "SUSPENDED" | "PENDING";
+  verificationToken?: string;
+  isVerified: boolean;
   image?: string;
   profileImage?: string;
   artisanType?: string;
@@ -76,6 +78,14 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["ACTIVE", "SUSPENDED", "PENDING"],
       default: "PENDING",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: false,
     },
     artisanType: {
         type: String,
