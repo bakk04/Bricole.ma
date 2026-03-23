@@ -292,6 +292,22 @@ function CategoryDropdown({ selectedCategory, setSelectedCategory, dropdownOpen,
 export default function HeroSection() {
     const [selectedCategory, setSelectedCategory] = useState(null)
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [listings, setListings] = useState([])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await fetch("/api/products");
+                if (res.ok) {
+                    const data = await res.json();
+                    setListings(data.products || []);
+                }
+            } catch (err) {
+                console.error("Failed to load listings:", err);
+            }
+        };
+        fetchData();
+    }, []);
 
     return (
         <>
@@ -608,46 +624,80 @@ export default function HeroSection() {
         }
 
         @media (max-width: 768px) {
-          .hero-sec { padding: 5rem 0 3rem; zoom: 1; }
+          .hero-sec { 
+            padding: 10px 0 20px; 
+            zoom: 1; 
+            background: #f4f4f4; /* Fond gris clair type app */
+          }
+          .hero-sec::after, .hero-sec::before {
+            display: none !important; /* On enlève les décorations PC */
+          }
           .hero-img-col { display:none !important; }
-          .hero-wrap { justify-content: center; min-height: auto; width: 100%; padding: 0; }
-          .hero-center { padding: 0 15px !important; width: 100%; }
+          .hero-wrap { 
+            min-height: auto; 
+            width: 100%; 
+            padding: 0; 
+          }
+          .hero-center { 
+            padding: 0 16px !important; 
+            width: 100%; 
+          }
           
-          .ha-form { width: 100%; margin: 0 auto; }
-          .ha-form form { width: 100%; }
+          h1 {
+            display: none; /* Avito n'a pas de grand titre H1 sur mobile */
+          }
 
+          .ha-sub {
+            display: none;
+          }
+
+          /* Barre de recherche style Glovo/Amazon */
+          .ha-form { width: 100%; margin-top: 15px; }
           .sbar {
-            flex-direction: column !important;
-            border-radius: 24px !important; 
-            padding: 12px !important; 
-            height: auto !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            gap: 4px !important;
+            flex-direction: row !important;
+            border-radius: 999px !important; 
+            padding: 4px 12px !important; 
+            height: 54px !important;
+            background: #fff !important;
+            border: 1px solid #f0f0f0 !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+            gap: 10px !important;
+            align-items: center !important;
           }
-          .sfield, .cat-trigger {
-            width: 100% !important; 
-            padding: 12px 16px !important; 
-            height: 52px !important;
-            justify-content: flex-start !important;
-            border-radius: 12px !important;
-            background: rgba(20, 120, 241, 0.04) !important;
-            border: 1px solid rgba(20, 120, 241, 0.05) !important;
+          .sfield {
+            padding: 0 !important;
+            height: 100% !important;
+            background: transparent !important;
+            border: none !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
           }
-          .cat-wrap { width: 100% !important; flex: none !important; }
-          .sdiv { display: none !important; }
+          .sfield input {
+            font-size: 15px !important;
+            font-weight: 500 !important;
+            color: #333 !important;
+          }
+          .sfield:nth-child(3), .sdiv {
+            display: none !important; 
+          }
+          .cat-wrap {
+            display: none !important; 
+          }
           .sbtn { 
-            width: 100% !important; 
-            justify-content: center !important; 
-            margin-top: 8px !important; 
-            height: 52px !important; 
-            border-radius: 999px !important;
-            font-size: 1rem !important;
-            box-shadow: 0 10px 25px rgba(20, 120, 241, 0.3) !important;
+            width: 44px !important; 
+            height: 44px !important; 
+            padding: 0 !important;
+            border-radius: 50% !important;
+            justify-content: center !important;
+            background: #1478f1 !important;
+            box-shadow: 0 4px 10px rgba(20, 120, 241, 0.2) !important;
           }
-          .cat-grid { grid-template-columns: 1fr; }
+          .sbtn span { display: none; } 
+
           .ai-orb { display: none; }
-          .ha-sub { font-size: 0.95rem !important; margin-bottom: 2rem !important; }
+          .ai-badge { display: none; }
+          .ai-hint { display: none; }
         }
       `}</style>
 
@@ -741,7 +791,7 @@ export default function HeroSection() {
 
                 </div>
             </section>
-            <CategorieExplore />
+            <CategorieExplore listingsData={listings} />
             <CitiesExplore />
         </>
     )

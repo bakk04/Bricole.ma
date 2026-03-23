@@ -1,59 +1,84 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import ArtisanProfile from "@/models/ArtisanProfile";
+import Category from "@/models/Category";
 
 async function getAuthUser() {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const authCookie = cookieStore.get("auth_token");
-  const authHeader = headerStore.get("authorization");
-
-  const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.substring(7)
-      : null;
-
-  const token = authCookie?.value || tokenFromHeader;
-
-  if (!token) {
-    return null;
-  }
-
-  let decoded;
-  try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return null;
-  }
-
   await connectDB();
-  const user = await User.findById(decoded.userId).lean();
-  if (!user || user.role !== "ARTISAN") {
-    return null;
+
+  // 1. NextAuth
+  const session = await getServerSession(authOptions);
+  let userId = session?.user?.id;
+
+  // 2. JWT Custom
+  if (!userId) {
+    const cookieStore = await cookies();
+    const headerStore = await headers();
+    const authCookie = cookieStore.get("auth_token");
+    const authHeader = headerStore.get("authorization");
+
+    const tokenFromHeader =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : null;
+
+    const token = authCookie?.value || tokenFromHeader;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+      } catch (err) {
+        console.error("JWT verification failed:", err.message);
+      }
+    }
   }
 
-  return user;
+  if (!userId) return { error: "Non authentifié", status: 401 };
+
+  const user = await User.findById(userId).lean();
+  if (!user || user.role !== "ARTISAN") {
+    return { error: "Accès réservé aux artisans", status: 403 };
+  }
+
+  return { user };
 }
 
 export async function GET() {
   try {
-    const user = await getAuthUser();
-    if (!user) {
+    const ctx = await getAuthUser();
+    if (ctx.error) {
       return NextResponse.json(
-        { success: false, message: "Non authentifié ou rôle invalide" },
-        { status: 401 }
+        { success: false, message: ctx.error },
+        { status: ctx.status }
       );
     }
 
-    const profile = await ArtisanProfile.findOne({ userId: user._id }).lean();
+    const { user } = ctx;
+    let profile = await ArtisanProfile.findOne({ userId: user._id }).lean();
+    
+    // Auto-création si manquant
     if (!profile) {
-      return NextResponse.json(
-        { success: false, message: "Profil artisan introuvable" },
-        { status: 404 }
-      );
+      let defaultCategory = await Category.findOne();
+      if (!defaultCategory) {
+        defaultCategory = await Category.create({ nom: "Général", description: "Default" });
+      }
+
+      profile = await ArtisanProfile.create({
+        userId: user._id,
+        nomComplet: user.name || `${user.prenom || ""} ${user.nom || ""}`.trim() || user.email.split("@")[0],
+        telephone: user.telephone || "Non spécifié",
+        ville: user.ville || "Non spécifiée",
+        metierId: defaultCategory._id,
+        description: "Nouveau profil artisan",
+        photoProfil: user.image || user.profileImage || "https://res.cloudinary.com/dr2fjkaye/image/upload/v1/default-avatar.png",
+      });
+      profile = profile.toObject();
     }
 
     return NextResponse.json({
@@ -68,4 +93,3 @@ export async function GET() {
     );
   }
 }
-

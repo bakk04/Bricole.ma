@@ -6,7 +6,8 @@ import {
     ChevronDown, User, Plus, Home, Info,
     List, BookOpen, FolderOpen, X, Menu,
     Mail, Phone, LogOut, Compass, Settings2, LayoutDashboard,ShieldCheck,Settings,
-    CircleUserRound, BarChart3, SlidersHorizontal, PowerOff, ChevronRight, Fingerprint
+    CircleUserRound, BarChart3, SlidersHorizontal, PowerOff, ChevronRight, Fingerprint,
+    Heart, Sparkles
 } from "lucide-react";
 import LanguageSwitcher from './LanguageSwitcher';
 import { useSession, signOut } from "next-auth/react";
@@ -15,6 +16,7 @@ import './Header.module.css'
 import {FaUser} from "react-icons/fa";
 
 export default function Header() {
+    // ... (rest of the logic remains the same)
     const { data: session, status: sessionStatus } = useSession();
     const { state: authState, dispatch: authDispatch, checkAuth } = useAuth();
     const [openDropdown, setOpenDropdown] = useState(null)
@@ -99,9 +101,23 @@ export default function Header() {
         <header className="header container-fluid">
             <div className="main-menu">
                 <nav className="navigation" ref={navRef}>
+                    {/* Mobile Header Icons */}
+                    <div className="mobile-only mobile-header-left">
+                        <Link href="/ai-explore">
+                            <Sparkles size={24} color="#1478f1" />
+                        </Link>
+                    </div>
+
                     <Link href="/" className="header-logo-link">
                         <img src="/assets/media/images/logo.png" className="header-logo" alt="Bricole.ma" />
                     </Link>
+
+                    <div className="mobile-only mobile-header-right">
+                        <Link href="/favorites">
+                            <Heart size={24} color="#262626" />
+                        </Link>
+                    </div>
+
                     <div className="main-menu__nav">
                         <ul className="main-menu__list">
                             <li>
@@ -284,7 +300,7 @@ export default function Header() {
                             </Link>
                             <button
                                 type="button"
-                                className="d-xl-none d-flex main-menu__toggler mobile-nav__toggler"
+                                className="d-xl-none d-none d-sm-flex main-menu__toggler mobile-nav__toggler"
                                 onClick={() => setMobileNavOpen(true)}
                                 style={{ background: 'rgba(20, 120, 241, 0.05)', border: 'none', padding: '8px', borderRadius: '10px' }}
                             >
@@ -352,6 +368,64 @@ export default function Header() {
             </div>
 
             <style jsx>{`
+                @media (max-width: 768px) {
+                    .header {
+                        padding: 0 !important;
+                        height: 60px !important;
+                        position: sticky;
+                        top: 0;
+                        background: #fff !important;
+                        border-bottom: 1px solid #f0f0f0;
+                        z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .navigation {
+                        justify-content: center !important;
+                        width: 100%;
+                    }
+                    .header-logo-link {
+                        margin: 0 auto !important;
+                        display: flex;
+                        justify-content: center;
+                        width: 100%;
+                    }
+                    .header-logo {
+                        height: 32px !important;
+                        width: auto;
+                    }
+                    .main-menu__nav, .main-menu__right {
+                        display: none !important; /* On cache tout le reste sur mobile */
+                    }
+                }
+                
+                @media (max-width: 768px) {
+                    .mobile-only {
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                        width: 50px;
+                        height: 100%;
+                        z-index: 10;
+                    }
+                    .mobile-header-left {
+                        position: absolute;
+                        left: 5px;
+                    }
+                    .mobile-header-right {
+                        position: absolute;
+                        right: 5px;
+                    }
+                    .header-logo-link {
+                        position: relative;
+                        z-index: 5;
+                    }
+                }
+                @media (min-width: 769px) {
+                    .mobile-only { display: none !important; }
+                }
+
                 /* Loading State */
                 .halo-pulse {
                     width: 38px;

@@ -1,39 +1,60 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import ArtisanProfile from "@/models/ArtisanProfile";
 import ProductService from "@/models/ProductService";
 
 async function getAuthArtisan() {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const authCookie = cookieStore.get("auth_token");
-  const authHeader = headerStore.get("authorization");
+  await connectDB();
 
-  const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.substring(7)
-      : null;
+  // 1. NextAuth Session
+  const session = await getServerSession(authOptions);
+  let userId = session?.user?.id;
 
-  const token = authCookie?.value || tokenFromHeader;
+  // 2. JWT Custom (auth_token cookie ou header)
+  if (!userId) {
+    const cookieStore = await cookies();
+    const headerStore = await headers();
+    const authCookie = cookieStore.get("auth_token");
+    const authHeader = headerStore.get("authorization");
 
-  if (!token) return null;
+    const tokenFromHeader =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : null;
 
-  let decoded;
-  try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return null;
+    const token = authCookie?.value || tokenFromHeader;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+      } catch (err) {
+        console.error("JWT verification failed:", err.message);
+      }
+    }
   }
 
-  await connectDB();
-  const user = await User.findById(decoded.userId).lean();
-  if (!user || user.role !== "ARTISAN") return null;
+  if (!userId) return { error: "Non authentifié", status: 401 };
+
+  const user = await User.findById(userId).lean();
+  if (!user) return { error: "Utilisateur introuvable", status: 401 };
+  
+  if (user.role !== "ARTISAN") {
+    return { error: "Accès réservé aux artisans", status: 403 };
+  }
 
   const artisan = await ArtisanProfile.findOne({ userId: user._id }).lean();
-  if (!artisan) return null;
+  if (!artisan) {
+    return { 
+      error: "Profil artisan non complété. Veuillez remplir votre profil avant de gérer vos services.", 
+      status: 403 
+    };
+  }
 
   return { user, artisan };
 }
@@ -41,10 +62,10 @@ async function getAuthArtisan() {
 export async function PUT(request, { params }) {
   try {
     const ctx = await getAuthArtisan();
-    if (!ctx) {
+    if (ctx.error) {
       return NextResponse.json(
-        { success: false, message: "Non authentifié ou artisan introuvable" },
-        { status: 401 }
+        { success: false, message: ctx.error },
+        { status: ctx.status }
       );
     }
 
@@ -93,10 +114,10 @@ export async function PUT(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const ctx = await getAuthArtisan();
-    if (!ctx) {
+    if (ctx.error) {
       return NextResponse.json(
-        { success: false, message: "Non authentifié ou artisan introuvable" },
-        { status: 401 }
+        { success: false, message: ctx.error },
+        { status: ctx.status }
       );
     }
 
@@ -137,10 +158,10 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const ctx = await getAuthArtisan();
-    if (!ctx) {
+    if (ctx.error) {
       return NextResponse.json(
-        { success: false, message: "Non authentifié ou artisan introuvable" },
-        { status: 401 }
+        { success: false, message: ctx.error },
+        { status: ctx.status }
       );
     }
 
@@ -170,4 +191,3 @@ export async function DELETE(request, { params }) {
     );
   }
 }
-

@@ -7,7 +7,7 @@ import {
     LucideChevronLeft, LucideChevronRight
 } from 'lucide-react';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
     { id: 'plomberie',   label: 'Plomberie',      Icon: LucideDroplet,    bg: '#dbeafe', ink: '#1d4ed8' },
     { id: 'electricite', label: 'Électricité',    Icon: LucideZap,        bg: '#fef9c3', ink: '#a16207' },
     { id: 'peinture',    label: 'Peinture',       Icon: LucidePaintbrush, bg: '#fce7f3', ink: '#be185d' },
@@ -32,7 +32,6 @@ const CSS = `
     --card-bg: #ffffff;
 }
 
-/* Header & Typography Refined */
 .ce-container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
 
 .ce-header {
@@ -70,7 +69,6 @@ const CSS = `
 }
 .ce-link-all:hover { color: var(--primary); border-color: var(--primary); }
 
-/* Animation Typewriter Premium */
 .ce-typewriter-wrapper { 
     color: var(--primary); display: inline-block; min-width: 150px; 
     transition: opacity 0.3s ease;
@@ -83,7 +81,6 @@ const CSS = `
 }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* Navigation Categories & Hover Arrows */
 .ce-nav-wrapper { position: relative; margin-bottom: 40px; }
 .ce-scroll-fade {
     position: relative;
@@ -121,7 +118,6 @@ const CSS = `
 }
 .ce-chip-lbl { font-size: 14px; font-weight: 600; color: var(--text-main); transition: color 0.3s ease; }
 
-/* Arrows with Hover Effect */
 .ce-arr {
     position: absolute; top: 50%; 
     width: 40px; height: 40px; 
@@ -133,15 +129,12 @@ const CSS = `
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
     color: var(--text-muted);
-    opacity: 0; pointer-events: none; /* Caché par défaut */
+    opacity: 0; pointer-events: none;
 }
 
-/* Affichage au survol de la zone de navigation */
 .ce-nav-wrapper:hover .ce-arr { opacity: 1; pointer-events: auto; }
-
 .ce-arr.left { left: -15px; transform: translateY(-60%) translateX(10px); }
 .ce-nav-wrapper:hover .ce-arr.left { transform: translateY(-60%) translateX(0); }
-
 .ce-arr.right { right: -15px; transform: translateY(-60%) translateX(-10px); }
 .ce-nav-wrapper:hover .ce-arr.right { transform: translateY(-60%) translateX(0); }
 
@@ -152,7 +145,6 @@ const CSS = `
 }
 @media (max-width: 1024px) { .ce-arr { display: none !important; } }
 
-/* Grid & Cards (Restent quasi identiques, ombres adoucies) */
 .ce-grid {
     display: grid; gap: 20px;
     grid-template-columns: repeat(1, 1fr);
@@ -203,53 +195,70 @@ function DynamicTitle() {
     const [text, setText] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
     const [loop, setLoop] = useState(0);
-
     const words = useMemo(() => ["près de vous", "à Casablanca", "à Marrakech", "vérifiés"], []);
 
     useEffect(() => {
         let timer;
         const i = loop % words.length;
         const fullText = words[i];
-
         const handleType = () => {
-            setText(isDeleting
-                ? fullText.substring(0, text.length - 1)
-                : fullText.substring(0, text.length + 1)
-            );
-
+            setText(isDeleting ? fullText.substring(0, text.length - 1) : fullText.substring(0, text.length + 1));
             if (!isDeleting && text === fullText) {
-                // Pause avant d'effacer
                 timer = setTimeout(() => setIsDeleting(true), 2500);
             } else if (isDeleting && text === "") {
-                // Mot effacé, passer au suivant
                 setIsDeleting(false);
                 setLoop((prev) => prev + 1);
-                // Petite pause avant d'écrire le nouveau mot
-                timer = setTimeout(() => {}, 400);
             } else {
-                // Vitesse d'écriture (50ms) et d'effacement (30ms) pour faire "pro"
-                const typingSpeed = isDeleting ? 30 : 60;
-                timer = setTimeout(handleType, typingSpeed);
+                timer = setTimeout(handleType, isDeleting ? 30 : 60);
             }
         };
-
         timer = setTimeout(handleType, 60);
         return () => clearTimeout(timer);
     }, [text, isDeleting, loop, words]);
 
-    return (
-        <span className="ce-typewriter-wrapper">
-            {text}<span className="ce-cursor" />
-        </span>
-    );
+    return <span className="ce-typewriter-wrapper">{text}<span className="ce-cursor" /></span>;
 }
 
 export default function CategorieExplore({ listingsData = [] }) {
-    const [active, setActive] = useState(CATEGORIES[0].id);
+    const [active, setActive] = useState("");
     const scrollRef = useRef(null);
 
+    // Générer dynamiquement les catégories à partir des données
+    const categories = useMemo(() => {
+        const catsMap = new Map();
+        
+        // Ajouter les catégories par défaut
+        DEFAULT_CATEGORIES.forEach(c => catsMap.set(c.id, c));
+        
+        // Ajouter les catégories venant des données réelles
+        listingsData.forEach(item => {
+            if (item.categoryId && !catsMap.has(item.categoryId)) {
+                catsMap.set(item.categoryId, {
+                    id: item.categoryId,
+                    label: item.categoryName || 'Autre',
+                    Icon: LucideLayoutGrid,
+                    bg: '#f3f4f6',
+                    ink: '#374151'
+                });
+            }
+        });
+        
+        return Array.from(catsMap.values());
+    }, [listingsData]);
+
+    // Initialiser la catégorie active au premier chargement sur une catégorie qui a des services
+    useEffect(() => {
+        if (!active && categories.length > 0) {
+            // Chercher la première catégorie qui a au moins un service
+            const firstWithData = categories.find(cat => 
+                listingsData.some(item => item.categoryId === cat.id)
+            );
+            setActive(firstWithData ? firstWithData.id : categories[0].id);
+        }
+    }, [categories, active, listingsData]);
+
     const filtered = listingsData.filter(i => i.categoryId === active);
-    const activeCat = CATEGORIES.find(c => c.id === active);
+    const activeCat = categories.find(c => c.id === active);
 
     const scroll = (direction) => {
         const amount = direction === 'left' ? -350 : 350;
@@ -259,45 +268,30 @@ export default function CategorieExplore({ listingsData = [] }) {
     return (
         <section className="ce-section">
             <style dangerouslySetInnerHTML={{ __html: CSS }} />
-
             <div className="ce-container">
-                {/* Header affiné */}
                 <header className="ce-header">
                     <div>
                         <div className="ce-tag"><span />Nos services</div>
-                        <h2 className="ce-title">
-                            Trouvez un expert <DynamicTitle />
-                        </h2>
+                        <h2 className="ce-title">Trouvez un expert <DynamicTitle /></h2>
                         <p className="ce-desc">Des artisans de confiance, sélectionnés au Maroc.</p>
                     </div>
-                    <Link href="/categories" className="ce-link-all">
-                        Explorer tout <LucideArrowUpRight size={16} />
-                    </Link>
+                    <Link href="/categories" className="ce-link-all">Explorer tout <LucideArrowUpRight size={16} /></Link>
                 </header>
 
-                {/* Navigation avec flèches au survol */}
                 <div className="ce-nav-wrapper">
-                    <button className="ce-arr left" onClick={() => scroll('left')} aria-label="Défiler à gauche">
-                        <LucideChevronLeft size={20} strokeWidth={2.5} />
-                    </button>
-
+                    <button className="ce-arr left" onClick={() => scroll('left')}><LucideChevronLeft size={20} /></button>
                     <div className="ce-scroll-fade">
-                        <div className="ce-scroll" ref={scrollRef} role="tablist">
-                            {CATEGORIES.map(cat => {
+                        <div className="ce-scroll" ref={scrollRef}>
+                            {categories.map(cat => {
                                 const isActive = cat.id === active;
                                 return (
                                     <button
                                         key={cat.id}
-                                        role="tab"
-                                        aria-selected={isActive}
                                         className={`ce-chip ${isActive ? 'active' : ''}`}
                                         onClick={() => setActive(cat.id)}
                                     >
-                                        <span
-                                            className="ce-chip-ico"
-                                            style={{ background: isActive ? 'rgba(255,255,255,0.15)' : cat.bg }}
-                                        >
-                                            <cat.Icon size={16} color={isActive ? '#ffffff' : cat.ink} strokeWidth={2.5} />
+                                        <span className="ce-chip-ico" style={{ background: isActive ? 'rgba(255,255,255,0.15)' : cat.bg }}>
+                                            <cat.Icon size={16} color={isActive ? '#ffffff' : cat.ink} />
                                         </span>
                                         <span className="ce-chip-lbl">{cat.label}</span>
                                     </button>
@@ -305,28 +299,18 @@ export default function CategorieExplore({ listingsData = [] }) {
                             })}
                         </div>
                     </div>
-
-                    <button className="ce-arr right" onClick={() => scroll('right')} aria-label="Défiler à droite">
-                        <LucideChevronRight size={20} strokeWidth={2.5} />
-                    </button>
+                    <button className="ce-arr right" onClick={() => scroll('right')}><LucideChevronRight size={20} /></button>
                 </div>
 
                 <div className="ce-grid">
                     {filtered.length > 0 ? filtered.map((item) => (
                         <Link href={`/offres/${item.id}`} key={item.id} className="ce-card">
                             <div className="ce-card-img-wrapper">
-                                <img
-                                    className="ce-card-img"
-                                    src={item.imageUrl || '/assets/media/listing-img/popularity-img-1.webp'}
-                                    alt={`Image de ${item.title}`}
-                                    loading="lazy"
-                                />
+                                <img className="ce-card-img" src={item.imageUrl} alt={item.title} loading="lazy" />
                             </div>
                             <div className="ce-card-body">
                                 <h3 className="ce-card-title">{item.title}</h3>
-                                <div className="ce-card-loc">
-                                    <LucideMapPin size={12} /> {item.city}
-                                </div>
+                                <div className="ce-card-loc"><LucideMapPin size={12} /> {item.city}</div>
                                 <div className="ce-card-footer">
                                     <span className="ce-card-price">{item.price} DH</span>
                                     <span className="ce-card-action">Voir l'offre</span>
@@ -335,9 +319,7 @@ export default function CategorieExplore({ listingsData = [] }) {
                         </Link>
                     )) : (
                         <div className="ce-empty">
-                            <div className="ce-empty-icon">
-                                <LucideInbox size={24} color="var(--text-muted)" strokeWidth={2} />
-                            </div>
+                            <div className="ce-empty-icon"><LucideInbox size={24} color="var(--text-muted)" /></div>
                             <h4>Aucun résultat</h4>
                             <p>Les artisans pour la catégorie <b>{activeCat?.label}</b> arrivent très prochainement.</p>
                         </div>

@@ -1,84 +1,146 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import ArtisanProfile from "@/models/ArtisanProfile";
 import ProductService from "@/models/ProductService";
 import Favorite from "@/models/Favorite";
 import Interaction from "@/models/Interaction";
+import Category from "@/models/Category"; // Import explicite en haut
 
 async function getAuthArtisan() {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const authCookie = cookieStore.get("auth_token");
-  const authHeader = headerStore.get("authorization");
-
-  const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.substring(7)
-      : null;
-
-  const token = authCookie?.value || tokenFromHeader;
-
-  if (!token) return null;
-
-  let decoded;
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return null;
+    await connectDB();
+    
+    // 1. Essayer NextAuth Session
+    const session = await getServerSession(authOptions);
+    let userId = session?.user?.id;
+    
+    // 2. Essayer JWT Custom (auth_token cookie ou header)
+    if (!userId) {
+      const cookieStore = await cookies();
+      const headerStore = await headers();
+      const authCookie = cookieStore.get("auth_token");
+      const authHeader = headerStore.get("authorization");
+
+      const tokenFromHeader =
+        authHeader && authHeader.startsWith("Bearer ")
+          ? authHeader.substring(7)
+          : null;
+
+      const token = authCookie?.value || tokenFromHeader;
+
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          userId = decoded.userId;
+        } catch (err) {
+          console.error("JWT verification failed:", err.message);
+        }
+      }
+    }
+
+    if (!userId) return { error: "Non authentifié", status: 401 };
+
+    const user = await User.findById(userId).lean();
+    if (!user) return { error: "Utilisateur introuvable", status: 401 };
+    
+    if (user.role !== "ARTISAN") {
+      return { error: "Accès réservé aux artisans", status: 403 };
+    }
+
+    let artisan = await ArtisanProfile.findOne({ userId: user._id }).lean();
+    
+    if (!artisan) {
+      console.log(`Auto-creating ArtisanProfile for user ${user._id}`);
+      
+      let defaultCategory = await Category.findOne();
+      
+      if (!defaultCategory) {
+          defaultCategory = await Category.create({ 
+              nom: "Général", 
+              description: "Catégorie par défaut" 
+          });
+      }
+
+      const newArtisan = await ArtisanProfile.create({
+        userId: user._id,
+        nomComplet: user.name || `${user.prenom || ""} ${user.nom || ""}`.trim() || user.email.split("@")[0],
+        telephone: user.telephone || "Non spécifié",
+        ville: user.ville || "Non spécifiée",
+        metierId: defaultCategory._id,
+        description: "Nouveau profil artisan",
+        photoProfil: user.image || user.profileImage || "https://res.cloudinary.com/dr2fjkaye/image/upload/v1/default-avatar.png",
+      });
+      
+      artisan = newArtisan.toObject();
+    }
+
+    return { user, artisan };
+  } catch (err) {
+    console.error("Erreur getAuthArtisan:", err);
+    return { error: "Erreur d'authentification interne", status: 500 };
   }
-
-  await connectDB();
-  const user = await User.findById(decoded.userId).lean();
-  if (!user || user.role !== "ARTISAN") return null;
-
-  const artisan = await ArtisanProfile.findOne({ userId: user._id }).lean();
-  if (!artisan) return null;
-
-  return { user, artisan };
 }
 
 export async function GET() {
   try {
     const ctx = await getAuthArtisan();
-    if (!ctx) {
+    if (ctx.error) {
       return NextResponse.json(
-        { success: false, message: "Non authentifié ou artisan introuvable" },
-        { status: 401 }
+        { success: false, message: ctx.error },
+        { status: ctx.status }
       );
     }
 
     const { artisan } = ctx;
+    await connectDB();
 
     const products = await ProductService.find({ artisanId: artisan._id })
       .populate("categoryId")
+      .sort({ createdAt: -1 })
       .lean();
 
-    const [favCounts, viewCounts] = await Promise.all([
-      Promise.all(
-        products.map((p) =>
-          Favorite.countDocuments({ productId: p._id })
-        )
-      ),
-      Promise.all(
-        products.map((p) =>
-          Interaction.countDocuments({
-            targetId: p._id,
-            targetType: "PRODUCT",
-            type: "VIEW",
-          })
-        )
-      ),
-    ]);
+    if (!products || products.length === 0) {
+      return NextResponse.json({
+        success: true,
+        products: [],
+      });
+    }
 
-    const enriched = products.map((p, idx) => ({
-      ...p,
-      favCount: favCounts[idx] || 0,
-      viewCount: viewCounts[idx] || 0,
-      statut: p.statut || "ACTIVE",
-    }));
+    const enriched = await Promise.all(
+      products.map(async (p) => {
+        try {
+          const [favCount, viewCount] = await Promise.all([
+            Favorite.countDocuments({ productId: p._id }).catch(() => 0),
+            Interaction.countDocuments({
+              targetId: p._id,
+              targetType: "PRODUCT",
+              type: "VIEW",
+            }).catch(() => 0),
+          ]);
+
+          return {
+            ...p,
+            id: p._id.toString(), // Assurer que l'id est une string
+            favCount: favCount || 0,
+            viewCount: viewCount || 0,
+            statut: p.statut || "ACTIVE",
+          };
+        } catch (err) {
+          return {
+            ...p,
+            id: p._id.toString(),
+            favCount: 0,
+            viewCount: 0,
+            statut: p.statut || "ACTIVE",
+          };
+        }
+      })
+    );
 
     return NextResponse.json({
       success: true,
@@ -96,17 +158,28 @@ export async function GET() {
 export async function POST(request) {
   try {
     const ctx = await getAuthArtisan();
-    if (!ctx) {
+    if (ctx.error) {
       return NextResponse.json(
-        { success: false, message: "Non authentifié ou artisan introuvable" },
-        { status: 401 }
+        { success: false, message: ctx.error },
+        { status: ctx.status }
       );
     }
 
     const { artisan } = ctx;
     const body = await request.json();
 
-    const { titre, description, prix, categoryId, images = [] } = body;
+    let { titre, description, prix, categoryId, categoryName, images = [] } = body;
+
+    if (!categoryId && categoryName) {
+      let cat = await Category.findOne({ nom: { $regex: new RegExp(`^${categoryName}$`, "i") } });
+      if (!cat) {
+        cat = await Category.create({ 
+          nom: categoryName, 
+          description: `Services de ${categoryName}` 
+        });
+      }
+      categoryId = cat._id;
+    }
 
     if (!titre || !prix || !categoryId) {
       return NextResponse.json(
@@ -121,7 +194,7 @@ export async function POST(request) {
       artisanId: artisan._id,
       categoryId,
       titre,
-      description: description || "",
+      description: description || titre,
       prix,
       images,
     });
@@ -135,6 +208,7 @@ export async function POST(request) {
         success: true,
         product: {
           ...product,
+          id: product._id.toString(),
           favCount: 0,
           viewCount: 0,
           statut: product.statut || "ACTIVE",
@@ -150,4 +224,3 @@ export async function POST(request) {
     );
   }
 }
-

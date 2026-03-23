@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/nodemailer";
 import crypto from "crypto";
 
 export async function POST(req) {
@@ -73,39 +73,12 @@ export async function POST(req) {
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const verificationUrl = `${baseUrl}/verify?token=${verificationToken}`;
 
-    const isProduction = process.env.NODE_ENV === "production";
-    const devRecipientOverride = process.env.RESEND_DEV_EMAIL;
-    const fromAddress =
-      process.env.RESEND_FROM_EMAIL || "Bricole.ma <onboarding@resend.dev>";
-
-    // En local / dev, on peut rediriger tous les emails vers une adresse de test
-    // (par exemple votre propre adresse) pour respecter les limitations de Resend.
-    const recipientEmail =
-      !isProduction && devRecipientOverride
-        ? devRecipientOverride
-        : normalizedEmail;
-
-    const isTestModeRecipient = recipientEmail !== normalizedEmail;
-
-    console.log(
-      "[Register] Préparation de l'email de vérification:",
-      JSON.stringify(
-        {
-          to: recipientEmail,
-          forUser: normalizedEmail,
-          env: isProduction ? "production" : "development",
-          override: isTestModeRecipient,
-        },
-        null,
-        2
-      )
-    );
-
+    console.log(`[Register] Tentative d'envoi d'email via Nodemailer à: ${normalizedEmail}`);
+    
     try {
-      const { data: emailData, error: emailError } = await resend.emails.send({
-        from: fromAddress,
-        to: recipientEmail,
-        subject: "Activez votre compte Bricole.ma",
+      await sendEmail({
+        to: normalizedEmail,
+        subject: 'Activez votre compte Bricole.ma',
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
             <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9;">
@@ -147,34 +120,9 @@ export async function POST(req) {
           </div>
         `
       });
-
-      if (emailError) {
-        // Erreur côté API Resend
-        if (emailError.statusCode === 403) {
-          // Cas typique : environnement de test sans domaine vérifié
-          console.warn(
-            "[Register] Limitation Resend (403 - mode test / domaine non vérifié).",
-            {
-              to: recipientEmail,
-              forUser: normalizedEmail,
-            }
-          );
-        } else {
-          console.error("[Register] Erreur API Resend:", emailError);
-        }
-      } else if (emailData) {
-        console.log(
-          "[Register] Email de vérification envoyé avec succès:",
-          {
-            id: emailData.id,
-            to: recipientEmail,
-            forUser: normalizedEmail,
-            testOverride: isTestModeRecipient,
-          }
-        );
-      }
+      console.log("[Register] Email envoyé avec succès via Nodemailer");
     } catch (err) {
-      console.error("[Register] Exception lors de l'envoi de l'email:", err);
+      console.error("[Register] Erreur Nodemailer:", err);
     }
 
     return NextResponse.json(

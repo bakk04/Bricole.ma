@@ -1,3 +1,4 @@
+'use client'
 // components/Footer.jsx
 import Link from 'next/link'
 import React from 'react'
@@ -5,14 +6,13 @@ import { FaPhone, FaLocationDot, FaEnvelope, FaArrowRight, FaFacebookF, FaXTwitt
 
 export default function Footer() {
     return (
-        <footer>
+        <footer className="main-footer">
             <div className="container-fluid">
                 <div className="row row-gap-5 mb-48">
                     <div className="col-lg-4 col-md-6">
                         <img src="/assets/media/images/logo.png" className="footer-logo mb-24" alt="Bricole.ma"/>
                         <p className="mb-32">
-                            At Revealé, we believe in nurturing your skin <br/>
-                            with nature&apos;s best ingredients.
+                            Bricole.ma, your destination for authentic Moroccan craftsmanship.
                         </p>
                         <form className="newslatter">
                             <input type="email" id="newemail" placeholder="Your Email Address..." required/>
@@ -63,8 +63,8 @@ export default function Footer() {
                                 </div>
                                 <div>
                                     <h6 className="mb-6">Email</h6>
-                                    <Link href="mailto:info@beautysalon.com" className="text-16 hover-content">
-                                        info@beautysalon.com
+                                    <Link href="mailto:info@bricole.ma" className="text-16 hover-content">
+                                        info@bricole.ma
                                     </Link>
                                 </div>
                             </div>
@@ -92,9 +92,17 @@ export default function Footer() {
                 <div className="hr-line bg-light mb-48"></div>
 
                 <div className="text-center">
-                    <p className="light-black">© 2025. All rights reserved by UI Paradox</p>
+                    <p className="light-black">© 2026. All rights reserved by Bricole.ma</p>
                 </div>
             </div>
+
+            <style jsx>{`
+                @media (max-width: 768px) {
+                    .main-footer {
+                        display: none !important;
+                    }
+                }
+            `}</style>
         </footer>
     )
 }
