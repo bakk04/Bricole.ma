@@ -545,349 +545,349 @@ export default function ArtisanDashboard() {
                             </div>
                         </div>
                     </div>
-</aside>
+                </aside>
 
-    {/* ══ MAIN ══ */}
-    <main className={styles.main}>
+                {/* ══ MAIN ══ */}
+                <main className={styles.main}>
 
-        {/* Topbar — Mobile-optimized header */}
-        <div className={styles.topbar}>
-            <div>
-                <div className={styles.topbarTitle}>{PAGE[navKey].title}</div>
-                <div className={styles.topbarSub}>{PAGE[navKey].sub}</div>
-            </div>
-            <div className={styles.topbarRight}>
-                {navKey === "catalogue" && (
-                    <button className={`${styles.topbarBtn} ${styles.topbarBtnPrimary}`}
-                            onClick={() => setModalProduct(null)}>
-                        <Plus size={15} />
-                        <span style={{ display: 'none' }}>Nouveau service</span>
-                    </button>
-                )}
-                <button className={`${styles.topbarBtn} ${styles.topbarBtnGhost}`}
-                        onClick={() => router.push("/profile")}
-                        title="Paramètres">
-                    <Settings size={15} />
-                </button>
-            </div>
-        </div>
-
-        {/* ── Content ── */}
-        <div className={styles.content} key={navKey}>
-
-            {/* ════ OVERVIEW ════ */}
-            {navKey === "overview" && (
-                <>
-                    {/* Hero banner */}
-                    <div className={styles.heroBanner}>
-                        <div className={styles.heroBannerInner}>
-                            <div className={styles.heroBannerLeft}>
-                                <h2>Bonjour, {profile?.nomComplet?.split(" ")[0] ?? "Artisan"} 👋</h2>
-                                <p>Voici un résumé de votre activité sur les 7 derniers jours.</p>
-                                {profile?.estVerifie && (
-                                    <div className={styles.heroBannerBadge}>
-                                        <Shield size={10} /> Profil vérifié
-                                    </div>
-                                )}
-                            </div>
-                            <div className={styles.heroBannerStats}>
-                                {[
-                                    { val: fmtNum(stats?.weekViews ?? 0),   lbl: "Visites / semaine" },
-                                    { val: fmtNum(stats?.totalFavs ?? 0),   lbl: "Total favoris" },
-                                    { val: profile?.noteMoyenne?.toFixed(1) ?? "—", lbl: "Note moy." },
-                                ].map(s => (
-                                    <div key={s.lbl} className={styles.heroBannerStat}>
-                                        <span className={styles.heroBannerStatVal}>{s.val}</span>
-                                        <span className={styles.heroBannerStatLbl}>{s.lbl}</span>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* Topbar — Mobile-optimized header */}
+                    <div className={styles.topbar}>
+                        <div>
+                            <div className={styles.topbarTitle}>{PAGE[navKey].title}</div>
+                            <div className={styles.topbarSub}>{PAGE[navKey].sub}</div>
                         </div>
-                    </div>
-
-                    {/* KPIs */}
-                    <div className={styles.kpiGrid}>
-                        {kpis.map((k, i) => (
-                            <div key={i} style={{ animationDelay: `${i * 60}ms` }}>
-                                <KpiCard {...k} />
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Dashboard 2-col grid */}
-                    <div className={styles.dashGrid}>
-                        {/* Visits chart */}
-                        <div className={styles.panel}>
-                            <div className={styles.panelHead}>
-                                <div>
-                                    <div className={styles.panelTitle}>Visites du profil</div>
-                                    <div className={styles.panelSub}>7 derniers jours</div>
-                                </div>
-                                <button className={styles.panelAction} onClick={() => setNavKey("stats")}>
-                                    Voir tout <ChevronRight size={12} />
+                        <div className={styles.topbarRight}>
+                            {navKey === "catalogue" && (
+                                <button className={`${styles.topbarBtn} ${styles.topbarBtnPrimary}`}
+                                        onClick={() => setModalProduct(null)}>
+                                    <Plus size={15} />
+                                    <span style={{ display: 'none' }}>Nouveau service</span>
                                 </button>
-                            </div>
-                            <VisitsChart data={visitData} />
+                            )}
+                            <button className={`${styles.topbarBtn} ${styles.topbarBtnGhost}`}
+                                    onClick={() => router.push("/profile")}
+                                    title="Paramètres">
+                                <Settings size={15} />
+                            </button>
                         </div>
+                    </div>
 
-                        {/* Recent activity */}
-                        <div className={styles.panel}>
-                            <div className={styles.panelHead}>
-                                <div>
-                                    <div className={styles.panelTitle}>Activité récente</div>
-                                    <div className={styles.panelSub}>En temps réel</div>
+                    {/* ── Content ── */}
+                    <div className={styles.content} key={navKey}>
+
+                        {/* ════ OVERVIEW ════ */}
+                        {navKey === "overview" && (
+                            <>
+                                {/* Hero banner */}
+                                <div className={styles.heroBanner}>
+                                    <div className={styles.heroBannerInner}>
+                                        <div className={styles.heroBannerLeft}>
+                                            <h2>Bonjour, {profile?.nomComplet?.split(" ")[0] ?? "Artisan"} 👋</h2>
+                                            <p>Voici un résumé de votre activité sur les 7 derniers jours.</p>
+                                            {profile?.estVerifie && (
+                                                <div className={styles.heroBannerBadge}>
+                                                    <Shield size={10} /> Profil vérifié
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={styles.heroBannerStats}>
+                                            {[
+                                                { val: fmtNum(stats?.weekViews ?? 0),   lbl: "Visites / semaine" },
+                                                { val: fmtNum(stats?.totalFavs ?? 0),   lbl: "Total favoris" },
+                                                { val: profile?.noteMoyenne?.toFixed(1) ?? "—", lbl: "Note moy." },
+                                            ].map(s => (
+                                                <div key={s.lbl} className={styles.heroBannerStat}>
+                                                    <span className={styles.heroBannerStatVal}>{s.val}</span>
+                                                    <span className={styles.heroBannerStatLbl}>{s.lbl}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className={styles.panelBody}>
-                                <div className={styles.actList}>
-                                    {recentActivity.map((a, i) => (
-                                        <div key={i} className={styles.actItem}>
-                                            <div className={styles.actIco} style={{ background: a.bg, color: a.color }}>
-                                                <a.Icon size={14} />
-                                            </div>
-                                            <div className={styles.actBody}>
-                                                <div className={styles.actTitle}>{a.title}</div>
-                                                <div className={styles.actDesc}>{a.desc}</div>
-                                            </div>
-                                            <span className={styles.actTime}>{a.time}</span>
+
+                                {/* KPIs */}
+                                <div className={styles.kpiGrid}>
+                                    {kpis.map((k, i) => (
+                                        <div key={i} style={{ animationDelay: `${i * 60}ms` }}>
+                                            <KpiCard {...k} />
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Top services */}
-                    <div className={styles.panel}>
-                        <div className={styles.panelHead}>
-                            <div>
-                                <div className={styles.panelTitle}>Services les plus favorisés</div>
-                                <div className={styles.panelSub}>Classement par nombre de favoris</div>
-                            </div>
-                            <button className={styles.panelAction} onClick={() => setNavKey("catalogue")}>
-                                Gérer <ChevronRight size={12} />
-                            </button>
-                        </div>
-                        <div className={styles.panelBody}>
-                            {topServices.length === 0
-                                ? <div className={styles.empty} style={{ padding: "24px" }}>
-                                    <div className={styles.emptyTitle}>Aucun service</div>
-                                    <div className={styles.emptyBody}>Ajoutez des services à votre catalogue pour apparaître ici.</div>
-                                </div>
-                                : topServices.map((s, i) => (
-                                    <div key={s._id} className={styles.serviceRow}>
-                                        <span className={styles.serviceRank}>#{i + 1}</span>
-                                        {s.images?.[0]
-                                            ? <img src={s.images[0]} className={styles.serviceThumb} alt="" referrerPolicy="no-referrer" />
-                                            : <div className={styles.serviceThumb} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                <Image size={14} color="var(--t4)" />
-                                            </div>
-                                        }
-                                        <div className={styles.serviceInfo}>
-                                            <div className={styles.serviceName}>{s.titre}</div>
-                                            <div className={styles.serviceCat}>{s.categoryId?.nom ?? "—"}</div>
-                                        </div>
-                                        <div className={styles.serviceStats}>
-                                            <div className={styles.serviceFavs}><Heart size={10} style={{ display: "inline", marginRight: 3 }} />{s.favCount ?? 0}</div>
-                                            <div className={styles.serviceViews}>{s.viewCount ?? 0} vues</div>
-                                        </div>
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    </div>
-                </>
-            )}
-
-            {/* ════ CATALOGUE ════ */}
-            {navKey === "catalogue" && (
-                <>
-                    <div className={styles.catHeader}>
-                        <div className={styles.catFilters}>
-                            {[
-                                { key: "all",    label: `Tous (${products.length})` },
-                                { key: "active", label: `Actifs (${products.filter(p => p.statut !== "PAUSED").length})` },
-                                { key: "paused", label: `En pause (${products.filter(p => p.statut === "PAUSED").length})` },
-                            ].map(f => (
-                                <button key={f.key}
-                                        className={`${styles.filterPill} ${filter === f.key ? styles.active : ""}`}
-                                        onClick={() => setFilter(f.key)}>
-                                    {f.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className={styles.searchWrap}>
-                            <Search size={13} className={styles.searchIcon} />
-                            <input className={styles.searchInput}
-                                   value={search} onChange={e => setSearch(e.target.value)}
-                                   placeholder="Rechercher…" />
-                        </div>
-                    </div>
-
-                    {visibleProducts.length === 0 && !search
-                        ? <div className={styles.empty}>
-                            <div className={styles.emptyIconWrap}><Package size={24} /></div>
-                            <div className={styles.emptyTitle}>Catalogue vide</div>
-                            <div className={styles.emptyBody}>Publiez votre premier service pour apparaître dans les recherches.</div>
-                            <button className={`${styles.btn} ${styles.btnPrimary}`} style={{ marginTop: 12 }}
-                                    onClick={() => setModalProduct(null)}>
-                                <Plus size={14} /> Ajouter un service
-                            </button>
-                        </div>
-                        : <div className={styles.catGrid}>
-                            {/* Add card */}
-                            <div className={styles.catCardAdd} onClick={() => setModalProduct(null)}>
-                                <div className={styles.catCardAddIcon}><Plus size={20} /></div>
-                                <div className={styles.catCardAddLabel}>Nouveau service</div>
-                                <div className={styles.catCardAddSub}>Ajouter des photos & un prix</div>
-                            </div>
-
-                            {visibleProducts.map((p, i) => (
-                                <div key={p._id}
-                                     className={`${styles.catCard} ${p.statut === "PAUSED" ? styles.paused : ""}`}
-                                     style={{ animationDelay: `${i * 40}ms` }}>
-
-                                    <div className={styles.catCardImg}>
-                                        {p.images?.[0]
-                                            ? <img src={p.images[0]} alt={p.titre} referrerPolicy="no-referrer" />
-                                            : <div className={styles.catCardImgEmpty}><Image size={24} /></div>
-                                        }
-                                        {p.images?.length > 1 && (
-                                            <div className={styles.imgCountBadge}><Image size={9} />{p.images.length}</div>
-                                        )}
-                                        {(p.favCount ?? 0) > 0 && (
-                                            <div className={styles.favsBadge}><Heart size={9} />{p.favCount}</div>
-                                        )}
-                                        <div className={`${styles.statusBadge} ${p.statut === "PAUSED" ? styles.statusPaused : styles.statusActive}`}>
-                                            {p.statut === "PAUSED" ? "Pause" : "Actif"}
-                                        </div>
-
-                                        {/* Action overlay */}
-                                        <div className={styles.catCardActions}>
-                                            <button className={`${styles.catActionBtn} ${styles.catActionEdit}`}
-                                                    onClick={e => { e.stopPropagation(); setModalProduct(p); }}
-                                                    title="Modifier">
-                                                <Edit2 size={12} />
-                                            </button>
-                                            <button
-                                                className={`${styles.catActionBtn} ${p.statut === "PAUSED" ? styles.catActionPlay : styles.catActionPause}`}
-                                                onClick={e => { e.stopPropagation(); handleTogglePause(p); }}
-                                                title={p.statut === "PAUSED" ? "Réactiver" : "Mettre en pause"}>
-                                                {p.statut === "PAUSED" ? <Play size={12} /> : <Pause size={12} />}
-                                            </button>
-                                            <button className={`${styles.catActionBtn} ${styles.catActionDelete}`}
-                                                    onClick={e => { e.stopPropagation(); setDeleteTarget(p); }}
-                                                    title="Supprimer">
-                                                <Trash2 size={12} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className={styles.catCardBody}>
-                                        <div className={styles.catCardTitle}>{p.titre}</div>
-                                        <div className={styles.catCardCat}>{p.categoryId?.nom ?? "—"}</div>
-                                        <div className={styles.catCardFooter}>
+                                {/* Dashboard 2-col grid */}
+                                <div className={styles.dashGrid}>
+                                    {/* Visits chart */}
+                                    <div className={styles.panel}>
+                                        <div className={styles.panelHead}>
                                             <div>
-                                                <div className={styles.catCardPrice}>{fmtPrice(p.prix)}</div>
-                                                <div className={styles.catCardPriceSub}>Prix de départ</div>
+                                                <div className={styles.panelTitle}>Visites du profil</div>
+                                                <div className={styles.panelSub}>7 derniers jours</div>
                                             </div>
-                                            <div className={styles.catCardMeta}>
-                                                <div className={styles.catCardMetaItem}>
-                                                    <Eye size={10} />{p.viewCount ?? 0}
-                                                </div>
-                                                <div className={styles.catCardMetaItem}>
-                                                    <Heart size={10} style={{ color: "var(--rose)" }} />{p.favCount ?? 0}
-                                                </div>
+                                            <button className={styles.panelAction} onClick={() => setNavKey("stats")}>
+                                                Voir tout <ChevronRight size={12} />
+                                            </button>
+                                        </div>
+                                        <VisitsChart data={visitData} />
+                                    </div>
+
+                                    {/* Recent activity */}
+                                    <div className={styles.panel}>
+                                        <div className={styles.panelHead}>
+                                            <div>
+                                                <div className={styles.panelTitle}>Activité récente</div>
+                                                <div className={styles.panelSub}>En temps réel</div>
+                                            </div>
+                                        </div>
+                                        <div className={styles.panelBody}>
+                                            <div className={styles.actList}>
+                                                {recentActivity.map((a, i) => (
+                                                    <div key={i} className={styles.actItem}>
+                                                        <div className={styles.actIco} style={{ background: a.bg, color: a.color }}>
+                                                            <a.Icon size={14} />
+                                                        </div>
+                                                        <div className={styles.actBody}>
+                                                            <div className={styles.actTitle}>{a.title}</div>
+                                                            <div className={styles.actDesc}>{a.desc}</div>
+                                                        </div>
+                                                        <span className={styles.actTime}>{a.time}</span>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    }
-                </>
-            )}
 
-            {/* ════ STATS ════ */}
-            {navKey === "stats" && (
-                <>
-                    <div className={styles.kpiGrid}>
-                        {kpis.map((k, i) => <div key={i} style={{ animationDelay: `${i * 60}ms` }}><KpiCard {...k} /></div>)}
-                    </div>
-                    <div className={styles.panel} style={{ marginTop: 20 }}>
-                        <div className={styles.panelHead}>
-                            <div>
-                                <div className={styles.panelTitle}>Visites hebdomadaires</div>
-                                <div className={styles.panelSub}>Répartition par jour</div>
-                            </div>
-                        </div>
-                        <VisitsChart data={visitData} />
-                    </div>
-                    <div className={styles.panel} style={{ marginTop: 20 }}>
-                        <div className={styles.panelHead}>
-                            <div>
-                                <div className={styles.panelTitle}>Performance par service</div>
-                                <div className={styles.panelSub}>Vues et favoris cumulés</div>
-                            </div>
-                        </div>
-                        <div className={styles.panelBody}>
-                            {products.slice(0, 8).map(p => (
-                                <div key={p._id} className={styles.progressRow}>
-                                    <div className={styles.progressLabel}>
-                                        <span>{p.titre}</span>
-                                        <span className={styles.progressVal}>{p.viewCount ?? 0} vues</span>
+                                {/* Top services */}
+                                <div className={styles.panel}>
+                                    <div className={styles.panelHead}>
+                                        <div>
+                                            <div className={styles.panelTitle}>Services les plus favorisés</div>
+                                            <div className={styles.panelSub}>Classement par nombre de favoris</div>
+                                        </div>
+                                        <button className={styles.panelAction} onClick={() => setNavKey("catalogue")}>
+                                            Gérer <ChevronRight size={12} />
+                                        </button>
                                     </div>
-                                    <div className={styles.progressTrack}>
-                                        <div className={styles.progressFill}
-                                             style={{ width: `${Math.min(((p.viewCount ?? 0) / Math.max(...products.map(x => x.viewCount ?? 1), 1)) * 100, 100)}%` }} />
+                                    <div className={styles.panelBody}>
+                                        {topServices.length === 0
+                                            ? <div className={styles.empty} style={{ padding: "24px" }}>
+                                                <div className={styles.emptyTitle}>Aucun service</div>
+                                                <div className={styles.emptyBody}>Ajoutez des services à votre catalogue pour apparaître ici.</div>
+                                            </div>
+                                            : topServices.map((s, i) => (
+                                                <div key={s._id} className={styles.serviceRow}>
+                                                    <span className={styles.serviceRank}>#{i + 1}</span>
+                                                    {s.images?.[0]
+                                                        ? <img src={s.images[0]} className={styles.serviceThumb} alt="" referrerPolicy="no-referrer" />
+                                                        : <div className={styles.serviceThumb} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                            <Image size={14} color="var(--t4)" />
+                                                        </div>
+                                                    }
+                                                    <div className={styles.serviceInfo}>
+                                                        <div className={styles.serviceName}>{s.titre}</div>
+                                                        <div className={styles.serviceCat}>{s.categoryId?.nom ?? "—"}</div>
+                                                    </div>
+                                                    <div className={styles.serviceStats}>
+                                                        <div className={styles.serviceFavs}><Heart size={10} style={{ display: "inline", marginRight: 3 }} />{s.favCount ?? 0}</div>
+                                                        <div className={styles.serviceViews}>{s.viewCount ?? 0} vues</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        }
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </>
+                            </>
+                        )}
+
+                        {/* ════ CATALOGUE ════ */}
+                        {navKey === "catalogue" && (
+                            <>
+                                <div className={styles.catHeader}>
+                                    <div className={styles.catFilters}>
+                                        {[
+                                            { key: "all",    label: `Tous (${products.length})` },
+                                            { key: "active", label: `Actifs (${products.filter(p => p.statut !== "PAUSED").length})` },
+                                            { key: "paused", label: `En pause (${products.filter(p => p.statut === "PAUSED").length})` },
+                                        ].map(f => (
+                                            <button key={f.key}
+                                                    className={`${styles.filterPill} ${filter === f.key ? styles.active : ""}`}
+                                                    onClick={() => setFilter(f.key)}>
+                                                {f.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className={styles.searchWrap}>
+                                        <Search size={13} className={styles.searchIcon} />
+                                        <input className={styles.searchInput}
+                                               value={search} onChange={e => setSearch(e.target.value)}
+                                               placeholder="Rechercher…" />
+                                    </div>
+                                </div>
+
+                                {visibleProducts.length === 0 && !search
+                                    ? <div className={styles.empty}>
+                                        <div className={styles.emptyIconWrap}><Package size={24} /></div>
+                                        <div className={styles.emptyTitle}>Catalogue vide</div>
+                                        <div className={styles.emptyBody}>Publiez votre premier service pour apparaître dans les recherches.</div>
+                                        <button className={`${styles.btn} ${styles.btnPrimary}`} style={{ marginTop: 12 }}
+                                                onClick={() => setModalProduct(null)}>
+                                            <Plus size={14} /> Ajouter un service
+                                        </button>
+                                    </div>
+                                    : <div className={styles.catGrid}>
+                                        {/* Add card */}
+                                        <div className={styles.catCardAdd} onClick={() => setModalProduct(null)}>
+                                            <div className={styles.catCardAddIcon}><Plus size={20} /></div>
+                                            <div className={styles.catCardAddLabel}>Nouveau service</div>
+                                            <div className={styles.catCardAddSub}>Ajouter des photos & un prix</div>
+                                        </div>
+
+                                        {visibleProducts.map((p, i) => (
+                                            <div key={p._id}
+                                                 className={`${styles.catCard} ${p.statut === "PAUSED" ? styles.paused : ""}`}
+                                                 style={{ animationDelay: `${i * 40}ms` }}>
+
+                                                <div className={styles.catCardImg}>
+                                                    {p.images?.[0]
+                                                        ? <img src={p.images[0]} alt={p.titre} referrerPolicy="no-referrer" />
+                                                        : <div className={styles.catCardImgEmpty}><Image size={24} /></div>
+                                                    }
+                                                    {p.images?.length > 1 && (
+                                                        <div className={styles.imgCountBadge}><Image size={9} />{p.images.length}</div>
+                                                    )}
+                                                    {(p.favCount ?? 0) > 0 && (
+                                                        <div className={styles.favsBadge}><Heart size={9} />{p.favCount}</div>
+                                                    )}
+                                                    <div className={`${styles.statusBadge} ${p.statut === "PAUSED" ? styles.statusPaused : styles.statusActive}`}>
+                                                        {p.statut === "PAUSED" ? "Pause" : "Actif"}
+                                                    </div>
+
+                                                    {/* Action overlay */}
+                                                    <div className={styles.catCardActions}>
+                                                        <button className={`${styles.catActionBtn} ${styles.catActionEdit}`}
+                                                                onClick={e => { e.stopPropagation(); setModalProduct(p); }}
+                                                                title="Modifier">
+                                                            <Edit2 size={12} />
+                                                        </button>
+                                                        <button
+                                                            className={`${styles.catActionBtn} ${p.statut === "PAUSED" ? styles.catActionPlay : styles.catActionPause}`}
+                                                            onClick={e => { e.stopPropagation(); handleTogglePause(p); }}
+                                                            title={p.statut === "PAUSED" ? "Réactiver" : "Mettre en pause"}>
+                                                            {p.statut === "PAUSED" ? <Play size={12} /> : <Pause size={12} />}
+                                                        </button>
+                                                        <button className={`${styles.catActionBtn} ${styles.catActionDelete}`}
+                                                                onClick={e => { e.stopPropagation(); setDeleteTarget(p); }}
+                                                                title="Supprimer">
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className={styles.catCardBody}>
+                                                    <div className={styles.catCardTitle}>{p.titre}</div>
+                                                    <div className={styles.catCardCat}>{p.categoryId?.nom ?? "—"}</div>
+                                                    <div className={styles.catCardFooter}>
+                                                        <div>
+                                                            <div className={styles.catCardPrice}>{fmtPrice(p.prix)}</div>
+                                                            <div className={styles.catCardPriceSub}>Prix de départ</div>
+                                                        </div>
+                                                        <div className={styles.catCardMeta}>
+                                                            <div className={styles.catCardMetaItem}>
+                                                                <Eye size={10} />{p.viewCount ?? 0}
+                                                            </div>
+                                                            <div className={styles.catCardMetaItem}>
+                                                                <Heart size={10} style={{ color: "var(--rose)" }} />{p.favCount ?? 0}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                }
+                            </>
+                        )}
+
+                        {/* ════ STATS ════ */}
+                        {navKey === "stats" && (
+                            <>
+                                <div className={styles.kpiGrid}>
+                                    {kpis.map((k, i) => <div key={i} style={{ animationDelay: `${i * 60}ms` }}><KpiCard {...k} /></div>)}
+                                </div>
+                                <div className={styles.panel} style={{ marginTop: 20 }}>
+                                    <div className={styles.panelHead}>
+                                        <div>
+                                            <div className={styles.panelTitle}>Visites hebdomadaires</div>
+                                            <div className={styles.panelSub}>Répartition par jour</div>
+                                        </div>
+                                    </div>
+                                    <VisitsChart data={visitData} />
+                                </div>
+                                <div className={styles.panel} style={{ marginTop: 20 }}>
+                                    <div className={styles.panelHead}>
+                                        <div>
+                                            <div className={styles.panelTitle}>Performance par service</div>
+                                            <div className={styles.panelSub}>Vues et favoris cumulés</div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.panelBody}>
+                                        {products.slice(0, 8).map(p => (
+                                            <div key={p._id} className={styles.progressRow}>
+                                                <div className={styles.progressLabel}>
+                                                    <span>{p.titre}</span>
+                                                    <span className={styles.progressVal}>{p.viewCount ?? 0} vues</span>
+                                                </div>
+                                                <div className={styles.progressTrack}>
+                                                    <div className={styles.progressFill}
+                                                         style={{ width: `${Math.min(((p.viewCount ?? 0) / Math.max(...products.map(x => x.viewCount ?? 1), 1)) * 100, 100)}%` }} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* ════ REVIEWS / MESSAGES ════ */}
+                        {(navKey === "reviews" || navKey === "messages") && (
+                            <div className={styles.empty}>
+                                <div className={styles.emptyIconWrap}>
+                                    {navKey === "reviews" ? <Star size={24} /> : <MessageSquare size={24} />}
+                                </div>
+                                <div className={styles.emptyTitle}>
+                                    {navKey === "reviews" ? "Aucun avis pour l'instant" : "Aucun message"}
+                                </div>
+                                <div className={styles.emptyBody}>
+                                    {navKey === "reviews"
+                                        ? "Vos avis clients apparaîtront ici une fois que des clients auront évalué vos services."
+                                        : "Vos échanges avec les clients apparaîtront ici."}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>{/* /content */}
+                </main>
+            </div>
+
+            {/* ── Modals ── */}
+            {modalProduct !== undefined && (
+                <ProductModal
+                    product={modalProduct}
+                    categories={categories}
+                    onSave={handleSave}
+                    onClose={() => setModalProduct(undefined)}
+                />
+            )}
+            {deleteTarget && (
+                <ConfirmModal
+                    item={deleteTarget}
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteTarget(null)}
+                />
             )}
 
-            {/* ════ REVIEWS / MESSAGES ════ */}
-            {(navKey === "reviews" || navKey === "messages") && (
-                <div className={styles.empty}>
-                    <div className={styles.emptyIconWrap}>
-                        {navKey === "reviews" ? <Star size={24} /> : <MessageSquare size={24} />}
-                    </div>
-                    <div className={styles.emptyTitle}>
-                        {navKey === "reviews" ? "Aucun avis pour l'instant" : "Aucun message"}
-                    </div>
-                    <div className={styles.emptyBody}>
-                        {navKey === "reviews"
-                            ? "Vos avis clients apparaîtront ici une fois que des clients auront évalué vos services."
-                            : "Vos échanges avec les clients apparaîtront ici."}
-                    </div>
-                </div>
-            )}
-
-        </div>{/* /content */}
-    </main>
-</div>
-
-    {/* ── Modals ── */}
-    {modalProduct !== undefined && (
-        <ProductModal
-            product={modalProduct}
-            categories={categories}
-            onSave={handleSave}
-            onClose={() => setModalProduct(undefined)}
-        />
-    )}
-    {deleteTarget && (
-        <ConfirmModal
-            item={deleteTarget}
-            onConfirm={handleDelete}
-            onCancel={() => setDeleteTarget(null)}
-        />
-    )}
-
-    {/* ── Toast ── */}
-    {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
-</div>
-);
+            {/* ── Toast ── */}
+            {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+        </div>
+    );
 }
