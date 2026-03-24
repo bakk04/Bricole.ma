@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
-import { MongoClient, ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 import redis from "@/lib/redis";
 import { uploadImage } from "@/lib/cloudinary";
-
-const client = new MongoClient(process.env.MONGODB_URI);
+import { connectDB } from "@/lib/mongodb";
+import User from "@/models/User";
 
 async function getUserFromToken(req) {
   const authHeader = req.headers.get("authorization");
   const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
+    authHeader && typeof authHeader === 'string' && authHeader.startsWith("Bearer ")
       ? authHeader.substring(7)
       : null;
 
@@ -26,21 +25,22 @@ async function getUserFromToken(req) {
 
   let decoded;
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
+    decoded = jwt.verify(token, process.env.JWT_SECRET || "");
+  } catch (err) {
     return { error: "Token invalide ou expiré", status: 401 };
   }
 
-  await client.connect();
-  const db = client.db(process.env.DB_NAME);
-  const users = db.collection("Users");
-
-  const user = await users.findOne({ _id: new ObjectId(decoded.userId) });
-  if (!user) {
-    return { error: "Utilisateur introuvable", status: 404 };
+  try {
+    await connectDB();
+    const user = await User.findById(decoded.userId).lean();
+    if (!user) {
+      return { error: "Utilisateur introuvable", status: 404 };
+    }
+    return { user, token };
+  } catch (err) {
+    console.error("Database connection error in getUserFromToken:", err);
+    return { error: "Erreur de connexion à la base de données", status: 500 };
   }
-
-  return { user, token };
 }
 
 export async function POST(req) {
@@ -62,23 +62,21 @@ export async function POST(req) {
 
     const uploaded = await uploadImage(image, "bricole_ma/avatars");
 
-    await client.connect();
-    const db = client.db(process.env.DB_NAME);
-    const users = db.collection("Users");
-
-    await users.updateOne(
+    await connectDB();
+    await User.updateOne(
       { _id: user._id },
       { $set: { profileImage: uploaded.url } }
     );
 
     const updatedUser = {
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
-      name: user.name || `${user.prenom || ""} ${user.nom || ""}`.trim(),
+      name: user.name || `${user.prenom || ""} ${user.nom || ""}`.trim() || user.email,
       role: user.role || "CLIENT",
       profileImage: uploaded.url,
     };
 
+    // Mettre à jour la session dans Redis
     await redis.set(
       `session:${token}`,
       JSON.stringify(updatedUser),
@@ -98,4 +96,3 @@ export async function POST(req) {
     );
   }
 }
-
