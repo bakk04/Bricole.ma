@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Annonce from "@/models/Annonce";
 import Category from "@/models/Category";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
