@@ -1086,7 +1086,7 @@ function Page(props) {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21"
                                                  viewBox="0 0 20 21"
                                                  fill="none">
-                                                <mask id="mask0_18034_11416" style="mask-type:luminance"
+                                                <mask id="mask0_18034_11416" style={{ maskType: "luminance" }}
                                                       maskUnits="userSpaceOnUse" x="1" y="1" width="18" height="18">
                                                     <path d="M1.5 1.5H18.5V18.5H1.5V1.5Z" fill="white"/>
                                                 </mask>
@@ -1264,7 +1264,7 @@ function Page(props) {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21"
                                                  viewBox="0 0 20 21"
                                                  fill="none">
-                                                <mask id="mask0s4_1aaa" style="mask-type:luminance"
+                                                <mask id="mask0s4_1aaa" style={{ maskType: "luminance" }}
                                                       maskUnits="userSpaceOnUse" x="1" y="1" width="18" height="18">
                                                     <path d="M1.5 1.5H18.5V18.5H1.5V1.5Z" fill="white"/>
                                                 </mask>
@@ -1443,7 +1443,7 @@ function Page(props) {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21"
                                                  viewBox="0 0 20 21"
                                                  fill="none">
-                                                <mask id="mask0_182034_1146" style="mask-type:luminance"
+                                                <mask id="mask0_182034_1146" style={{ maskType: "luminance" }}
                                                       maskUnits="userSpaceOnUse" x="1" y="1" width="18" height="18">
                                                     <path d="M1.5 1.5H18.5V18.5H1.5V1.5Z" fill="white"/>
                                                 </mask>
@@ -1621,7 +1621,7 @@ function Page(props) {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21"
                                                  viewBox="0 0 20 21"
                                                  fill="none">
-                                                <mask id="mask0_18031461" style="mask-type:luminance"
+                                                <mask id="mask0_18031461" style={{ maskType: "luminance" }}
                                                       maskUnits="userSpaceOnUse" x="1" y="1" width="18" height="18">
                                                     <path d="M1.5 1.5H18.5V18.5H1.5V1.5Z" fill="white"/>
                                                 </mask>
@@ -1800,7 +1800,7 @@ function Page(props) {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21"
                                                  viewBox="0 0 20 21"
                                                  fill="none">
-                                                <mask id="mask10_18034_1146" style="mask-type:luminance"
+                                                <mask id="mask10_18034_1146" style={{ maskType: "luminance" }}
                                                       maskUnits="userSpaceOnUse" x="1" y="1" width="18" height="18">
                                                     <path d="M1.5 1.5H18.5V18.5H1.5V1.5Z" fill="white"/>
                                                 </mask>
@@ -1978,7 +1978,7 @@ function Page(props) {
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="21"
                                                  viewBox="0 0 20 21"
                                                  fill="none">
-                                                <mask id="mask0a_11461" style="mask-type:luminance"
+                                                <mask id="mask0a_11461" style={{ maskType: "luminance" }}
                                                       maskUnits="userSpaceOnUse" x="1" y="1" width="18" height="18">
                                                     <path d="M1.5 1.5H18.5V18.5H1.5V1.5Z" fill="white"/>
                                                 </mask>
