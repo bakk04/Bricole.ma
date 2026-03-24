@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/mongodb";
+export const dynamic = "force-dynamic";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import redis from "@/lib/redis";

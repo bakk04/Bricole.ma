@@ -5,6 +5,8 @@ import Category from "@/models/Category";
 import User from "@/models/User";
 import { cache } from "@/lib/redis";
 
+export const dynamic = "force-dynamic";
+
 const APIFY_TOKEN = process.env.APIFY_TOKEN;
 
 export async function POST(req) {

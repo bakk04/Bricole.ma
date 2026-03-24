@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import jwt from "jsonwebtoken";
 import redis from "@/lib/redis";
 import { connectDB } from "@/lib/mongodb";

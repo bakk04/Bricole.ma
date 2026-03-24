@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { connectDB } from "@/lib/mongodb";
 import ProductService from "@/models/ProductService";
 import ArtisanProfile from "@/models/ArtisanProfile";
