@@ -40,14 +40,8 @@ const BottomNav = () => {
   if (!mounted) return null
 
   return (
-    <div id="tg-main-nav-wrapper">
-      <div className="tg-nav-dock-modern">
-        {/* L'indicateur est maintenant une barre fine en haut pour ne pas cacher l'icône */}
-        <div 
-          className="tg-active-bar"
-          style={{ transform: `translateX(${activeIndex * 100}%)` }}
-        />
-
+    <div id="tg-final-nav-wrapper">
+      <div className="tg-dock-modern-final">
         {navItems.map((item, index) => {
           const Icon = item.icon
           const isActive = pathname === item.href
@@ -56,24 +50,26 @@ const BottomNav = () => {
             <Link 
               key={item.id} 
               href={item.href} 
-              className={`tg-nav-link-item ${isActive ? 'tg-active' : ''}`}
+              className={`tg-link-final ${isActive ? 'tg-active-final' : ''}`}
               onClick={() => setActiveIndex(index)}
             >
-              <div className="tg-nav-content-box">
-                {item.id === 'profile' && getAvatarUrl(user) ? (
-                  <img 
-                    src={getAvatarUrl(user)} 
-                    alt="P" 
-                    className={`tg-nav-avatar-img ${isActive ? 'tg-avatar-active' : ''}`} 
-                  />
-                ) : (
-                  <Icon 
-                    size={24} 
-                    strokeWidth={isActive ? 2.5 : 2} 
-                    className="tg-nav-lucide-icon"
-                  />
-                )}
-                <span className="tg-nav-text-label">{item.label}</span>
+              <div className="tg-box-final">
+                <div className="tg-icon-container-final">
+                  {item.id === 'profile' && getAvatarUrl(user) ? (
+                    <img 
+                      src={getAvatarUrl(user)} 
+                      alt="P" 
+                      className={`tg-avatar-final ${isActive ? 'tg-avatar-active' : ''}`} 
+                    />
+                  ) : (
+                    <Icon 
+                      size={24} 
+                      strokeWidth={isActive ? 2.5 : 2} 
+                      className="tg-lucide-final"
+                    />
+                  )}
+                </div>
+                <span className="tg-label-final">{item.label}</span>
               </div>
             </Link>
           )
@@ -81,54 +77,41 @@ const BottomNav = () => {
       </div>
 
       <style jsx global>{`
-        /* ISOLATION TOTALE POUR ÉVITER LES CONFLITS BOOTSTRAP */
-        #tg-main-nav-wrapper {
+        #tg-final-nav-wrapper {
           display: none !important;
           position: fixed !important;
           bottom: 15px !important;
           left: 0 !important;
           right: 0 !important;
-          z-index: 2147483647 !important; 
+          z-index: 2147483647 !important;
           pointer-events: none !important;
           justify-content: center !important;
           padding: 0 12px !important;
         }
 
         @media (max-width: 768px) {
-          #tg-main-nav-wrapper {
+          #tg-final-nav-wrapper {
             display: flex !important;
           }
         }
 
-        .tg-nav-dock-modern {
+        .tg-dock-modern-final {
           pointer-events: auto !important;
           position: relative !important;
           display: grid !important;
           grid-template-columns: repeat(5, 1fr) !important;
           width: 100% !important;
           max-width: 400px !important;
-          height: 62px !important;
+          height: 64px !important;
           background: #ffffff !important;
-          border-radius: 25px !important;
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-          border: 1px solid rgba(0, 0, 0, 0.08) !important;
-          padding: 0 4px !important;
-          overflow: hidden !important;
+          border-radius: 30px !important;
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+          border: 1px solid rgba(0, 0, 0, 0.05) !important;
           margin: 0 auto !important;
+          padding: 0 5px !important;
         }
 
-        .tg-active-bar {
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 20% !important;
-          height: 3px !important;
-          background: #0088cc !important;
-          transition: transform 0.4s cubic-bezier(0.2, 1, 0.2, 1) !important;
-          z-index: 5 !important;
-        }
-
-        .tg-nav-link-item {
+        .tg-link-final {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
@@ -136,70 +119,75 @@ const BottomNav = () => {
           text-decoration: none !important;
           border: none !important;
           outline: none !important;
-          background: none !important;
-          position: relative !important;
-          height: 100% !important;
+          -webkit-tap-highlight-color: transparent !important;
         }
 
-        .tg-nav-link-item, 
-        .tg-nav-link-item:hover, 
-        .tg-nav-link-item:focus, 
-        .tg-nav-link-item:active,
-        .tg-nav-link-item span {
+        .tg-link-final, .tg-link-final:hover, .tg-link-final span {
           text-decoration: none !important;
           border-bottom: none !important;
-          outline: none !important;
-          box-shadow: none !important;
         }
 
-        .tg-nav-content-box {
+        .tg-box-final {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
           justify-content: center !important;
           color: #000000 !important;
-          transition: transform 0.2s ease !important;
+          transition: all 0.3s ease !important;
         }
 
-        .tg-nav-lucide-icon {
-          color: #000000 !important;
-          margin-bottom: 1px !important;
+        .tg-icon-container-final {
+          height: 28px !important; 
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          margin-bottom: 2px !important;
         }
 
-        .tg-nav-text-label {
-          font-size: 10px !important;
-          font-weight: 700 !important;
+        .tg-lucide-final {
           color: #000000 !important;
-          text-decoration: none !important;
-          line-height: 1.2 !important;
-          text-transform: none !important;
+          transition: transform 0.3s ease !important;
+        }
+
+        .tg-label-final {
+          font-size: 11px !important;
+          font-weight: 600 !important;
+          color: #000000 !important;
+          line-height: 1 !important;
           margin: 0 !important;
+          text-align: center !important;
         }
 
-        .tg-active .tg-nav-content-box {
+        .tg-active-final .tg-box-final {
           color: #0088cc !important;
           transform: translateY(-2px) !important;
         }
 
-        .tg-active .tg-nav-lucide-icon,
-        .tg-active .tg-nav-text-label {
+        .tg-active-final .tg-lucide-final,
+        .tg-active-final .tg-label-final {
           color: #0088cc !important;
         }
 
-        .tg-nav-avatar-img {
-          width: 24px !important;
-          height: 24px !important;
+        .tg-avatar-final {
+          width: 26px !important;
+          height: 26px !important;
           border-radius: 50% !important;
           object-fit: cover !important;
-          border: 1.5px solid #000000 !important;
+          border: 2px solid transparent !important;
         }
 
         .tg-avatar-active {
           border-color: #0088cc !important;
         }
 
-        .tg-nav-link-item:active {
+        .tg-link-final:active {
           transform: scale(0.9) !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .tg-dock-modern-final { background: #ffffff !important; }
+          .tg-box-final, .tg-label-final { color: #000000 !important; }
+          .tg-active-final .tg-box-final { color: #0088cc !important; }
         }
       `}</style>
     </div>

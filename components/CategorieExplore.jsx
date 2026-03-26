@@ -1,255 +1,230 @@
+'use client'
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
     LucideDroplet, LucideZap, LucidePaintbrush, LucideHammer,
     LucideLeaf, LucideWind, LucideLayoutGrid, LucideKey,
-    LucideInbox, LucideMapPin, LucideArrowUpRight,
-    LucideChevronLeft, LucideChevronRight
+    LucideMapPin, LucideStar, LucideShieldCheck, LucideSlidersHorizontal, LucideSearch
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES = [
-    { id: 'plomberie',   label: 'Plomberie',      Icon: LucideDroplet,    bg: '#dbeafe', ink: '#1d4ed8' },
-    { id: 'electricite', label: 'Électricité',    Icon: LucideZap,        bg: '#fef9c3', ink: '#a16207' },
-    { id: 'peinture',    label: 'Peinture',       Icon: LucidePaintbrush, bg: '#fce7f3', ink: '#be185d' },
-    { id: 'menuiserie',  label: 'Menuiserie',     Icon: LucideHammer,     bg: '#ffedd5', ink: '#c2410c' },
-    { id: 'jardinage',   label: 'Jardinage',      Icon: LucideLeaf,       bg: '#dcfce7', ink: '#15803d' },
-    { id: 'clima',       label: 'Climatisation',  Icon: LucideWind,       bg: '#e0f2fe', ink: '#0369a1' },
-    { id: 'maconnerie',  label: 'Maçonnerie',     Icon: LucideLayoutGrid, bg: '#f3f4f6', ink: '#374151' },
-    { id: 'serrurerie',  label: 'Serrurerie',     Icon: LucideKey,        bg: '#ede9fe', ink: '#6d28d9' },
+    { id: 'plomberie',   label: 'Plomberie',      Icon: LucideDroplet },
+    { id: 'electricite', label: 'Électricité',    Icon: LucideZap },
+    { id: 'peinture',    label: 'Peinture',       Icon: LucidePaintbrush },
+    { id: 'menuiserie',  label: 'Menuiserie',     Icon: LucideHammer },
+    { id: 'jardinage',   label: 'Jardinage',      Icon: LucideLeaf },
+    { id: 'clima',       label: 'Climatisation',  Icon: LucideWind },
+    { id: 'maconnerie',  label: 'Maçonnerie',     Icon: LucideLayoutGrid },
+    { id: 'serrurerie',  label: 'Serrurerie',     Icon: LucideKey },
 ];
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-.ce-section {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+.ce-google-section {
     background-color: #ffffff;
-    padding: 40px 0 80px;
-    --primary: #0052FF;
-    --text-main: #0f172a;
-    --text-muted: #475569;
-    --border-light: #e2e8f0;
-    --card-bg: #ffffff;
+    padding: 24px 0 60px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #202124;
 }
 
-.ce-container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
-
-.ce-header {
-    display: flex; flex-direction: column; gap: 12px;
-    margin-bottom: 32px;
-}
-@media (min-width: 768px) {
-    .ce-header { flex-direction: row; align-items: flex-end; justify-content: space-between; margin-bottom: 40px; }
+.ce-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 16px;
 }
 
-.ce-tag {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--primary); margin-bottom: 8px;
-}
-.ce-tag span { width: 20px; height: 2px; background: var(--primary); border-radius: 2px; }
-
-.ce-title {
-    font-size: clamp(20px, 3.5vw, 28px); font-weight: 700;
-    color: var(--text-main); margin: 0; line-height: 1.25; letter-spacing: -0.01em;
+/* Header - Alignement Parfait */
+.ce-header-minimal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Centrage vertical strict */
+    margin-bottom: 24px;
+    height: 40px;
 }
 
-.ce-desc { 
-    font-size: 14px; color: var(--text-muted); 
-    margin: 6px 0 0; line-height: 1.6; font-weight: 400;
+.ce-title-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #202124;
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
 
-.ce-link-all {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 14px; font-weight: 600; color: var(--text-main);
-    text-decoration: none; padding-bottom: 4px;
-    border-bottom: 1.5px solid transparent;
-    transition: all 0.2s ease;
-    align-self: flex-start;
-}
-.ce-link-all:hover { color: var(--primary); border-color: var(--primary); }
-
-.ce-typewriter-wrapper { 
-    color: var(--primary); display: inline-block; min-width: 150px; 
-    transition: opacity 0.3s ease;
-}
-.ce-cursor { 
-    display: inline-block;
-    width: 2px; height: 1em; background-color: var(--primary);
-    vertical-align: text-bottom; margin-left: 4px;
-    animation: blink 0.8s step-end infinite; 
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-.ce-nav-wrapper { position: relative; margin-bottom: 40px; }
-.ce-scroll-fade {
-    position: relative;
-    mask-image: linear-gradient(to right, black 85%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-}
-@media (min-width: 1024px) {
-    .ce-scroll-fade { mask-image: none; -webkit-mask-image: none; }
+.ce-title-text span {
+    color: #1a73e8;
+    margin-left: 6px;
 }
 
-.ce-scroll {
-    display: flex; gap: 12px; overflow-x: auto;
-    padding: 4px 20px 16px 0;
-    scroll-behavior: smooth;
+.ce-filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3c4043;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.ce-filter-chip:hover { background: #f8f9fa; border-color: #1a73e8; color: #1a73e8; }
+
+/* Chips Navigation */
+.ce-chips-wrapper {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 100;
+    margin: 0 -16px 28px;
+    padding: 8px 16px;
+    border-bottom: 1px solid transparent;
+    transition: border 0.3s;
+}
+
+.ce-chips-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
     scrollbar-width: none;
-    -ms-overflow-style: none;
+    padding: 4px 0;
 }
-.ce-scroll::-webkit-scrollbar { display: none; }
+.ce-chips-scroll::-webkit-scrollbar { display: none; }
 
-.ce-chip {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 18px 8px 8px; border-radius: 100px;
-    border: 1px solid var(--border-light); background: var(--card-bg);
-    cursor: pointer; white-space: nowrap; flex-shrink: 0;
-    font-family: inherit; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.ce-chip:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,82,255,0.06); }
-.ce-chip.active { background: var(--text-main); border-color: var(--text-main); box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12); }
-.ce-chip.active .ce-chip-lbl { color: #ffffff; }
-
-.ce-chip-ico {
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.3s ease;
-}
-.ce-chip-lbl { font-size: 14px; font-weight: 600; color: var(--text-main); transition: color 0.3s ease; }
-
-.ce-arr {
-    position: absolute; top: 50%; 
-    width: 40px; height: 40px; 
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border-light); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; z-index: 10;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-    color: var(--text-muted);
-    opacity: 0; pointer-events: none;
+.ce-chip-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 100px;
+    white-space: nowrap;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ce-nav-wrapper:hover .ce-arr { opacity: 1; pointer-events: auto; }
-.ce-arr.left { left: -15px; transform: translateY(-60%) translateX(10px); }
-.ce-nav-wrapper:hover .ce-arr.left { transform: translateY(-60%) translateX(0); }
-.ce-arr.right { right: -15px; transform: translateY(-60%) translateX(-10px); }
-.ce-nav-wrapper:hover .ce-arr.right { transform: translateY(-60%) translateX(0); }
+.ce-chip-btn.active {
+    background: #e8f0fe;
+    border-color: #1a73e8;
+    color: #1967d2;
+}
 
-.ce-arr:hover { 
-    background: #fff; color: var(--primary); border-color: var(--primary); 
-    transform: translateY(-60%) scale(1.08) !important; 
-    box-shadow: 0 6px 20px rgba(0,82,255,0.12);
+/* Results Grid */
+.ce-results-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 1fr;
+    min-height: 200px;
 }
-@media (max-width: 1024px) { .ce-arr { display: none !important; } }
 
-.ce-grid {
-    display: grid; gap: 20px;
-    grid-template-columns: repeat(1, 1fr);
-}
-@media (min-width: 560px) { .ce-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 860px) { .ce-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1100px) { .ce-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 600px) { .ce-results-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .ce-results-grid { grid-template-columns: repeat(3, 1fr); } }
 
-.ce-card {
-    display: flex; flex-direction: column; text-decoration: none; color: inherit;
-    background: var(--card-bg); border-radius: 14px; border: 1px solid var(--border-light);
-    overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%; position: relative;
+.ce-clean-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    border-radius: 16px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
-.ce-card:hover { 
-    transform: translateY(-4px); 
-    box-shadow: 0 10px 22px -6px rgba(0, 0, 0, 0.08); 
-    border-color: #cbd5e1; 
+.ce-clean-card:hover {
+    border-color: #1a73e8;
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.08);
 }
-.ce-card-img-wrapper { position: relative; aspect-ratio: 4/3; overflow: hidden; background: #f1f5f9; }
-.ce-card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-.ce-card:hover .ce-card-img { transform: scale(1.04); }
 
-.ce-card-body { padding: 16px; display: flex; flex-direction: column; flex: 1; }
-.ce-card-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin: 0 0 6px; line-height: 1.4; }
-.ce-card-loc { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
-.ce-card-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
-.ce-card-price { font-size: 16px; font-weight: 700; color: var(--primary); }
-.ce-card-action { font-size: 12px; font-weight: 600; color: var(--text-main); background: #f1f5f9; padding: 6px 10px; border-radius: 6px; transition: background 0.2s; }
-.ce-card:hover .ce-card-action { background: var(--primary); color: #fff; }
+.ce-card-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: #f8f9fa;
+    overflow: hidden;
+}
 
-.ce-empty {
-    grid-column: 1 / -1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 60px 20px; text-align: center;
-    background: #f8fafc; border-radius: 14px; border: 1px dashed var(--border-light);
+.ce-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
-.ce-empty-icon {
-    width: 56px; height: 56px; border-radius: 50%; background: #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+
+/* Empty State Modern - Google Style */
+.ce-empty-modern {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    animation: fadeIn 0.5s ease;
 }
-.ce-empty h4 { font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0 0 8px; }
-.ce-empty p { font-size: 14px; color: var(--text-muted); max-width: 360px; line-height: 1.5; margin: 0; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ce-empty-illustration {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.ce-search-icon-anim {
+    color: #dadce0;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+.ce-empty-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 8px;
+}
+
+.ce-empty-desc {
+    font-size: 14px;
+    color: #5f6368;
+    max-width: 280px;
+    line-height: 1.5;
+}
 `;
-
-function DynamicTitle() {
-    const [text, setText] = useState("");
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [loop, setLoop] = useState(0);
-    const words = useMemo(() => ["près de vous", "à Casablanca", "à Marrakech", "vérifiés"], []);
-
-    useEffect(() => {
-        let timer;
-        const i = loop % words.length;
-        const fullText = words[i];
-        const handleType = () => {
-            setText(isDeleting ? fullText.substring(0, text.length - 1) : fullText.substring(0, text.length + 1));
-            if (!isDeleting && text === fullText) {
-                timer = setTimeout(() => setIsDeleting(true), 2500);
-            } else if (isDeleting && text === "") {
-                setIsDeleting(false);
-                setLoop((prev) => prev + 1);
-            } else {
-                timer = setTimeout(handleType, isDeleting ? 30 : 60);
-            }
-        };
-        timer = setTimeout(handleType, 60);
-        return () => clearTimeout(timer);
-    }, [text, isDeleting, loop, words]);
-
-    return <span className="ce-typewriter-wrapper">{text}<span className="ce-cursor" /></span>;
-}
 
 export default function CategorieExplore({ listingsData = [] }) {
     const [active, setActive] = useState("");
     const scrollRef = useRef(null);
 
-    // Générer dynamiquement les catégories à partir des données
     const categories = useMemo(() => {
         const catsMap = new Map();
-        
-        // Ajouter les catégories par défaut
         DEFAULT_CATEGORIES.forEach(c => catsMap.set(c.id, c));
-        
-        // Ajouter les catégories venant des données réelles
         listingsData.forEach(item => {
             if (item.categoryId && !catsMap.has(item.categoryId)) {
                 catsMap.set(item.categoryId, {
                     id: item.categoryId,
                     label: item.categoryName || 'Autre',
-                    Icon: LucideLayoutGrid,
-                    bg: '#f3f4f6',
-                    ink: '#374151'
+                    Icon: LucideLayoutGrid
                 });
             }
         });
-        
         return Array.from(catsMap.values());
     }, [listingsData]);
 
-    // Initialiser la catégorie active au premier chargement sur une catégorie qui a des services
     useEffect(() => {
         if (!active && categories.length > 0) {
-            // Chercher la première catégorie qui a au moins un service
             const firstWithData = categories.find(cat => 
                 listingsData.some(item => item.categoryId === cat.id)
             );
@@ -260,68 +235,70 @@ export default function CategorieExplore({ listingsData = [] }) {
     const filtered = listingsData.filter(i => i.categoryId === active);
     const activeCat = categories.find(c => c.id === active);
 
-    const scroll = (direction) => {
-        const amount = direction === 'left' ? -350 : 350;
-        scrollRef.current?.scrollBy({ left: amount, behavior: 'smooth' });
-    };
-
     return (
-        <section className="ce-section">
+        <section className="ce-google-section">
             <style dangerouslySetInnerHTML={{ __html: CSS }} />
             <div className="ce-container">
-                <header className="ce-header">
-                    <div>
-                        <div className="ce-tag"><span />Nos services</div>
-                        <h2 className="ce-title">Trouvez un expert <DynamicTitle /></h2>
-                        <p className="ce-desc">Des artisans de confiance, sélectionnés au Maroc.</p>
-                    </div>
-                    <Link href="/categories" className="ce-link-all">Explorer tout <LucideArrowUpRight size={16} /></Link>
-                </header>
-
-                <div className="ce-nav-wrapper">
-                    <button className="ce-arr left" onClick={() => scroll('left')}><LucideChevronLeft size={20} /></button>
-                    <div className="ce-scroll-fade">
-                        <div className="ce-scroll" ref={scrollRef}>
-                            {categories.map(cat => {
-                                const isActive = cat.id === active;
-                                return (
-                                    <button
-                                        key={cat.id}
-                                        className={`ce-chip ${isActive ? 'active' : ''}`}
-                                        onClick={() => setActive(cat.id)}
-                                    >
-                                        <span className="ce-chip-ico" style={{ background: isActive ? 'rgba(255,255,255,0.15)' : cat.bg }}>
-                                            <cat.Icon size={16} color={isActive ? '#ffffff' : cat.ink} />
-                                        </span>
-                                        <span className="ce-chip-lbl">{cat.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    <button className="ce-arr right" onClick={() => scroll('right')}><LucideChevronRight size={20} /></button>
+                <div className="ce-header-minimal">
+                    <h2 className="ce-title-text">Explorer les <span>services</span></h2>
+                    <button className="ce-filter-chip">
+                        <LucideSlidersHorizontal size={16} />
+                        Filtres
+                    </button>
                 </div>
 
-                <div className="ce-grid">
+                <div className="ce-chips-wrapper">
+                    <div className="ce-chips-scroll" ref={scrollRef}>
+                        {categories.map(cat => {
+                            const isActive = cat.id === active;
+                            return (
+                                <button
+                                    key={cat.id}
+                                    className={`ce-chip-btn ${isActive ? 'active' : ''}`}
+                                    onClick={() => setActive(cat.id)}
+                                >
+                                    <cat.Icon size={18} strokeWidth={2} color={isActive ? "#1a73e8" : "#5f6368"} />
+                                    <span className="ce-chip-label">{cat.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="ce-results-grid">
                     {filtered.length > 0 ? filtered.map((item) => (
-                        <Link href={`/offres/${item.id}`} key={item.id} className="ce-card">
-                            <div className="ce-card-img-wrapper">
-                                <img className="ce-card-img" src={item.imageUrl} alt={item.title} loading="lazy" />
+                        <Link href={`/offres/${item.id}`} key={item.id} className="ce-clean-card">
+                            <div className="ce-card-thumb">
+                                <img className="ce-thumb-img" src={item.imageUrl} alt={item.title} loading="lazy" />
                             </div>
-                            <div className="ce-card-body">
-                                <h3 className="ce-card-title">{item.title}</h3>
-                                <div className="ce-card-loc"><LucideMapPin size={12} /> {item.city}</div>
-                                <div className="ce-card-footer">
-                                    <span className="ce-card-price">{item.price} DH</span>
-                                    <span className="ce-card-action">Voir l'offre</span>
+                            <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a73e8', textTransform: 'uppercase' }}>{activeCat?.label}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#5f6368' }}>
+                                        <LucideStar size={12} fill="#f9ab00" color="#f9ab00" />
+                                        <span>4.8</span>
+                                    </div>
+                                </div>
+                                <h3 style={{ fontSize: '16px', fontWeight: '500', color: '#202124', margin: '0' }}>{item.title}</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                                    <div style={{ fontSize: '13px', color: '#5f6368', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <LucideMapPin size={14} />
+                                        {item.city}
+                                        {item.isVerified && <LucideShieldCheck size={14} color="#1a73e8" />}
+                                    </div>
+                                    <div style={{ fontSize: '15px', fontWeight: '500', color: '#202124' }}>{item.price} DH</div>
                                 </div>
                             </div>
                         </Link>
                     )) : (
-                        <div className="ce-empty">
-                            <div className="ce-empty-icon"><LucideInbox size={24} color="var(--text-muted)" /></div>
-                            <h4>Aucun résultat</h4>
-                            <p>Les artisans pour la catégorie <b>{activeCat?.label}</b> arrivent très prochainement.</p>
+                        <div className="ce-empty-modern">
+                            <div className="ce-empty-illustration">
+                                <LucideSearch size={48} className="ce-search-icon-anim" />
+                            </div>
+                            <h4 className="ce-empty-title">Aucun expert disponible</h4>
+                            <p className="ce-empty-desc">
+                                Nous n'avons pas encore d'artisans vérifiés pour <b>{activeCat?.label}</b> à cet endroit.
+                            </p>
                         </div>
                     )}
                 </div>
