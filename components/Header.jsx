@@ -103,9 +103,7 @@ export default function Header() {
                 <nav className="navigation" ref={navRef}>
                     {/* Mobile Header Icons */}
                     <div className="mobile-only mobile-header-left">
-                        <Link href="/ai-explore">
-                            <Sparkles size={24} color="#1478f1" />
-                        </Link>
+                        <LanguageSwitcher minimal />
                     </div>
 
                     <Link href="/" className="header-logo-link">

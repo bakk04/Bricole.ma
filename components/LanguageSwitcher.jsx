@@ -1,13 +1,13 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Languages, Globe } from 'lucide-react'
 
 const LANGUAGES = [
     { code: 'fr', label: 'FR', flag: 'https://flagcdn.com/w40/fr.png', name: 'Français' },
     { code: 'ar', label: 'AR', flag: 'https://flagcdn.com/w40/ma.png', name: 'العربية' }
 ]
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ minimal = false }) {
     const [currentLang, setCurrentLang] = useState(LANGUAGES[0])
     const [isOpen, setIsOpen] = useState(false)
 
@@ -156,6 +156,35 @@ export default function LanguageSwitcher() {
         if (lang.code === 'ar' && typeof window !== 'undefined') {
             window.location.reload();
         }
+    }
+
+    if (minimal) {
+        return (
+            <div className="lang-switcher-minimal notranslate" style={{ position: 'relative', zIndex: 10000 }}>
+                <div id="google_translate_element2" style={{ display: 'none' }}></div>
+                <button 
+                    onClick={() => {
+                        const nextLang = currentLang.code === 'fr' ? LANGUAGES[1] : LANGUAGES[0];
+                        changeLang(nextLang);
+                    }}
+                    style={{
+                        background: 'transparent', border: 'none',
+                        padding: '0', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: '40px', height: '40px',
+                        transition: 'all 0.2s ease'
+                    }}
+                    className="lang-btn-minimal"
+                    aria-label="Change Language"
+                >
+                    <Globe size={24} color="#262626" strokeWidth={1.5} />
+                </button>
+                <style>{`
+                    .lang-btn-minimal:active { transform: scale(0.9); opacity: 0.7; }
+                `}</style>
+                <div className="gtranslate_wrapper" style={{ display: 'none' }}></div>
+            </div>
+        )
     }
 
     return (

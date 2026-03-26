@@ -10,7 +10,7 @@ export default function MainLayout({ children }) {
             <Header />
 
             <AuthProvider>
-                <main style={{ paddingBottom: '80px' }}>{children}</main>
+                <main style={{ paddingBottom: '100px' }}>{children}</main>
                 <Footer />
             </AuthProvider>
 
