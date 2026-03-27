@@ -45,8 +45,11 @@ export async function middleware(req) {
       return NextResponse.redirect(url);
     }
 
-    // Validation du jeton dans l'URL (style ChatGPT)
-    if (urlSid !== sessionUrlToken) {
+    // Validation du jeton dans l'URL (style ChatGPT) - UNIQUEMENT pour les pages UI
+    // Pas pour les routes API car le format d'URL est différent
+    const isUIRoute = path.startsWith("/profile") || path.startsWith("/dashboard");
+    
+    if (isUIRoute && urlSid && urlSid !== sessionUrlToken) {
       // Si le jeton est absent ou incorrect dans le segment d'URL, on redirige vers l'URL propre avec le bon jeton
       // Ex: /profile -> /profile/[sessionUrlToken]
       const targetPath = `/${parts[1]}/${sessionUrlToken}`;

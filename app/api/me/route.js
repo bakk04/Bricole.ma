@@ -63,7 +63,7 @@ export async function GET() {
         `session:${token}`,
         JSON.stringify(sessionData),
         "EX",
-        900
+        30 * 24 * 60 * 60 // 30 days session in Redis
       );
     } else {
       try {

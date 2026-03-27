@@ -9,10 +9,13 @@ import ArtisanProfile from "@/models/ArtisanProfile";
 import ProductService from "@/models/ProductService";
 import Favorite from "@/models/Favorite";
 import Interaction from "@/models/Interaction";
-import Category from "@/models/Category"; // Import explicite en haut
+import Category from "@/models/Category";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Récupère l'artisan authentifié
+ */
 async function getAuthArtisan() {
   try {
     await connectDB();
@@ -20,6 +23,7 @@ async function getAuthArtisan() {
     // 1. Essayer NextAuth Session
     const session = await getServerSession(authOptions);
     let userId = session?.user?.id;
+    let authSource = "session";
     
     // 2. Essayer JWT Custom (auth_token cookie ou header)
     if (!userId) {
@@ -39,28 +43,34 @@ async function getAuthArtisan() {
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
           userId = decoded.userId;
+          authSource = "jwt";
         } catch (err) {
           console.error("JWT verification failed:", err.message);
+          return { error: `Token invalide ou expiré: ${err.message}`, status: 401 };
         }
       }
     }
 
-    if (!userId) return { error: "Non authentifié", status: 401 };
+    if (!userId) {
+        console.warn("Aucun userId trouvé dans la session ou le header Authorization");
+        return { error: "Non authentifié (Session absente et aucun token trouvé)", status: 401 };
+    }
 
     const user = await User.findById(userId).lean();
-    if (!user) return { error: "Utilisateur introuvable", status: 401 };
+    if (!user) {
+        console.error(`Utilisateur non trouvé en DB pour ID: ${userId}`);
+        return { error: "Utilisateur introuvable dans la base de données", status: 401 };
+    }
     
     if (user.role !== "ARTISAN") {
-      return { error: "Accès réservé aux artisans", status: 403 };
+      console.warn(`Tentative d'accès artisan par un utilisateur avec le rôle: ${user.role} (ID: ${userId})`);
+      return { error: `Accès réservé aux artisans (Votre rôle actuel: ${user.role})`, status: 403 };
     }
 
     let artisan = await ArtisanProfile.findOne({ userId: user._id }).lean();
     
     if (!artisan) {
-      console.log(`Auto-creating ArtisanProfile for user ${user._id}`);
-      
       let defaultCategory = await Category.findOne();
-      
       if (!defaultCategory) {
           defaultCategory = await Category.create({ 
               nom: "Général", 
@@ -88,15 +98,13 @@ async function getAuthArtisan() {
   }
 }
 
+/**
+ * GET: Liste des services de l'artisan
+ */
 export async function GET() {
   try {
     const ctx = await getAuthArtisan();
-    if (ctx.error) {
-      return NextResponse.json(
-        { success: false, message: ctx.error },
-        { status: ctx.status }
-      );
-    }
+    if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
 
     const { artisan } = ctx;
     await connectDB();
@@ -106,91 +114,57 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .lean();
 
-    if (!products || products.length === 0) {
-      return NextResponse.json({
-        success: true,
-        products: [],
-      });
-    }
-
     const enriched = await Promise.all(
       products.map(async (p) => {
-        try {
-          const [favCount, viewCount] = await Promise.all([
-            Favorite.countDocuments({ productId: p._id }).catch(() => 0),
-            Interaction.countDocuments({
-              targetId: p._id,
-              targetType: "PRODUCT",
-              type: "VIEW",
-            }).catch(() => 0),
-          ]);
+        const [favCount, viewCount] = await Promise.all([
+          Favorite.countDocuments({ productId: p._id }).catch(() => 0),
+          Interaction.countDocuments({
+            targetId: p._id,
+            targetType: "PRODUCT",
+            type: "VIEW",
+          }).catch(() => 0),
+        ]);
 
-          return {
-            ...p,
-            id: p._id.toString(), // Assurer que l'id est une string
-            favCount: favCount || 0,
-            viewCount: viewCount || 0,
-            statut: p.statut || "ACTIVE",
-          };
-        } catch (err) {
-          return {
-            ...p,
-            id: p._id.toString(),
-            favCount: 0,
-            viewCount: 0,
-            statut: p.statut || "ACTIVE",
-          };
-        }
+        return {
+          ...p,
+          id: p._id.toString(),
+          favCount: favCount || 0,
+          viewCount: viewCount || 0,
+          statut: p.statut || "ACTIVE",
+        };
       })
     );
 
-    return NextResponse.json({
-      success: true,
-      products: enriched,
-    });
+    return NextResponse.json({ success: true, products: enriched });
   } catch (error) {
-    console.error("Erreur /api/artisan/products [GET]:", error);
-    return NextResponse.json(
-      { success: false, message: "Erreur serveur lors du chargement des services" },
-      { status: 500 }
-    );
+    console.error("Erreur [GET] /api/artisan/products:", error);
+    return NextResponse.json({ success: false, message: "Erreur serveur" }, { status: 500 });
   }
 }
 
+/**
+ * POST: Création d'un service
+ */
 export async function POST(request) {
   try {
     const ctx = await getAuthArtisan();
-    if (ctx.error) {
-      return NextResponse.json(
-        { success: false, message: ctx.error },
-        { status: ctx.status }
-      );
-    }
+    if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
 
     const { artisan } = ctx;
     const body = await request.json();
-
     let { titre, description, prix, categoryId, categoryName, images = [] } = body;
+
+    await connectDB();
 
     if (!categoryId && categoryName) {
       let cat = await Category.findOne({ nom: { $regex: new RegExp(`^${categoryName}$`, "i") } });
-      if (!cat) {
-        cat = await Category.create({ 
-          nom: categoryName, 
-          description: `Services de ${categoryName}` 
-        });
-      }
+      if (!cat) cat = await Category.create({ nom: categoryName, description: `Services de ${categoryName}` });
       categoryId = cat._id;
     }
 
     if (!titre || !prix || !categoryId) {
-      return NextResponse.json(
-        { success: false, message: "Titre, prix et catégorie sont obligatoires" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: "Champs obligatoires manquants" }, { status: 400 });
     }
-
-    await connectDB();
 
     const created = await ProductService.create({
       artisanId: artisan._id,
@@ -199,30 +173,95 @@ export async function POST(request) {
       description: description || titre,
       prix,
       images,
+      statut: "ACTIVE",
     });
 
-    const product = await ProductService.findById(created._id)
-      .populate("categoryId")
-      .lean();
+    const product = await ProductService.findById(created._id).populate("categoryId").lean();
 
-    return NextResponse.json(
-      {
-        success: true,
-        product: {
-          ...product,
-          id: product._id.toString(),
-          favCount: 0,
-          viewCount: 0,
-          statut: product.statut || "ACTIVE",
-        },
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      product: { ...product, id: product._id.toString(), favCount: 0, viewCount: 0, statut: "ACTIVE" }
+    }, { status: 201 });
   } catch (error) {
-    console.error("Erreur /api/artisan/products [POST]:", error);
-    return NextResponse.json(
-      { success: false, message: "Erreur serveur lors de la création du service" },
-      { status: 500 }
-    );
+    console.error("Erreur [POST] /api/artisan/products:", error);
+    return NextResponse.json({ success: false, message: "Erreur lors de la création" }, { status: 500 });
+  }
+}
+
+/**
+ * PUT: Mise à jour d'un service (ou toggle statut)
+ */
+export async function PUT(request) {
+  try {
+    const ctx = await getAuthArtisan();
+    if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
+
+    const { artisan } = ctx;
+    const body = await request.json();
+    const id = body.id || body._id;
+
+    if (!id) return NextResponse.json({ success: false, message: "ID du service manquant" }, { status: 400 });
+
+    await connectDB();
+
+    // Préparer les données à mettre à jour (uniquement celles fournies)
+    const updateData = {};
+    const fields = ["titre", "description", "prix", "categoryId", "images", "statut"];
+    fields.forEach(f => {
+      if (body[f] !== undefined) updateData[f] = body[f];
+    });
+
+    // Cas particulier : si categoryName est fourni mais pas categoryId
+    if (!body.categoryId && body.categoryName) {
+        let cat = await Category.findOne({ nom: { $regex: new RegExp(`^${body.categoryName}$`, "i") } });
+        if (!cat) cat = await Category.create({ nom: body.categoryName, description: `Services de ${body.categoryName}` });
+        updateData.categoryId = cat._id;
+    }
+
+    const updated = await ProductService.findOneAndUpdate(
+      { _id: id, artisanId: artisan._id },
+      { $set: updateData },
+      { new: true }
+    ).populate("categoryId").lean();
+
+    if (!updated) return NextResponse.json({ success: false, message: "Service introuvable" }, { status: 404 });
+
+    return NextResponse.json({
+      success: true,
+      product: { ...updated, id: updated._id.toString() }
+    });
+  } catch (error) {
+    console.error("Erreur [PUT] /api/artisan/products:", error);
+    return NextResponse.json({ success: false, message: "Erreur lors de la mise à jour" }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE: Suppression d'un service
+ */
+export async function DELETE(request) {
+  try {
+    const ctx = await getAuthArtisan();
+    if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
+
+    const { artisan } = ctx;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) return NextResponse.json({ success: false, message: "ID manquant" }, { status: 400 });
+
+    await connectDB();
+
+    const deleted = await ProductService.findOneAndDelete({
+      _id: id,
+      artisanId: artisan._id,
+    }).lean();
+
+    if (!deleted) return NextResponse.json({ success: false, message: "Service introuvable" }, { status: 404 });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Erreur [DELETE] /api/artisan/products:", error);
+    return NextResponse.json({ success: false, message: "Erreur lors de la suppression" }, { status: 500 });
   }
 }

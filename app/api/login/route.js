@@ -118,7 +118,7 @@ export async function POST(req) {
     const token = jwt.sign(
         { userId: user._id.toString(), email: user.email, urlToken: urlToken },
         process.env.JWT_SECRET,
-        { expiresIn: "15m" }
+        { expiresIn: "30d" }
     );
 
     // Payload session
@@ -137,7 +137,7 @@ export async function POST(req) {
             `session:${token}`,
             JSON.stringify(sessionPayload),
             "EX",
-            900 // 15 minutes
+            30 * 24 * 60 * 60 // 30 days
         );
     } catch (redisError) {
         console.error("Redis storage error:", redisError);
@@ -155,7 +155,7 @@ export async function POST(req) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 900, // 15 minutes
+      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: "/",
     });
 

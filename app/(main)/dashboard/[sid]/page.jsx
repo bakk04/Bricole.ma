@@ -138,6 +138,7 @@ function ConfirmModal({ item, onConfirm, onCancel }) {
 function ProductModal({ product, categories = [], onSave, onClose }) {
     const isEdit = !!product?._id;
     const [form, setForm] = useState({
+        _id: product?._id, // CRUCIAL for update logic
         titre: product?.titre || "",
         description: product?.description || "",
         prix: product?.prix ?? "",
@@ -157,7 +158,6 @@ function ProductModal({ product, categories = [], onSave, onClose }) {
         setSaving(true);
         try {
             const newImages = await Promise.all(fileArray.map(async (file) => {
-                // Conversion en Base64 pour persistance simple (ou appel API upload si existant)
                 return new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onloadend = () => resolve(reader.result);
@@ -173,7 +173,6 @@ function ProductModal({ product, categories = [], onSave, onClose }) {
     };
 
     const submit = async () => {
-        // Validation : soit categoryId soit newCategory doit être présent
         if (!form.titre || !form.prix || (!form.categoryId && !form.newCategory)) {
             alert("Veuillez remplir tous les champs obligatoires (*)");
             return;
@@ -183,12 +182,10 @@ function ProductModal({ product, categories = [], onSave, onClose }) {
             await onSave({
                 ...form,
                 prix: Number(form.prix),
-                // Si on a saisi une nouvelle catégorie, on l'envoie telle quelle
                 categoryName: form.newCategory || undefined
             });
         } catch (err) {
             console.error("Submit error:", err);
-            alert("Erreur lors de l'enregistrement : " + (err.response?.data?.message || err.message));
         } finally { setSaving(false); }
     };
 
@@ -239,7 +236,7 @@ function ProductModal({ product, categories = [], onSave, onClose }) {
                                         ) : (
                                             <option disabled>Chargement des catégories...</option>
                                         )}
-                                        <option value="ADD_NEW" style={{ fontWeight: 'bold', color: 'var(--cobalt)' }}>+ Autre (Saisir manuellement)</option>
+                                        <option value="ADD_NEW" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Autre (Saisir manuellement)</option>
                                     </select>
                                 </div>
                             ) : (
@@ -385,35 +382,48 @@ export default function ArtisanDashboard() {
     const handleSave = async (formData) => {
         try {
             if (formData._id) {
-                await putData(`/artisan/products/${formData._id}`, formData);
+                // Mise à jour : l'ID est dans formData
+                await putData("/artisan/products", formData);
                 setProducts(ps => ps.map(p => p._id === formData._id ? { ...p, ...formData } : p));
                 showToast("Service mis à jour ✓");
             } else {
+                // Création
                 const res = await postData("/artisan/products", formData);
                 setProducts(ps => [res.product, ...ps]);
                 showToast("Service publié ✓");
             }
             setModalProduct(undefined);
-        } catch (e) { showToast(e.message, "error"); }
+        } catch (e) {
+            console.error("Save error:", e);
+            showToast(e.response?.data?.message || e.message, "error");
+        }
     };
 
     const handleTogglePause = async (product) => {
         const newStatus = product.statut === "PAUSED" ? "ACTIVE" : "PAUSED";
         try {
-            await putData(`/artisan/products/${product._id}`, { statut: newStatus });
+            // L'API consolidée accepte l'ID dans le body pour PUT
+            await putData("/artisan/products", { _id: product._id, statut: newStatus });
             setProducts(ps => ps.map(p => p._id === product._id ? { ...p, statut: newStatus } : p));
             showToast(newStatus === "PAUSED" ? "Service mis en pause" : "Service réactivé ✓");
-        } catch (e) { showToast(e.message, "error"); }
+        } catch (e) {
+            console.error("Toggle pause error:", e);
+            showToast(e.response?.data?.message || e.message, "error");
+        }
     };
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
         try {
-            await deleteData(`/artisan/products/${deleteTarget._id}`);
+            // L'API consolidée attend l'ID en query param pour DELETE
+            await deleteData(`/artisan/products?id=${deleteTarget._id}`);
             setProducts(ps => ps.filter(p => p._id !== deleteTarget._id));
             showToast("Service supprimé");
             setDeleteTarget(null);
-        } catch (e) { showToast(e.message, "error"); }
+        } catch (e) {
+            console.error("Delete error:", e);
+            showToast(e.response?.data?.message || e.message, "error");
+        }
     };
 
     /* ── Filtered products ── */
@@ -524,7 +534,7 @@ export default function ArtisanDashboard() {
                             <span>Paramètres</span>
                         </button>
                         <button className={styles.navItem} onClick={async () => {
-                            await api("/api/auth/logout", { method: "POST" });
+                            await postData("/auth/logout");
                             router.push("/login");
                         }}>
                             <LogOut size={16} />
@@ -734,76 +744,92 @@ export default function ArtisanDashboard() {
                                             <Plus size={14} /> Ajouter un service
                                         </button>
                                     </div>
-                                    : <div className={styles.catGrid}>
-                                        {/* Add card */}
-                                        <div className={styles.catCardAdd} onClick={() => setModalProduct(null)}>
-                                            <div className={styles.catCardAddIcon}><Plus size={20} /></div>
-                                            <div className={styles.catCardAddLabel}>Nouveau service</div>
-                                            <div className={styles.catCardAddSub}>Ajouter des photos & un prix</div>
+                                    : <>
+                                        <div className={styles.catGrid}>
+                                            {/* Add card */}
+                                            <div className={styles.catCardAdd} onClick={() => setModalProduct(null)}>
+                                                <div className={styles.catCardAddIcon}><Plus size={20} /></div>
+                                                <div className={styles.catCardAddLabel}>Nouveau service</div>
+                                                <div className={styles.catCardAddSub}>Ajouter des photos & un prix</div>
+                                            </div>
+
+                                            {visibleProducts.map((p, i) => (
+                                                <div key={p._id}
+                                                     className={`${styles.catCard} ${p.statut === "PAUSED" ? styles.paused : ""}`}
+                                                     style={{ animationDelay: `${i * 40}ms` }}>
+
+                                                    <div className={styles.catCardImg}>
+                                                        {p.images?.[0]
+                                                            ? <img src={p.images[0]} alt={p.titre} referrerPolicy="no-referrer" />
+                                                            : <div className={styles.catCardImgEmpty}><Image size={24} /></div>
+                                                        }
+                                                        {p.images?.length > 1 && (
+                                                            <div className={styles.imgCountBadge}><Image size={9} />{p.images.length}</div>
+                                                        )}
+                                                        <div className={`${styles.statusBadge} ${p.statut === "PAUSED" ? styles.statusPaused : styles.statusActive}`}>
+                                                            {p.statut === "PAUSED" ? "En pause" : "Actif"}
+                                                        </div>
+
+                                                        {/* Action overlay */}
+                                                        <div className={styles.catCardActions}>
+                                                            <button className={`${styles.catActionBtn} ${styles.catActionEdit}`}
+                                                                    onClick={e => { e.stopPropagation(); setModalProduct(p); }}
+                                                                    title="Modifier">
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                            <button
+                                                                className={`${styles.catActionBtn} ${p.statut === "PAUSED" ? styles.catActionPlay : styles.catActionPause}`}
+                                                                onClick={e => { e.stopPropagation(); handleTogglePause(p); }}
+                                                                title={p.statut === "PAUSED" ? "Réactiver" : "Mettre en pause"}>
+                                                                {p.statut === "PAUSED" ? <Play size={14} /> : <Pause size={14} />}
+                                                            </button>
+                                                            <button className={`${styles.catActionBtn} ${styles.catActionDelete}`}
+                                                                    onClick={e => { e.stopPropagation(); setDeleteTarget(p); }}
+                                                                    title="Supprimer">
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className={styles.catCardBody}>
+                                                        <div className={styles.catCardTitle}>{p.titre}</div>
+                                                        <div className={styles.catCardCat}>{p.categoryId?.nom ?? "Non classé"}</div>
+                                                        <div className={styles.catCardPrice}>{fmtPrice(p.prix)}</div>
+                                                        <div className={styles.catCardPriceSub}>Prix de départ</div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
 
-                                        {visibleProducts.map((p, i) => (
-                                            <div key={p._id}
-                                                 className={`${styles.catCard} ${p.statut === "PAUSED" ? styles.paused : ""}`}
-                                                 style={{ animationDelay: `${i * 40}ms` }}>
-
-                                                <div className={styles.catCardImg}>
-                                                    {p.images?.[0]
-                                                        ? <img src={p.images[0]} alt={p.titre} referrerPolicy="no-referrer" />
-                                                        : <div className={styles.catCardImgEmpty}><Image size={24} /></div>
-                                                    }
-                                                    {p.images?.length > 1 && (
-                                                        <div className={styles.imgCountBadge}><Image size={9} />{p.images.length}</div>
-                                                    )}
-                                                    {(p.favCount ?? 0) > 0 && (
-                                                        <div className={styles.favsBadge}><Heart size={9} />{p.favCount}</div>
-                                                    )}
-                                                    <div className={`${styles.statusBadge} ${p.statut === "PAUSED" ? styles.statusPaused : styles.statusActive}`}>
-                                                        {p.statut === "PAUSED" ? "Pause" : "Actif"}
-                                                    </div>
-
-                                                    {/* Action overlay */}
-                                                    <div className={styles.catCardActions}>
-                                                        <button className={`${styles.catActionBtn} ${styles.catActionEdit}`}
-                                                                onClick={e => { e.stopPropagation(); setModalProduct(p); }}
-                                                                title="Modifier">
-                                                            <Edit2 size={12} />
-                                                        </button>
-                                                        <button
-                                                            className={`${styles.catActionBtn} ${p.statut === "PAUSED" ? styles.catActionPlay : styles.catActionPause}`}
-                                                            onClick={e => { e.stopPropagation(); handleTogglePause(p); }}
-                                                            title={p.statut === "PAUSED" ? "Réactiver" : "Mettre en pause"}>
-                                                            {p.statut === "PAUSED" ? <Play size={12} /> : <Pause size={12} />}
-                                                        </button>
-                                                        <button className={`${styles.catActionBtn} ${styles.catActionDelete}`}
-                                                                onClick={e => { e.stopPropagation(); setDeleteTarget(p); }}
-                                                                title="Supprimer">
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div className={styles.catCardBody}>
-                                                    <div className={styles.catCardTitle}>{p.titre}</div>
-                                                    <div className={styles.catCardCat}>{p.categoryId?.nom ?? "—"}</div>
-                                                    <div className={styles.catCardFooter}>
-                                                        <div>
-                                                            <div className={styles.catCardPrice}>{fmtPrice(p.prix)}</div>
-                                                            <div className={styles.catCardPriceSub}>Prix de départ</div>
-                                                        </div>
-                                                        <div className={styles.catCardMeta}>
-                                                            <div className={styles.catCardMetaItem}>
-                                                                <Eye size={10} />{p.viewCount ?? 0}
-                                                            </div>
-                                                            <div className={styles.catCardMetaItem}>
-                                                                <Heart size={10} style={{ color: "var(--rose)" }} />{p.favCount ?? 0}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        {/* Aggregate Stats */}
+                                        <div className={styles.catStats}>
+                                            <div className={styles.catStatCard}>
+                                                <div className={styles.catStatLabel}>Total Vues</div>
+                                                <div className={styles.catStatVal}>{fmtNum(products.reduce((acc, p) => acc + (p.viewCount ?? 0), 0))}</div>
+                                                <div className={styles.catStatSub}>Sur tous les services</div>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className={styles.catStatCard}>
+                                                <div className={styles.catStatLabel}>Total Favoris</div>
+                                                <div className={styles.catStatVal}>{fmtNum(products.reduce((acc, p) => acc + (p.favCount ?? 0), 0))}</div>
+                                                <div className={styles.catStatSub}>Engagements cumulés</div>
+                                            </div>
+                                            <div className={styles.catStatCard}>
+                                                <div className={styles.catStatLabel}>Services Actifs</div>
+                                                <div className={styles.catStatVal}>{products.filter(p => p.statut !== "PAUSED").length}</div>
+                                                <div className={styles.catStatSub}>{products.length} au total</div>
+                                            </div>
+                                            <div className={styles.catStatCard}>
+                                                <div className={styles.catStatLabel}>Conversion</div>
+                                                <div className={styles.catStatVal}>
+                                                    {products.reduce((acc, p) => acc + (p.viewCount ?? 0), 0) > 0 
+                                                        ? ((products.reduce((acc, p) => acc + (p.favCount ?? 0), 0) / products.reduce((acc, p) => acc + (p.viewCount ?? 0), 0)) * 100).toFixed(1) + "%"
+                                                        : "0%"
+                                                    }
+                                                </div>
+                                                <div className={styles.catStatSub}>Favoris / Vues</div>
+                                            </div>
+                                        </div>
+                                    </>
                                 }
                             </>
                         )}

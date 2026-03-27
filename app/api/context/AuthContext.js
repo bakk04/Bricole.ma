@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer, useMemo } from "react";
+import { createContext, useContext, useReducer, useMemo, useEffect } from "react";
 import { authReducer, initialState } from "../auth/authReducer";
 
 const AuthContext = createContext(null);
@@ -28,6 +28,11 @@ export function AuthProvider({ children }) {
       console.error("Auth check failed:", error);
     }
   };
+
+  // Charger l'utilisateur au montage
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   const contextValue = useMemo(
     () => ({

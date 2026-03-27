@@ -7,6 +7,7 @@ export interface IProductService extends Document {
   description: string;
   prix: number;
   images: string[]; // URLs Cloudinary
+  statut: "ACTIVE" | "PAUSED";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +41,11 @@ const ProductServiceSchema = new Schema<IProductService>(
     images: {
       type: [String],
       default: [],
+    },
+    statut: {
+      type: String,
+      enum: ["ACTIVE", "PAUSED"],
+      default: "ACTIVE",
     },
   },
   {
