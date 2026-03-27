@@ -9,6 +9,22 @@ import crypto from "crypto";
 export async function POST(req) {
   try {
     await connectDB();
+
+    // --- Protection CSRF ---
+    const origin = req.headers.get("origin");
+    const host = req.headers.get("host");
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    const expectedOrigin = `${protocol}://${host}`;
+
+    if (origin && origin !== expectedOrigin) {
+      console.warn(`CSRF attempt detected during registration: origin=${origin}, expected=${expectedOrigin}`);
+      return NextResponse.json(
+          { success: false, message: "Requête non autorisée (CSRF)." },
+          { status: 403 }
+      );
+    }
+    // -----------------------
+
     const data = await req.json();
 
     const {

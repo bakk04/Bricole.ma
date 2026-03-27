@@ -62,7 +62,7 @@ export async function GET() {
         `session:${token}`,
         JSON.stringify(sessionData),
         "EX",
-        3600
+        900
       );
     } else {
       try {

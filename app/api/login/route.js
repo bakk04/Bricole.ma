@@ -9,6 +9,21 @@ import User from "@/models/User";
 export async function POST(req) {
   try {
     await connectDB();
+    // --- Protection CSRF ---
+    const origin = req.headers.get("origin");
+    const host = req.headers.get("host");
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    const expectedOrigin = `${protocol}://${host}`;
+
+    if (origin && origin !== expectedOrigin) {
+      console.warn(`CSRF attempt detected: origin=${origin}, expected=${expectedOrigin}`);
+      return NextResponse.json(
+          { success: false, message: "Requête non autorisée (CSRF)." },
+          { status: 403 }
+      );
+    }
+    // -----------------------
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -99,7 +114,7 @@ export async function POST(req) {
     const token = jwt.sign(
         { userId: user._id.toString(), email: user.email },
         process.env.JWT_SECRET,
-        { expiresIn: "7d" } // Augmenté à 7 jours pour une meilleure UX
+        { expiresIn: "15m" } // Réduit à 15 minutes
     );
 
     // Payload session
@@ -117,7 +132,7 @@ export async function POST(req) {
             `session:${token}`,
             JSON.stringify(sessionPayload),
             "EX",
-            3600 * 24 * 7 // 7 jours
+            900 // 15 minutes
         );
     } catch (redisError) {
         console.error("Redis storage error:", redisError);
@@ -134,7 +149,7 @@ export async function POST(req) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 3600 * 24 * 7, // 7 jours
+      maxAge: 900, // 15 minutes
       path: "/",
     });
 
