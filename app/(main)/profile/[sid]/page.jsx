@@ -7,7 +7,7 @@ import {
     Bell, AtSign, Globe, Moon, MessageCircle, Phone, Calendar,
     Package, AlertCircle, RefreshCw, ChevronRight, ImageOff,
 } from "lucide-react";
-import styles from "./profile.module.css";
+import styles from "../profile.module.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 

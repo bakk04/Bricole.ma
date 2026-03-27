@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import redis from "@/lib/redis";
 import { NextResponse } from "next/server";
 import User from "@/models/User";
+import crypto from "crypto";
 
 export async function POST(req) {
   try {
@@ -111,10 +112,13 @@ export async function POST(req) {
         throw new Error("Erreur de configuration serveur.");
     }
 
+    // Générer un jeton de navigation (Session-Bound Routing)
+    const urlToken = crypto.randomBytes(8).toString('hex');
+
     const token = jwt.sign(
-        { userId: user._id.toString(), email: user.email },
+        { userId: user._id.toString(), email: user.email, urlToken: urlToken },
         process.env.JWT_SECRET,
-        { expiresIn: "15m" } // Réduit à 15 minutes
+        { expiresIn: "15m" }
     );
 
     // Payload session
@@ -124,9 +128,10 @@ export async function POST(req) {
       name: user.name || `${user.prenom || ""} ${user.nom || ""}`.trim() || "Utilisateur",
       role: user.role || "CLIENT",
       image: user.image || user.profileImage || null,
+      urlToken: urlToken,
     };
 
-    // Stockage session dans Redis (optionnel, on gère les erreurs)
+    // Stockage session dans Redis
     try {
         await redis.set(
             `session:${token}`,
@@ -143,6 +148,7 @@ export async function POST(req) {
       success: true,
       user: sessionPayload,
       token: token,
+      urlToken: urlToken
     });
 
     response.cookies.set("auth_token", token, {

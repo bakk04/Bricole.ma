@@ -37,6 +37,7 @@ export default function Header() {
     // Ainsi, pour un compte Google, on utilise toujours session.user (qui contient l'image)
     // et on ne revient pas au user du contexte sans image.
     const user = session?.user || authState.user;
+    const urlToken = user?.urlToken || "";
     const isLoggedIn = !!user;
     // Plus de délai artificiel : si on a un user, on n'est plus en loading
     const isLoading = !isLoggedIn && (sessionStatus === 'loading' || authState.loading);
@@ -233,11 +234,11 @@ export default function Header() {
 
                                                 {user.role === 'CLIENT' && (
                                                     <>
-                                                        <Link href="/profile" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/profile/${urlToken}`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><User size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Mon Espace</span>
                                                         </Link>
-                                                        <Link href="/profile" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/profile/${urlToken}/settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><Settings size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                         </Link>
@@ -246,12 +247,12 @@ export default function Header() {
 
                                                 {user.role === 'ARTISAN' && (
                                                     <>
-                                                        <Link href="/dashboard" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/dashboard/${urlToken}`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><BarChart3 size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Mon Dashboard</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
-                                                        <Link href="/dashboard" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/dashboard/${urlToken}/settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><SlidersHorizontal size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
@@ -266,7 +267,7 @@ export default function Header() {
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Administration</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
-                                                        <Link href="/profile/settings" className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/profile/${urlToken}/settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><SlidersHorizontal size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />

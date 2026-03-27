@@ -8,7 +8,7 @@ import {
     Users, MessageSquare, Bell, LogOut, Settings, ChevronRight,
     Minus, Layers, Activity, Clock, DollarSign, Zap, Shield,
 } from "lucide-react";
-import styles from "./dashboard.module.css";
+import styles from "../dashboard.module.css";
 import { useRouter } from "next/navigation";
 import { getData, postData, putData, deleteData } from "@/lib/api";
 

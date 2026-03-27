@@ -102,6 +102,7 @@ export default function LoginPage() {
 
             router.refresh();
             const role = data.user?.role;
+            const urlToken = data.urlToken;
 
             const roleRoutes = {
                 ADMIN: "/admin/dashboard",
@@ -109,7 +110,8 @@ export default function LoginPage() {
                 CLIENT: "/profile"
             };
 
-            router.replace(roleRoutes[role] || "/profile");
+            const targetPath = roleRoutes[role] || "/profile";
+            router.replace(`${targetPath}/${urlToken}`);
         } catch (err) {
             console.error('Erreur de connexion:', err);
             setError("Erreur serveur lors de la connexion.");

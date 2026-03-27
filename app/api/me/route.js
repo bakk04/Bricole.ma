@@ -56,6 +56,7 @@ export async function GET() {
         name: user.name || `${user.prenom || ""} ${user.nom || ""}`.trim(),
         role: user.role || "CLIENT",
         profileImage: user.profileImage || user.image || null,
+        urlToken: decoded.urlToken || null, // Si présent dans le JWT
       };
 
       await redis.set(
