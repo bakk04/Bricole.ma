@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import styles from './login.module.css';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { data: session, status: sessionStatus } = useSession();
 
     // États locaux pour remplacer le AuthContext
     const [loading, setLoading] = useState(false);
@@ -30,6 +31,16 @@ export default function LoginPage() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Redirection automatique si déjà connecté via NextAuth
+    useEffect(() => {
+        if (sessionStatus === 'authenticated' && session?.user?.urlToken) {
+            const role = session.user.role;
+            const urlToken = session.user.urlToken;
+            const targetPath = role === "ARTISAN" ? "/dashboard" : "/profile";
+            router.replace(`${targetPath}/${urlToken}`);
+        }
+    }, [sessionStatus, session, router]);
 
     // Gestion de l'affichage du Toast
     useEffect(() => {
@@ -100,18 +111,15 @@ export default function LoginPage() {
                 return;
             }
 
-            router.refresh();
             const role = data.user?.role;
             const urlToken = data.urlToken;
 
-            const roleRoutes = {
-                ADMIN: "/admin/dashboard",
-                ARTISAN: "/dashboard",
-                CLIENT: "/profile"
-            };
-
-            const targetPath = roleRoutes[role] || "/profile";
-            router.replace(`${targetPath}/${urlToken}`);
+            const targetPath = role === "ARTISAN" ? "/dashboard" : "/profile";
+            
+            // On attend un peu pour que les cookies soient bien propagés en PWA
+            setTimeout(() => {
+                router.replace(`${targetPath}/${urlToken}`);
+            }, 100);
         } catch (err) {
             console.error('Erreur de connexion:', err);
             setError("Erreur serveur lors de la connexion.");
@@ -215,10 +223,7 @@ export default function LoginPage() {
                         type="button"
                         disabled={loading}
                         onClick={() => {
-                            // Redirige vers /profile avec un token court disponible côté client via NextAuth
-                            signIn('google', {
-                                callbackUrl: '/profile',
-                            });
+                            signIn('google');
                         }}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24">
