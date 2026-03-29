@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../api/context/AuthContext';
 import { 
-    User, Briefcase, Building2, Wrench, Zap, Paintbrush, 
+    User, Building2, Wrench, Zap, Paintbrush, 
     Axe, Wind, LayoutGrid, TreePalm, Key, HelpCircle, 
     Phone, MapPin, Mail, Lock, Eye, EyeOff, ArrowLeft, 
-    CheckCircle2, Building, Trash2, Plus, Info, Home, LogIn, Share2, Search, MessageCircle, Megaphone, SkipForward
+    CheckCircle2, Building, Plus, Info
 } from 'lucide-react';
 import styles from './register.module.css';
 import axios from "axios";
@@ -33,13 +33,6 @@ const TYPING_LINES = [
     'Finalisation du compte...',
 ];
 
-const Q_OPTIONS = [
-    { label: 'Réseaux sociaux', icon: Share2 },
-    { label: 'Google',          icon: Search },
-    { label: 'Bouche à oreille',icon: MessageCircle },
-    { label: 'Publicité',       icon: Megaphone },
-];
-
 function getPwStrength(pw) {
     if (!pw) return { level: 0, label: '', cls: '' };
     let score = 0;
@@ -52,11 +45,9 @@ function getPwStrength(pw) {
     return { level: 3, label: 'Fort', cls: styles.strong };
 }
 
-function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntreprise, artisanType }) {
+function SuccessFlow({ prenom }) {
     const [step, setStep]         = useState(1);
     const [typingText, setTyping] = useState('');
-    const [selected, setSelected] = useState(null);
-    const [thankMsg, setThank]    = useState('');
     const lineIdx = useRef(0), charIdx = useRef(0);
 
     // Typing animation
@@ -71,22 +62,21 @@ function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntr
             const line = TYPING_LINES[lineIdx.current];
             if (charIdx.current <= line.length) {
                 setTyping(line.slice(0, charIdx.current++));
-                t = setTimeout(tick, 15); // Faster typing
+                t = setTimeout(tick, 15);
             } else {
                 t = setTimeout(() => {
                     charIdx.current = 0;
                     lineIdx.current++;
                     if (lineIdx.current >= TYPING_LINES.length) setStep(2);
                     else tick();
-                }, 300); // Shorter pause between lines
+                }, 300);
             }
         };
-        t = setTimeout(tick, 300); // Shorter initial delay
+        t = setTimeout(tick, 300);
         return () => clearTimeout(t);
     }, [step]);
 
-    const domaineLabel = domaine === 'autre' ? customDomaine : DOMAINES.find(d => d.key === domaine)?.label;
-    const progress = { 1: 25, 2: 50, 3: 75, 4: 100 }[step] || 0;
+    const progress = step === 1 ? (lineIdx.current / TYPING_LINES.length) * 100 : 100;
 
     return (
         <div className={styles.scene}>
@@ -140,7 +130,7 @@ function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntr
                         </div>
                     </div>
 
-                    {/* STEP 2 — Success Welcome */}
+                    {/* STEP 2 — Success Message */}
                     <div className={`${styles.step} ${step === 2 ? styles.stepOn : ''}`}>
                         <div className={styles.burstWrap}>
                             <div className={styles.burstRing} /><div className={styles.burstRing} /><div className={styles.burstRing} />
@@ -154,79 +144,8 @@ function SuccessFlow({ prenom, nom, email, role, domaine, customDomaine, nomEntr
                         <div className={styles.wPill}>Inscription réussie</div>
                         <h2 className={styles.wTitle}>Bienvenue, <em>{prenom}</em></h2>
                         <p className={styles.wDesc}>
-                            Votre compte a été créé avec succès. <strong>Veuillez vérifier votre boîte de réception</strong> pour activer votre compte via l'e-mail que nous venons de vous envoyer.
+                            Votre compte a été créé avec succès. <strong>Vous devez vérifier votre e-mail pour que votre compte soit activé.</strong> Un lien de confirmation a été envoyé à votre boîte de réception.
                         </p>
-                        <button className={styles.wBtn} onClick={() => setStep(3)}>
-                            Continuer →
-                        </button>
-                    </div>
-
-                    {/* STEP 3 — Summary */}
-                    <div className={`${styles.step} ${step === 3 ? styles.stepOn : ''}`}>
-                        <div className={styles.s3Head}>
-                            <h3>Récapitulatif</h3>
-                            <p>Voici les détails de votre nouveau compte</p>
-                        </div>
-                        
-                        <div className={styles.dataTable}>
-                            {[
-                                { k: 'Utilisateur', v: `${prenom} ${nom}` },
-                                { k: 'Email',      v: email },
-                                { k: 'Type',       v: null, badge: role === 'ARTISAN' ? 'pro' : 'client' },
-                                ...(role === 'ARTISAN' ? [{ k: 'Domaine', v: domaineLabel }] : []),
-                                ...(role === 'ARTISAN' && artisanType === 'COMPANY' ? [{ k: 'Entreprise', v: nomEntreprise }] : []),
-                            ].map((row, i) => (
-                                <div className={styles.dataRow} key={i} style={{ animationDelay: `${i * 0.1}s` }}>
-                                    <span className={styles.dataKey}>{row.k}</span>
-                                    <span className={styles.dataVal}>
-                                        {row.badge ? (
-                                            <span className={row.badge === 'pro' ? styles.badgePro : styles.badgeClient}>
-                                                {row.badge === 'pro' ? 'Professionnel' : 'Client'}
-                                            </span>
-                                        ) : row.v}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className={styles.btnPair}>
-                            <Link href="/login" className={styles.btnGhost}><LogIn size={14}/> Connexion</Link>
-                            <Link href="/"      className={styles.btnPrim}> <Home size={14}/> Accueil</Link>
-                        </div>
-                        
-                        <button className={styles.btnNext} onClick={() => setStep(4)}>
-                            Petite question ? (facultatif)
-                        </button>
-                    </div>
-
-                    {/* STEP 4 — Post-signup Question */}
-                    <div className={`${styles.step} ${step === 4 ? styles.stepOn : ''}`}>
-                        <div className={styles.qIcon}>
-                            <Search size={24} color="#3b82f6" />
-                        </div>
-                        <h3 className={styles.qTitle}>Une dernière chose...</h3>
-                        <p className={styles.qSub}>Comment avez-vous connu Bricole.ma ?</p>
-                        
-                        <div className={styles.qGrid}>
-                            {Q_OPTIONS.map(({ label, icon: Icon }) => (
-                                <button 
-                                    key={label}
-                                    className={`${styles.qOpt} ${selected === label ? styles.qOptSel : ''}`}
-                                    onClick={() => { setSelected(label); setThank(`Merci !`); }}
-                                >
-                                    <Icon size={14}/> {label}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        {thankMsg && <p className={styles.thankMsg}>{thankMsg}</p>}
-                        
-                        <span className={styles.skipLink} onClick={() => setStep(3)}>Retour au récapitulatif</span>
-                        
-                        <div className={styles.btnPair}>
-                            <Link href="/login" className={styles.btnGhost}><LogIn size={14}/> Connexion</Link>
-                            <Link href="/"      className={styles.btnPrim}> <Home size={14}/> Accueil</Link>
-                        </div>
                     </div>
                 </div>
             </div>

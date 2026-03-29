@@ -8,19 +8,28 @@ import { useAuth } from "@/app/api/context/AuthContext"
 
 const BottomNav = () => {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   const { state: authState } = useAuth()
   const [mounted, setMounted] = useState(false)
   
   const user = session?.user || authState.user
   const urlToken = user?.urlToken || ""
+  const isLoggedIn = !!user && sessionStatus !== 'loading'
 
   const navItems = [
     { id: 'home', icon: Home, href: '/', label: 'Home' },
     { id: 'explore', icon: Search, href: '/explore', label: 'Explore' },
     { id: 'add', icon: PlusSquare, href: '/listing/add', label: 'Add' },
-    { id: 'proxi', icon: MapPin, href: user?.role === 'ARTISAN' ? `/dashboard/${urlToken}` : `/profile/${urlToken}`, label: 'Proxi' },
-    { id: 'profile', icon: User, href: `/profile/${urlToken}`, label: 'Profile' },
+    { id: 'proxi', 
+      icon: MapPin, 
+      href: isLoggedIn ? (user?.role === 'ARTISAN' ? `/dashboard/${urlToken}` : `/profile/${urlToken}`) : '/login', 
+      label: 'Proxi' 
+    },
+    { id: 'profile', 
+      icon: User, 
+      href: isLoggedIn ? `/profile/${urlToken}` : '/login', 
+      label: 'Profile' 
+    },
   ]
 
   const [activeIndex, setActiveIndex] = useState(0)
@@ -29,10 +38,10 @@ const BottomNav = () => {
     setMounted(true)
     const index = navItems.findIndex(item => item.href === pathname)
     if (index !== -1) setActiveIndex(index)
-  }, [pathname, user])
+  }, [pathname, isLoggedIn])
 
   const getAvatarUrl = (u) => {
-    if (!u) return null;
+    if (!isLoggedIn || !u) return null;
     const raw = u.image || u.profileImage;
     if (!raw || raw === "null" || raw === "undefined") return null;
     return raw;

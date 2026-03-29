@@ -74,6 +74,10 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       user: sessionData
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0, must-revalidate',
+      }
     });
   } catch (error) {
     console.error("Erreur /api/profile:", error);

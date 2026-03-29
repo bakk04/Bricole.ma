@@ -80,7 +80,11 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json(sessionData);
+    return NextResponse.json(sessionData, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0, must-revalidate',
+      }
+    });
   } catch (error) {
     console.error("Erreur /api/me:", error);
     return NextResponse.json(
