@@ -10,20 +10,8 @@ import {
 import styles from "../profile.module.css";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
-/* ─── API ──────────────────────────────────────────────────────── */
-async function apiFetch(path, options = {}) {
-    const res = await fetch(path, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        ...options,
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `HTTP ${res.status}`);
-    }
-    return res.json();
-}
+import { useLogout } from "@/hooks/useLogout";
+import api, { getData as apiFetch } from "@/lib/api";
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
 function initials(name = "") {
@@ -121,7 +109,7 @@ function FavsPanel() {
     const [error, setError]   = useState(null);
 
     useEffect(() => {
-        apiFetch("/api/profile/favorites")
+        apiFetch("/profile/favorites")
             .then(d => setFavs(d.favorites ?? []))
             .catch(e => setError(e.message))
             .finally(() => setLoad(false));
@@ -163,7 +151,7 @@ function ActivityPanel() {
     const [error, setError]   = useState(null);
 
     useEffect(() => {
-        apiFetch("/api/profile/activity")
+        apiFetch("/profile/activity")
             .then(d => setActs(d.activities ?? []))
             .catch(e => setError(e.message))
             .finally(() => setLoad(false));
@@ -232,7 +220,7 @@ function SettingsPanel() {
     const save = async () => {
         setSaving(true);
         try {
-            await apiFetch("/api/profile/settings", {
+            await apiFetch("/profile/settings", {
                 method: "PUT",
                 body: JSON.stringify({ notifs, privacy }),
             });
@@ -312,15 +300,30 @@ export default function ProfilePage() {
     const [error, setError]  = useState(null);
     const [tab, setTab]      = useState("favorites");
     const [synced, setSynced] = useState(false);
-    const { data: session }  = useSession();
+    const { data: session, status }  = useSession();
+    const { logout }         = useLogout();
     const router             = useRouter();
 
     /* Google sync */
     useEffect(() => {
         (async () => {
-            if (synced) return;
+            // Attendre que la session soit chargée
+            if (status === "loading" || synced) return;
+
+            // Si pas de session NextAuth du tout, on marque comme synchronisé (pour laisser le middleware ou l'API gérer)
+            if (status === "unauthenticated") {
+                setSynced(true);
+                return;
+            }
+
             const bricoleToken = session?.user?.bricoleToken;
-            if (!bricoleToken) { setSynced(true); return; }
+            
+            // Si session existe mais pas de token Bricole (ne devrait pas arriver avec Google)
+            if (!bricoleToken) {
+                setSynced(true);
+                return;
+            }
+
             try {
                 const res = await fetch("/api/auth/google-sync", {
                     method: "POST",
@@ -328,22 +331,29 @@ export default function ProfilePage() {
                     credentials: "include",
                 });
                 if (!res.ok) console.error("google-sync failed", await res.text());
-            } catch (e) { console.error("google-sync error", e); }
-            finally { setSynced(true); }
+            } catch (e) {
+                console.error("google-sync error", e);
+            } finally {
+                setSynced(true);
+            }
         })();
-    }, [session, synced]);
+    }, [session, status, synced]);
 
     /* Load profile + stats */
     useEffect(() => {
-        if (!synced) return;
-        Promise.all([apiFetch("/api/profile"), apiFetch("/api/profile/stats")])
+        if (!synced || status === "loading") return;
+        
+        Promise.all([apiFetch("/profile"), apiFetch("/profile/stats")])
             .then(([p, s]) => {
                 if (!p.success) throw new Error("Profil introuvable.");
                 setUser(p.user); setStats(s.stats);
             })
-            .catch(e => setError(e.message))
+            .catch(e => {
+                console.error("Profile load error:", e);
+                setError(e.message);
+            })
             .finally(() => setLoad(false));
-    }, [synced]);
+    }, [synced, status]);
 
     /* Loading skeleton */
     if (loading) return (
@@ -417,10 +427,7 @@ export default function ProfilePage() {
                             <button className={styles.btnPrimary} onClick={() => router.push("/profile/edit")}>
                                 <Edit3 size={14} /> Modifier
                             </button>
-                            <button className={styles.btnOutline} onClick={async () => {
-                                await apiFetch("/api/auth/logout", { method: "POST" });
-                                router.push("/login");
-                            }}>
+                            <button className={styles.btnOutline} onClick={logout}>
                                 <LogOut size={14} /> Quitter
                             </button>
                         </div>

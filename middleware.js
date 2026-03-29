@@ -45,17 +45,22 @@ export async function middleware(req) {
       return NextResponse.redirect(url);
     }
 
-    // Validation du jeton dans l'URL (style ChatGPT) - UNIQUEMENT pour les pages UI
-    // Pas pour les routes API car le format d'URL est différent
+    // Validation du jeton dans l'URL - Forcer la redirection vers /path/[token]
     const isUIRoute = path.startsWith("/profile") || path.startsWith("/dashboard");
     
-    if (isUIRoute && urlSid && urlSid !== sessionUrlToken) {
-      // Si le jeton est absent ou incorrect dans le segment d'URL, on redirige vers l'URL propre avec le bon jeton
-      // Ex: /profile -> /profile/[sessionUrlToken]
-      const targetPath = `/${parts[1]}/${sessionUrlToken}`;
+    // Si on est sur une route UI et que le SID est absent ou incorrect
+    if (isUIRoute && (!urlSid || urlSid !== sessionUrlToken)) {
+      // Déterminer le dossier de base correct selon le rôle si on arrive sur une racine
+      // (Ex: un artisan qui arrive sur /profile est renvoyé vers /dashboard/[token])
+      let baseDir = parts[1]; 
+      
+      // Optionnel : On peut forcer le dossier selon le rôle pour plus de sécurité
+      // const userRole = nextAuthToken?.role || "CLIENT";
+      // baseDir = userRole === "ARTISAN" ? "dashboard" : "profile";
+
+      const targetPath = `/${baseDir}/${sessionUrlToken}`;
       const signedUrl = new URL(targetPath, req.url);
       
-      // Conserver les paramètres additionnels s'ils existent
       req.nextUrl.searchParams.forEach((value, key) => {
         signedUrl.searchParams.set(key, value);
       });

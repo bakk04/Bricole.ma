@@ -34,12 +34,31 @@ export default function LoginPage() {
 
     // Redirection automatique si déjà connecté via NextAuth
     useEffect(() => {
-        if (sessionStatus === 'authenticated' && session?.user?.urlToken) {
-            const role = session.user.role;
-            const urlToken = session.user.urlToken;
-            const targetPath = role === "ARTISAN" ? "/dashboard" : "/profile";
-            router.replace(`${targetPath}/${urlToken}`);
-        }
+        const syncAndRedirect = async () => {
+            if (sessionStatus === 'authenticated' && session?.user?.urlToken) {
+                const role = session.user.role;
+                const urlToken = session.user.urlToken;
+                const bricoleToken = session.user.bricoleToken;
+                const targetPath = role === "ARTISAN" ? "/dashboard" : "/profile";
+
+                // SYNCHRONISATION CRITIQUE : On crée le cookie auth_token avant de partir
+                if (bricoleToken) {
+                    try {
+                        await fetch("/api/auth/google-sync", {
+                            method: "POST",
+                            headers: { "Authorization": `Bearer ${bricoleToken}` },
+                            credentials: "include",
+                        });
+                    } catch (e) {
+                        console.error("Erreur sync Google:", e);
+                    }
+                }
+
+                router.replace(`${targetPath}/${urlToken}`);
+            }
+        };
+        
+        syncAndRedirect();
     }, [sessionStatus, session, router]);
 
     // Gestion de l'affichage du Toast
@@ -223,7 +242,7 @@ export default function LoginPage() {
                         type="button"
                         disabled={loading}
                         onClick={() => {
-                            signIn('google');
+                            signIn('google', { callbackUrl: '/profile' });
                         }}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24">

@@ -14,16 +14,17 @@ const BottomNav = () => {
   
   // On ne considère l'utilisateur connecté QUE si sessionStatus est 'authenticated' 
   // OU si authState.user existe alors que sessionStatus est 'unauthenticated' (cas login classique)
-  const user = (sessionStatus === 'authenticated' ? session?.user : null) || authState.user
+  const user = (sessionStatus === 'authenticated' ? session?.user : null) || (sessionStatus === 'unauthenticated' ? authState.user : null)
   const urlToken = user?.urlToken || ""
   
-  // Sécurité renforcée pour isLoggedIn
-  const isLoggedIn = !!user && !!urlToken && sessionStatus !== 'loading'
+  // Sécurité renforcée pour isLoggedIn : on s'assure que le status n'est pas en train de charger 
+  // et qu'on n'est pas dans un état de déconnexion
+  const isLoggedIn = !!user && !!urlToken && sessionStatus !== 'loading' && sessionStatus !== 'unauthenticated' ? !!user : (sessionStatus === 'unauthenticated' && !!authState.user)
 
   const navItems = [
     { id: 'home', icon: Home, href: '/', label: 'Home' },
     { id: 'explore', icon: Search, href: '/explore', label: 'Explore' },
-    { id: 'add', icon: PlusSquare, href: '/listing/add', label: 'Add' },
+    { id: 'add', icon: PlusSquare, href: '/listing/add', label: 'Publier' },
     { id: 'proxi', 
       icon: MapPin, 
       href: '/explore', 

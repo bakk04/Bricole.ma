@@ -57,7 +57,12 @@ export async function POST(req) {
 
     // Création du token JWT principal (auth_token) comme /api/login
     const authToken = jwt.sign(
-      { userId: user._id.toString(), email: user.email },
+      { 
+        userId: user._id.toString(), 
+        email: user.email,
+        role: user.role || "CLIENT",
+        urlToken: user.urlToken
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );

@@ -2,6 +2,7 @@
 // components/Header.jsx
 import Link from 'next/link'
 import React, { useState, useRef, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import {
     ChevronDown, User, Plus, Home, Info,
     List, BookOpen, FolderOpen, X, Menu,
@@ -15,16 +16,21 @@ import { useAuth } from "@/app/api/context/AuthContext";
 import './Header.module.css'
 import {FaUser} from "react-icons/fa";
 
+import { useLogout } from "@/hooks/useLogout";
+
 export default function Header() {
-    // ... (rest of the logic remains the same)
+    const pathname = usePathname();
     const { data: session, status: sessionStatus } = useSession();
     const { state: authState, dispatch: authDispatch, checkAuth } = useAuth();
+    const { logout } = useLogout();
     const [openDropdown, setOpenDropdown] = useState(null)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [mobileSubmenu, setMobileSubmenu] = useState(null)
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const navRef = useRef(null)
     const profileRef = useRef(null);
+
+    const isActive = (path) => pathname === path ? 'active' : '';
 
     useEffect(() => {
         // Ne lancer checkAuth que si on n'a ni session NextAuth ni user dans le contexte local
@@ -69,16 +75,9 @@ export default function Header() {
     }
 
     const handleLogout = async () => {
-        try {
-            if (session) {
-                await signOut({ redirect: false });
-            }
-            await fetch("/api/auth/logout", { method: "POST" });
-            authDispatch({ type: "LOGOUT" });
-            window.location.href = "/";
-        } catch (error) {
-            console.error("Logout error:", error);
-        }
+        setShowProfileMenu(false);
+        setMobileNavOpen(false);
+        await logout();
     };
 
     const getInitials = (name = "") => {
@@ -120,41 +119,41 @@ export default function Header() {
                     <div className="main-menu__nav">
                         <ul className="main-menu__list">
                             <li>
-                                <Link href="/" className="active nav-link-item">
+                                <Link href="/" className={`${isActive('/')} nav-link-item`}>
                                     <Home className="nav-icon" size={18} aria-hidden />
                                     <span>Home</span>
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/about" className="nav-link-item">
+                                <Link href="/about" className={`${isActive('/about')} nav-link-item`}>
                                     <Info className="nav-icon" size={18} aria-hidden />
                                     <span>About Us</span>
                                 </Link>
                             </li>
 
-                            <li className={`dropdown ${openDropdown === 'listings' ? 'open' : ''}`}>
+                            <li className={`dropdown ${openDropdown === 'explore' ? 'open' : ''}`}>
                                 <button
                                     type="button"
-                                    className="dropdown-trigger"
-                                    onClick={(e) => { e.stopPropagation(); toggleDropdown('listings') }}
+                                    className={`dropdown-trigger ${isActive('/explore')}`}
+                                    onClick={(e) => { e.stopPropagation(); toggleDropdown('explore') }}
                                 >
-                                    <List className="nav-icon" size={18} aria-hidden />
-                                    <span>Listings</span>
+                                    <Compass className="nav-icon" size={18} aria-hidden />
+                                    <Link href="/explore" className="nav-link-item"><span>Explore</span></Link>
                                     <ChevronDown className="d-lg-block d-none dropdown-chevron" size={14} style={{ marginLeft: '4px' }} />
                                 </button>
                                 <ul>
-                                    <li><Link href="/listing/grid" onClick={() => setOpenDropdown(null)}>Directory (Grid Style)</Link></li>
-                                    <li><Link href="/listing/list" onClick={() => setOpenDropdown(null)}>Directory (List Style)</Link></li>
-                                    <li><Link href="/listing/add" onClick={() => setOpenDropdown(null)}>Add Listing</Link></li>
-                                    <li><Link href="/listing/restaurant" onClick={() => setOpenDropdown(null)}>Listing Restaurant Detail</Link></li>
-                                    <li><Link href="/listing/shop" onClick={() => setOpenDropdown(null)}>Listing Shop Detail</Link></li>
+                                    <li><Link href="/explore?city=Casablanca" onClick={() => setOpenDropdown(null)}>Casablanca</Link></li>
+                                    <li><Link href="/explore?city=Rabat" onClick={() => setOpenDropdown(null)}>Rabat</Link></li>
+                                    <li><Link href="/explore?city=Tanger" onClick={() => setOpenDropdown(null)}>Tanger</Link></li>
+                                    <li><Link href="/explore?city=Marrakech" onClick={() => setOpenDropdown(null)}>Marrakech</Link></li>
+                                    <li><Link href="/explore?city=Agadir" onClick={() => setOpenDropdown(null)}>Agadir</Link></li>
                                 </ul>
                             </li>
 
                             <li className={`dropdown ${openDropdown === 'blogs' ? 'open' : ''}`}>
                                 <button
                                     type="button"
-                                    className="dropdown-trigger"
+                                    className={`dropdown-trigger ${isActive('/blogs')}`}
                                     onClick={(e) => { e.stopPropagation(); toggleDropdown('blogs') }}
                                 >
                                     <BookOpen className="nav-icon" size={18} aria-hidden />
@@ -170,7 +169,7 @@ export default function Header() {
                             <li className={`dropdown ${openDropdown === 'pages' ? 'open' : ''}`}>
                                 <button
                                     type="button"
-                                    className="dropdown-trigger"
+                                    className={`dropdown-trigger ${isActive('/contact') || isActive('/login') || isActive('/register') ? 'active' : ''}`}
                                     onClick={(e) => { e.stopPropagation(); toggleDropdown('pages') }}
                                 >
                                     <FolderOpen className="nav-icon" size={18} aria-hidden />
@@ -294,7 +293,7 @@ export default function Header() {
                             )}
 
                             <Link href="/listing/add" className="cus-btn d-none d-sm-flex">
-                                <span className="text">Add Listing</span>
+                                <span className="text">offre</span>
                                 <Plus size={20} className="cus-btn-icon" />
                             </Link>
                             <button
@@ -344,7 +343,7 @@ export default function Header() {
                                 </li>
                                 <li>
                                     <Link href="/explore" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
-                                        <List className="mobile-nav__icon" size={18} /> <span>Explore</span>
+                                        <Compass className="mobile-nav__icon" size={18} /> <span>Explore</span>
                                     </Link>
                                 </li>
                                 <li>
@@ -360,7 +359,7 @@ export default function Header() {
                         </div>
 
                         <Link href="/listing/add" className="mobile-nav__btn mobile-nav__btn--primary" onClick={() => setMobileNavOpen(false)} style={{ width: '100%' }}>
-                            <Plus size={18} /> Add Listing
+                            <Plus size={18} /> Publier une offre
                         </Link>
                     </div>
                 </div>

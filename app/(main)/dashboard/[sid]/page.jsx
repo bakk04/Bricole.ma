@@ -10,9 +10,12 @@ import {
 } from "lucide-react";
 import styles from "../dashboard.module.css";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { getData, postData, putData, deleteData } from "@/lib/api";
 
 /* ─── Helpers ───────────────────────────────────────────────── */
+// ... (initials, fmtNum, etc. omitted for brevity if replace handles it, but I must provide full context)
+
 function initials(n = "") {
     return n.split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
 }
@@ -325,6 +328,7 @@ const NAV = [
 ══════════════════════════════════════════════════════════════ */
 export default function ArtisanDashboard() {
     const router = useRouter();
+    const { data: session, status } = useSession();
 
     /* ── State ── */
     const [navKey, setNavKey]       = useState("overview");
@@ -333,6 +337,7 @@ export default function ArtisanDashboard() {
     const [products, setProducts]   = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading]     = useState(true);
+    const [synced, setSynced]       = useState(false);
 
     // Mock data for new sections
     const [leads, setLeads] = useState([
@@ -351,8 +356,33 @@ export default function ArtisanDashboard() {
     const [toast, setToast]         = useState(null);
     const showToast = (msg, type = "success") => setToast({ msg, type });
 
+    /* ── Google Sync ── */
+    useEffect(() => {
+        (async () => {
+            if (status === "loading" || synced) return;
+            if (status === "unauthenticated") { setSynced(true); return; }
+
+            const bricoleToken = session?.user?.bricoleToken;
+            if (!bricoleToken) { setSynced(true); return; }
+
+            try {
+                await fetch("/api/auth/google-sync", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${bricoleToken}` },
+                    credentials: "include",
+                });
+            } catch (e) {
+                console.error("google-sync error:", e);
+            } finally {
+                setSynced(true);
+            }
+        })();
+    }, [session, status, synced]);
+
     /* ── Load ── */
     useEffect(() => {
+        if (!synced || status === "loading") return;
+
         (async () => {
             try {
                 const [p, s, prods, cats] = await Promise.all([
@@ -366,12 +396,15 @@ export default function ArtisanDashboard() {
                 setProducts(prods.products ?? []);
                 setCategories(cats.categories ?? []);
             } catch (e) {
-                console.error(e);
+                console.error("Dashboard load error:", e);
+                if (e.response?.status === 401) {
+                    // router.push("/login");
+                }
             } finally {
                 setLoading(false);
             }
         })();
-    }, []);
+    }, [synced, status]);
 
     /* ── Visit chart mock ── */
     const visitData = WEEK_DAYS.map((l, i) => ({
