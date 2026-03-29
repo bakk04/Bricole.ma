@@ -12,8 +12,12 @@ const BottomNav = () => {
   const { state: authState } = useAuth()
   const [mounted, setMounted] = useState(false)
   
-  const user = session?.user || authState.user
+  // On ne considère l'utilisateur connecté QUE si sessionStatus est 'authenticated' 
+  // OU si authState.user existe alors que sessionStatus est 'unauthenticated' (cas login classique)
+  const user = (sessionStatus === 'authenticated' ? session?.user : null) || authState.user
   const urlToken = user?.urlToken || ""
+  
+  // Sécurité renforcée pour isLoggedIn
   const isLoggedIn = !!user && !!urlToken && sessionStatus !== 'loading'
 
   const navItems = [
@@ -22,12 +26,14 @@ const BottomNav = () => {
     { id: 'add', icon: PlusSquare, href: '/listing/add', label: 'Add' },
     { id: 'proxi', 
       icon: MapPin, 
-      href: isLoggedIn ? (user?.role === 'ARTISAN' ? `/dashboard/${urlToken}` : `/profile/${urlToken}`) : '/login', 
+      href: '/explore', 
       label: 'Proxi' 
     },
     { id: 'profile', 
       icon: User, 
-      href: isLoggedIn ? `/profile/${urlToken}` : '/login', 
+      href: isLoggedIn 
+        ? (user?.role === 'ARTISAN' ? `/dashboard/${urlToken}` : `/profile/${urlToken}`) 
+        : '/login', 
       label: 'Profile' 
     },
   ]
@@ -38,10 +44,13 @@ const BottomNav = () => {
     setMounted(true)
     const index = navItems.findIndex(item => item.href === pathname)
     if (index !== -1) setActiveIndex(index)
-  }, [pathname, isLoggedIn])
+  }, [pathname, isLoggedIn, sessionStatus]) // Ajout de sessionStatus comme dépendance
 
   const getAvatarUrl = (u) => {
+    // Si pas de session NextAuth ET pas de user local, on renvoie null direct
+    if (sessionStatus === 'unauthenticated' && !authState.user) return null;
     if (!isLoggedIn || !u) return null;
+    
     const raw = u.image || u.profileImage;
     if (!raw || raw === "null" || raw === "undefined") return null;
     return raw;
@@ -61,7 +70,12 @@ const BottomNav = () => {
               key={item.id} 
               href={item.href} 
               className={`tg-link-final ${isActive ? 'tg-active-final' : ''}`}
-              onClick={() => setActiveIndex(index)}
+              onClick={() => {
+                if (isActive) {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                setActiveIndex(index);
+              }}
             >
               <div className="tg-box-final">
                 <div className="tg-icon-container-final">

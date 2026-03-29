@@ -108,6 +108,12 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     order: -1; /* Appear above main on mobile */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
 }
 
 @media (min-width: 1024px) {
@@ -121,6 +127,16 @@
         height: 100vh;
         overflow-y: auto;
         order: 0;
+        scrollbar-width: auto;
+        -ms-overflow-style: auto;
+    }
+    .sidebar::-webkit-scrollbar {
+        display: block;
+        width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+        background: var(--border-medium);
+        border-radius: 10px;
     }
 }
 
@@ -178,6 +194,12 @@
     flex-direction: row;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sidebarNav::-webkit-scrollbar {
+    display: none;
 }
 
 @media (min-width: 1024px) {
