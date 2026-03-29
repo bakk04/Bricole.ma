@@ -14,7 +14,7 @@ const BottomNav = () => {
   
   const user = session?.user || authState.user
   const urlToken = user?.urlToken || ""
-  const isLoggedIn = !!user && sessionStatus !== 'loading'
+  const isLoggedIn = !!user && !!urlToken && sessionStatus !== 'loading'
 
   const navItems = [
     { id: 'home', icon: Home, href: '/', label: 'Home' },

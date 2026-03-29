@@ -40,7 +40,7 @@ const withPWA = withPWAInit({
         },
       },
       {
-        urlPattern: /\/api\/(auth|me|profile|login|register)\/.*$/i,
+        urlPattern: /\/api\/(auth|me|profile|login|register)(?:\/.*)?$/i,
         handler: "NetworkOnly",
       },
       {
