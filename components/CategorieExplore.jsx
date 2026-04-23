@@ -138,7 +138,7 @@ function PopupOverlay({ item, liked, onLike, onClose }) {
                                              color={liked ? '#1a73e8' : '#222'}
                                              strokeWidth={2} />
                             </button>
-                            <Link href={`/offres/${item.id}`} className={styles.popupCta}>
+                            <Link href={`/explore/details/${item.id}`} className={styles.popupCta}>
                                 Voir le service
                             </Link>
                         </div>
@@ -223,7 +223,7 @@ function ServiceCard({ item, index }) {
     return (
         <>
             <Link
-                href={`/offres/${item.id}`}
+                href={`/explore/details/${item.id}`}
                 className={`${styles.card} ${longPressActive ? styles.longPressActive : ''}`}
                 style={{ '--delay': `${index * 55}ms` }}
                 onMouseEnter={handleMouseEnter}

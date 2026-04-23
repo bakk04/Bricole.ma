@@ -51,6 +51,9 @@ export default function RootLayout({ children }) {
         <head>
             <meta charSet="UTF-8"/>
             <meta httpEquiv="X-UA-Compatible" content="IE=edge"/>
+            {/* Preload LCP Images */}
+            <link rel="preload" href="/assets/media/hero/img-1.jpg" as="image" fetchPriority="high" />
+            <link rel="preload" href="/assets/media/hero/img-6.jpg" as="image" fetchPriority="high" />
         </head>
         <body>
         
@@ -70,25 +73,11 @@ export default function RootLayout({ children }) {
         />
         <Script 
           src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js" 
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script 
           src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js" 
-          strategy="afterInteractive"
-        />
-        
-        {/* Leaflet & Map Scripts from public/vendor */}
-        <Script 
-          src="/vendor/unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-          strategy="afterInteractive"
-        />
-        <Script 
-          src="/vendor/unpkg.com/leaflet-geosearch@3.11.0/dist/bundle.min.js" 
-          strategy="afterInteractive"
-        />
-        <Script 
-          src="/vendor/unpkg.com/leaflet-control-geocoder@3.3.1/dist/Control.Geocoder.js" 
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         
         {/* PWA Lifecycle Logic */}

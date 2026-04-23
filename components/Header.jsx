@@ -30,7 +30,10 @@ export default function Header() {
     const navRef = useRef(null)
     const profileRef = useRef(null);
 
-    const isActive = (path) => pathname === path ? 'active' : '';
+    const isActive = (path) => {
+        const active = path === '/' ? pathname === '/' : pathname.startsWith(path);
+        return active ? 'active' : '';
+    };
 
     useEffect(() => {
         // Ne lancer checkAuth que si on n'a ni session NextAuth ni user dans le contexte local

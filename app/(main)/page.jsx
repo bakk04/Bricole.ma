@@ -108,7 +108,7 @@ function DiscoveryHint() {
     )
 }
 
-function HeroImg({ src, delay, tall }) {
+function HeroImg({ src, delay, tall, priority }) {
     const h = tall ? 210 : 150
     const w = 135
 
@@ -126,7 +126,7 @@ function HeroImg({ src, delay, tall }) {
                 alt="Artisan crafting traditional Moroccan goods"
                 width={w}
                 height={h}
-                priority={true}
+                priority={priority}
                 className="hero-image-zoom"
                 style={{
                     width: '100%',
@@ -708,12 +708,12 @@ export default function HeroSection() {
                     <div className="img-wrap hero-img-col d-none d-lg-flex" style={{ paddingRight: 40 }}>
                         <div className="hcol">
                             {LEFT_IMGS.slice(0, 2).map((src, i) => (
-                                <HeroImg key={`l1-${i}`} src={src} delay={`${i * 0.15}s`} tall={i === 1} />
+                                <HeroImg key={`l1-${i}`} src={src} delay={`${i * 0.15}s`} tall={i === 1} priority={i === 0} />
                             ))}
                         </div>
                         <div className="hcol shift">
                             {LEFT_IMGS.slice(2, 4).map((src, i) => (
-                                <HeroImg key={`l2-${i}`} src={src} delay={`${0.2 + i * 0.15}s`} tall={i === 0} />
+                                <HeroImg key={`l2-${i}`} src={src} delay={`${0.2 + i * 0.15}s`} tall={i === 0} priority={false} />
                             ))}
                         </div>
                     </div>
@@ -779,12 +779,12 @@ export default function HeroSection() {
                     <div className="img-wrap hero-img-col d-none d-lg-flex" style={{ paddingLeft: 40 }}>
                         <div className="hcol">
                             {RIGHT_IMGS.slice(0, 2).map((src, i) => (
-                                <HeroImg key={`r1-${i}`} src={src} delay={`${0.1 + i * 0.15}s`} tall={i === 0} />
+                                <HeroImg key={`r1-${i}`} src={src} delay={`${0.1 + i * 0.15}s`} tall={i === 0} priority={i === 0} />
                             ))}
                         </div>
                         <div className="hcol shift">
                             {RIGHT_IMGS.slice(2, 4).map((src, i) => (
-                                <HeroImg key={`r2-${i}`} src={src} delay={`${0.3 + i * 0.15}s`} tall={i === 1} />
+                                <HeroImg key={`r2-${i}`} src={src} delay={`${0.3 + i * 0.15}s`} tall={i === 1} priority={false} />
                             ))}
                         </div>
                     </div>

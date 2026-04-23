@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
         const { id } = await params;
 
         // 1. Récupérer le service
-        const product = await ProductService.findById(id).lean();
+        const product = await ProductService.findById(id).populate("categoryId", "nom").lean();
         if (!product) {
             return NextResponse.json({ success: false, message: "Service introuvable" }, { status: 404 });
         }
@@ -40,6 +40,10 @@ export async function GET(request, { params }) {
             product: {
                 ...product,
                 id: product._id.toString(),
+                title: product.titre,
+                price: product.prix,
+                imageUrl: product.images?.[0] || null,
+                categoryName: product.categoryId?.nom || "Service",
             },
             artisan: artisan ? {
                 id: artisan._id.toString(),

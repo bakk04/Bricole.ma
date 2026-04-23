@@ -201,12 +201,15 @@ export default function CitiesExplore({ listingsData = [] }) {
                     {activeListings.length > 0 ? (
                         <div className="city-grid">
                             {activeListings.map(listing => (
-                                <Link href={`/offres/${listing.id}`} key={listing.id} className="city-card">
-                                    <div className="city-card-img">
+                                <Link href={`/explore/details/${listing.id}`} key={listing.id} className="city-card">
+                                    <div className="city-card-img" style={{ position: 'relative', width: '100%', aspectRatio: '4/3', backgroundColor: '#f1f5f9' }}>
                                         <img
                                             src={listing.imageUrl || '/assets/media/listing-img/popularity-img-1.webp'}
                                             alt={listing.title}
                                             loading="lazy"
+                                            width={400}
+                                            height={300}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                         />
                                         <div className="city-card-price">{listing.price} DH</div>
                                     </div>
