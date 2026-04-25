@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getData } from '@/lib/api';
 import styles from './details.module.css';
+import FavoriteButton from '@/components/FavoriteButton';
 
 /* ══════════════════════════════
    STAR DISPLAY
@@ -210,10 +211,10 @@ export default function ServiceDetailsPage() {
                 </button>
                 <div className={styles.mobileTopbarActions}>
                     <button className={styles.iconBtn} onClick={handleShare}><Share2 size={17} /></button>
-                    <button className={`${styles.iconBtn} ${liked ? styles.iconBtnLiked : ''}`}
-                            onClick={() => setLiked(!liked)}>
-                        <Heart size={17} fill={liked ? 'currentColor' : 'none'} />
-                    </button>
+                    <FavoriteButton 
+                        productId={sid as string} 
+                        className={styles.iconBtn}
+                    />
                 </div>
             </div>
 

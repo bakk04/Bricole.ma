@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
@@ -43,6 +44,8 @@ const FALLBACK = [
     'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=640&q=80',
 ];
 
+import FavoriteButton from '@/components/FavoriteButton';
+
 /* ══════════════════════
    SERVICE CARD
 ══════════════════════ */
@@ -66,7 +69,6 @@ function ServiceCard({
     index: number;
     onHover: (id: string | null) => void;
 }) {
-    const [saved, setSaved] = useState(false);
     const [imgLoaded, setImgLoaded] = useState(false);
     const image = item.imageUrl || FALLBACK[index % FALLBACK.length];
 
@@ -87,13 +89,10 @@ function ServiceCard({
                     onLoad={() => setImgLoaded(true)}
                 />
                 <div className={styles.cardImgOverlay} />
-                <button
-                    className={`${styles.save} ${saved ? styles.saveOn : ''}`}
-                    onClick={e => { e.preventDefault(); setSaved(!saved); }}
-                    aria-label="Sauvegarder"
-                >
-                    <Heart size={14} fill={saved ? 'currentColor' : 'none'} strokeWidth={2} />
-                </button>
+                <FavoriteButton 
+                    productId={item.id} 
+                    className={styles.save}
+                />
                 {isNew(item.createdAt) && (
                     <span className={styles.badgeNew}>Nouveau</span>
                 )}
@@ -142,12 +141,13 @@ function SkeletonCard({ delay = 0 }: { delay?: number }) {
    EXPLORE PAGE
 ══════════════════════ */
 export default function ExplorePage() {
+    const searchParams = useSearchParams();
     const [cats, setCats]           = useState<any[]>([]);
     const [services, setServices]   = useState<ServiceItem[]>([]);
     const [loading, setLoading]     = useState(true);
-    const [activeCat, setActiveCat] = useState<string>('all');
-    const [query, setQuery]         = useState('');
-    const [location, setLocation]   = useState('');
+    const [activeCat, setActiveCat] = useState<string>(searchParams.get('category') || 'all');
+    const [query, setQuery]         = useState(searchParams.get('q') || '');
+    const [location, setLocation]   = useState(searchParams.get('location') || '');
     const [showMap, setShowMap]     = useState(false);
     const [hoverId, setHoverId]     = useState<string | null>(null);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -157,6 +157,16 @@ export default function ExplorePage() {
     const markersRef  = useRef<Record<string, any>>({});
     const catBarRef   = useRef<HTMLDivElement>(null);
     const leafletRef  = useRef<any>(null);
+
+    // Sync state when URL changes
+    useEffect(() => {
+        const q = searchParams.get('q');
+        const loc = searchParams.get('location');
+        const cat = searchParams.get('category');
+        if (q !== null) setQuery(q);
+        if (loc !== null) setLocation(loc);
+        if (cat !== null) setActiveCat(cat);
+    }, [searchParams]);
 
     const getCoords = (cityName?: string): [number, number] => {
         const cities: Record<string, [number, number]> = {

@@ -28,6 +28,8 @@ interface CitiesExploreProps {
     listingsData?: Listing[];
 }
 
+import FavoriteButton from '@/components/FavoriteButton';
+
 const BASE_CITIES: CityInfo[] = [
     { id: 'casablanca', label: 'Casablanca', desc: 'Capitale Économique' },
     { id: 'marrakech',  label: 'Marrakech',  desc: 'Ville Ocre' },
@@ -232,6 +234,11 @@ const CitiesExplore: React.FC<CitiesExploreProps> = ({ listingsData = [] }) => {
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                         />
                                         <div className="city-card-price">{listing.price} DH</div>
+                                        <FavoriteButton 
+                                            productId={listing.id} 
+                                            className="city-fav-btn"
+                                            style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10 }} 
+                                        />
                                     </div>
                                     <div className="city-card-body">
                                         <span className="city-card-cat">{listing.categoryId || 'Service'}</span>

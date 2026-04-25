@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import {
     User, Mail, Shield, Hash, Heart, Activity, Settings,
     Edit3, LogOut, Star, MapPin, CheckCircle, FileText,
@@ -12,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useLogout } from "@/hooks/useLogout";
 import api, { getData as apiFetch } from "@/lib/api";
+import FavoriteButton from "@/components/FavoriteButton";
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
 function initials(name = "") {
@@ -108,38 +110,58 @@ function FavsPanel() {
     const [loading, setLoad]  = useState(true);
     const [error, setError]   = useState(null);
 
-    useEffect(() => {
-        apiFetch("/profile/favorites")
-            .then(d => setFavs(d.favorites ?? []))
+    const loadFavs = useCallback(() => {
+        fetch("/api/favorites")
+            .then(res => res.json())
+            .then(d => {
+                if (d.success) setFavs(d.favorites);
+                else throw new Error(d.error || "Erreur chargement");
+            })
             .catch(e => setError(e.message))
             .finally(() => setLoad(false));
     }, []);
 
+    useEffect(() => {
+        loadFavs();
+    }, [loadFavs]);
+
     if (loading) return <SkFavGrid />;
     if (error)   return <Err msg={error} />;
     if (!favs?.length)
-        return <Empty Icon={Heart} title="Aucun favori" body="Explorez et sauvegardez les artisans qui vous plaisent." cta="Découvrir" href="/artisans" />;
+        return <Empty Icon={Heart} title="Aucun favori" body="Explorez et sauvegardez les services qui vous plaisent." cta="Découvrir" href="/explore" />;
 
     return (
         <div className={styles.favGrid}>
-            {favs.map((f, i) => (
-                <a key={f.id} href={`/artisans/${f.artisanId}`} className={styles.favCard}
-                   style={{ animationDelay: `${i * 40}ms`, textDecoration: "none", color: "inherit" }}>
-                    {f.image
-                        ? <img src={f.image} alt={f.name} style={{ width: "100%", height: 140, objectFit: "cover" }} referrerPolicy="no-referrer" />
-                        : <div style={{ width: "100%", height: 140, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <ImageOff size={22} color="var(--ink-400)" />
-                        </div>
-                    }
-                    <div className={styles.favInfo}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-700)" }}>{f.name}</span>
-                        <span style={{ fontSize: 11, color: "var(--ink-400)" }}>{f.profession}</span>
-                        {f.city && <span style={{ fontSize: 11, color: "var(--ink-400)", display: "flex", alignItems: "center", gap: 3, marginTop: 2 }}>
-                            <MapPin size={10} />{f.city}
-                        </span>}
+            {favs.map((f, i) => {
+                const p = f.productId;
+                if (!p) return null;
+                const img = p.images?.[0] || p.imageUrl || null;
+                
+                return (
+                    <div key={f._id} className={styles.favCard} style={{ animationDelay: `${i * 40}ms`, position: 'relative' }}>
+                        <Link href={`/explore/details/${p._id || p.id}`} style={{ textDecoration: "none", color: "inherit", display: 'block' }}>
+                            {img
+                                ? <img src={img} alt={p.titre} style={{ width: "100%", height: 140, objectFit: "cover" }} referrerPolicy="no-referrer" />
+                                : <div style={{ width: "100%", height: 140, background: "var(--surface-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <ImageOff size={22} color="var(--ink-400)" />
+                                </div>
+                            }
+                            <div className={styles.favInfo}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-700)", display: 'block', marginBottom: 2 }}>{p.titre}</span>
+                                <span style={{ fontSize: 11, color: "var(--ink-400)", fontWeight: 600 }}>{p.prix} DH</span>
+                                {p.city && <span style={{ fontSize: 11, color: "var(--ink-400)", display: "flex", alignItems: "center", gap: 3, marginTop: 4 }}>
+                                    <MapPin size={10} />{p.city}
+                                </span>}
+                            </div>
+                        </Link>
+                        <FavoriteButton 
+                            productId={p._id || p.id} 
+                            className="profile-fav-btn"
+                            style={{ position: 'absolute', top: 8, right: 8, zIndex: 5, width: 30, height: 30 }}
+                        />
                     </div>
-                </a>
-            ))}
+                );
+            })}
         </div>
     );
 }

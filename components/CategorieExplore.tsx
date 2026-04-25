@@ -38,6 +38,8 @@ const DEFAULT_CATEGORIES = [
     { id: 'serrurerie', label: 'Serrurerie', Icon: LucideKey },
 ];
 
+import FavoriteButton from '@/components/FavoriteButton';
+
 /* ─── Helper: is NEW (< 24h) ─── */
 function isNew(createdAt: string | Date | undefined): boolean {
     if (!createdAt) return false;
@@ -47,12 +49,10 @@ function isNew(createdAt: string | Date | undefined): boolean {
 /* ─── POPUP INSTAGRAM ─── */
 interface PopupOverlayProps {
     item: ListingItem;
-    liked: boolean;
-    onLike: () => void;
     onClose: () => void;
 }
 
-const PopupOverlay: React.FC<PopupOverlayProps> = ({ item, liked, onLike, onClose }) => {
+const PopupOverlay: React.FC<PopupOverlayProps> = ({ item, onClose }) => {
     const images = item.images && item.images.length > 0 ? item.images : [item.imageUrl || '/placeholder.jpg'];
     const [imgIdx, setImgIdx] = useState(0);
     const isItemNew = isNew(item.createdAt);
@@ -149,16 +149,10 @@ const PopupOverlay: React.FC<PopupOverlayProps> = ({ item, liked, onLike, onClos
                         </div>
 
                         <div className={styles.popupActions}>
-                            <button
-                                className={`${styles.popupFav} ${liked ? styles.popupFavActive : ''}`}
-                                onClick={(e) => { e.preventDefault(); onLike(); }}
-                                aria-label="Favori"
-                            >
-                                <LucideHeart size={20}
-                                             fill={liked ? '#1a73e8' : 'none'}
-                                             color={liked ? '#1a73e8' : '#222'}
-                                             strokeWidth={2} />
-                            </button>
+                            <FavoriteButton 
+                                productId={item.id} 
+                                className={styles.popupFav} 
+                            />
                             <Link href={`/explore/details/${item.id}`} className={styles.popupCta}>
                                 Voir le service
                             </Link>
@@ -177,7 +171,6 @@ interface ServiceCardProps {
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ item, index }) => {
-    const [liked, setLiked] = useState(false);
     const [imgIdx, setImgIdx] = useState(0);
     const [popup, setPopup] = useState(false);
     const [longPressActive, setLongPressActive] = useState(false);
@@ -190,10 +183,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, index }) => {
     const images = item.images && item.images.length > 0 ? item.images : [item.imageUrl || '/placeholder.jpg'];
     const isItemNew = isNew(item.createdAt);
 
-    const handleLike = (e: React.MouseEvent) => {
-        e.preventDefault(); e.stopPropagation();
-        setLiked(p => !p);
-    };
     const handlePrev = (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
         setImgIdx(i => (i - 1 + images.length) % images.length);
@@ -272,18 +261,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, index }) => {
                     )}
 
                     {/* FAVORITE */}
-                    <button
-                        className={`${styles.favoriteBtn} ${liked ? styles.favoriteBtnActive : ''}`}
-                        onClick={handleLike}
-                        aria-label="Ajouter aux favoris"
-                    >
-                        <LucideHeart
-                            size={18}
-                            fill={liked ? '#1a73e8' : 'transparent'}
-                            color={liked ? '#1a73e8' : '#fff'}
-                            strokeWidth={2.5}
-                        />
-                    </button>
+                    <FavoriteButton 
+                        productId={item.id} 
+                        className={styles.favoriteBtn} 
+                    />
 
                     {/* NAV */}
                     {images.length > 1 && (
@@ -330,8 +311,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, index }) => {
             {popup && (
                 <PopupOverlay
                     item={item}
-                    liked={liked}
-                    onLike={() => setLiked(p => !p)}
                     onClose={() => setPopup(false)}
                 />
             )}
