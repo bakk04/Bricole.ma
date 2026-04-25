@@ -1,17 +1,18 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import styles from './login.module.css';
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { data: session, status: sessionStatus } = useSession();
 
     // États locaux pour remplacer le AuthContext
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(searchParams.get('error'));
 
     const [showPw, setShowPw] = useState(false);
     const [remember, setRemember] = useState(false);

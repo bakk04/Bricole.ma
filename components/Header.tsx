@@ -2,7 +2,7 @@
 // components/Header.tsx
 import Link from 'next/link'
 import React, { useState, useRef, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
     ChevronDown, User as UserIcon, Plus, Home, Info,
     BookOpen, FolderOpen, X, Menu,
@@ -20,6 +20,7 @@ import { User } from '@/types';
 
 const Header: React.FC = () => {
     const pathname = usePathname();
+    const router = useRouter();
     const { data: session, status: sessionStatus } = useSession();
     const { state: authState, checkAuth } = useAuth();
     const { logout } = useLogout();
@@ -277,10 +278,22 @@ const Header: React.FC = () => {
                                 </Link>
                             )}
 
-                            <Link href="/listing/add" className="cus-btn d-none d-sm-flex">
+                            <button 
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        router.push("/login?error=Vous devez être connecté en tant qu'artisan pour publier une offre");
+                                    } else if (user?.role !== "ARTISAN") {
+                                        router.push("/login?error=Cet espace est réservé aux artisans professionnels");
+                                    } else {
+                                        router.push(`/dashboard/${urlToken}?action=add`);
+                                    }
+                                }} 
+                                className="cus-btn d-none d-sm-flex"
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <span className="text">offre</span>
                                 <Plus size={20} className="cus-btn-icon" />
-                            </Link>
+                            </button>
                             <button
                                 type="button"
                                 className="d-xl-none d-none d-sm-flex main-menu__toggler mobile-nav__toggler"
