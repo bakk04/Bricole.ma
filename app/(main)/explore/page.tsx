@@ -45,6 +45,7 @@ const FALLBACK = [
 ];
 
 import FavoriteButton from '@/components/FavoriteButton';
+import NearbyModal from '@/components/NearbyModal';
 
 /* ══════════════════════
    SERVICE CARD
@@ -151,6 +152,7 @@ export default function ExplorePage() {
     const [showMap, setShowMap]     = useState(false);
     const [hoverId, setHoverId]     = useState<string | null>(null);
     const [filterOpen, setFilterOpen] = useState(false);
+    const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false);
 
     const mapRef      = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
@@ -339,7 +341,7 @@ export default function ExplorePage() {
                             <span>Filtres</span>
                             <ChevronDown size={13} className={filterOpen ? styles.chevronUp : ''} />
                         </button>
-                        <button className={styles.actionPill}>
+                        <button className={styles.actionPill} onClick={() => setIsNearbyModalOpen(true)}>
                             <LocateFixed size={14} />
                             <span>Proximité</span>
                         </button>
@@ -448,6 +450,11 @@ export default function ExplorePage() {
                     100% { background-position:  400px 0; }
                 }
             `}</style>
-        </div>
-    );
-}
+
+            <NearbyModal 
+                isOpen={isNearbyModalOpen} 
+                onClose={() => setIsNearbyModalOpen(false)} 
+            />
+            </div>
+            );
+            }
