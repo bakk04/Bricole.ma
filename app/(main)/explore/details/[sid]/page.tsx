@@ -18,15 +18,25 @@ import FavoriteButton from '@/components/FavoriteButton';
 /* ══════════════════════════════
    STAR DISPLAY
 ══════════════════════════════ */
-function Stars({ rating }: { rating: number }) {
+function Stars({ rating, size = 12 }: { rating: number, size?: number }) {
+    const full = Math.floor(rating);
+    const half = rating % 1 >= 0.5;
+    
     return (
-        <span className={styles.stars}>
-            {[1,2,3,4,5].map(n => (
-                <Star key={n} size={12}
-                      fill={n <= Math.round(rating) ? 'currentColor' : 'none'}
-                      strokeWidth={2}
-                />
-            ))}
+        <span className="d-flex align-items-center gap-0.5">
+            {[...Array(5)].map((_, i) => {
+                if (i < full) return <Star key={i} size={size} fill="#fcd34d" color="#fcd34d" />;
+                if (i === full && half) return (
+                    <span key={i} style={{ position: 'relative', display: 'inline-block', width: size, height: size }}>
+                        <Star size={size} color="#e2e8f0" />
+                        <span style={{ position: 'absolute', top: 0, left: 0, width: '50%', overflow: 'hidden' }}>
+                            <Star size={size} fill="#fcd34d" color="#fcd34d" />
+                        </span>
+                    </span>
+                );
+                return <Star key={i} size={size} color="#e2e8f0" />;
+            })}
+            <span className="ms-1 fw-bold text-dark" style={{ fontSize: size + 1 }}>{rating.toFixed(1)}</span>
         </span>
     );
 }
@@ -315,22 +325,49 @@ export default function ServiceDetailsPage() {
                         <div className={styles.divider} />
 
                         {/* Artisan brief */}
-                        <div className={styles.artisanRow}>
+                        <div className={styles.artisanRow} style={{ padding: '28px', backgroundColor: '#fcfcfc', borderRadius: '32px', border: '1px solid #f1f5f9', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.04)' }}>
                             <div className={styles.artisanInfo}>
-                                <h2 className={styles.artisanName}>
-                                    Service proposé par <strong>{artisan?.name || 'un artisan'}</strong>
-                                </h2>
-                                <p className={styles.artisanSub}>
-                                    {artisan?.speciality || product.categoryName}
-                                    {artisan?.experience ? ` · ${artisan.experience} ans d'expérience` : ''}
-                                </p>
+                                <div className="d-flex align-items-center gap-2 mb-2">
+                                    <h2 className={styles.artisanName} style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0f172a' }}>
+                                        {artisan?.name || 'Artisan Bricole'}
+                                    </h2>
+                                    {artisan?.isVerified && (
+                                        <BadgeCheck size={22} fill="#1478f1" color="#fff" />
+                                    )}
+                                </div>
+                                
+                                <div className="mb-3">
+                                    <Stars rating={rating} count={reviews.length} size={14} />
+                                </div>
+
+                                <div className="d-flex flex-wrap align-items-center gap-3 text-slate-500 mb-4" style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                                    <span className="d-flex align-items-center gap-1.5 bg-white px-2.5 py-1 rounded-pill border border-slate-100">
+                                        <MapPin size={14} className="text-primary" /> {artisan?.city || 'Maroc'}
+                                    </span>
+                                    <span className="d-flex align-items-center gap-1.5 bg-white px-2.5 py-1 rounded-pill border border-slate-100">
+                                        <Award size={14} className="text-primary" /> {artisan?.speciality || 'Expert'}
+                                    </span>
+                                </div>
+                                
+                                <Link 
+                                    href={`/artisans/${artisan?.id}`}
+                                    className="d-inline-flex align-items-center gap-2 px-4 py-2.5 rounded-4 bg-slate-900 text-white fw-bold text-decoration-none transition-all hover:bg-primary shadow-lg hover:shadow-primary/20 active:scale-95"
+                                    style={{ fontSize: '0.88rem' }}
+                                >
+                                    <Grid3x3 size={16} />
+                                    Voir la carte pro & catalogue
+                                </Link>
                             </div>
-                            <div className={styles.artisanAvatarWrap}>
+                            <div className={styles.artisanAvatarWrap} style={{ width: '90px', height: '90px', position: 'relative' }}>
                                 {artisan?.image
-                                    ? <img src={artisan.image} alt={artisan.name} className={styles.artisanAvatar} />
-                                    : <div className={styles.artisanAvatarFallback}><User size={22} /></div>
+                                    ? <img src={artisan.image} alt={artisan.name} className={styles.artisanAvatar} style={{ border: '4px solid #fff', boxShadow: '0 8px 20px rgba(0,0,0,0.1)', width: '100%', height: '100%', objectFit: 'cover', borderRadius: '28px' }} />
+                                    : <div className={styles.artisanAvatarFallback} style={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '28px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={36} color="#94a3b8" /></div>
                                 }
-                                {rating >= 4.9 && <span className={styles.superBadge}>⭐</span>}
+                                {rating >= 4.7 && (
+                                    <div style={{ position: 'absolute', bottom: '-5px', right: '-5px', background: '#fff', borderRadius: '50%', padding: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                                        <div style={{ background: '#fcd34d', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>⭐</div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
