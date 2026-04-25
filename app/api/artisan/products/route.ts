@@ -119,26 +119,34 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .lean();
 
-    const enriched = await Promise.all(
-      products.map(async (p: any) => {
-        const [favCount, viewCount] = await Promise.all([
-          Favorite.countDocuments({ productId: p._id }).catch(() => 0),
-          Interaction.countDocuments({
-            targetId: p._id,
-            targetType: "PRODUCT",
-            type: "VIEW",
-          }).catch(() => 0),
-        ]);
+    if (products.length === 0) {
+      return NextResponse.json({ success: true, products: [] });
+    }
 
-        return {
-          ...p,
-          id: p._id.toString(),
-          favCount: favCount || 0,
-          viewCount: viewCount || 0,
-          statut: p.statut || "ACTIVE",
-        };
-      })
-    );
+    const productIds = products.map(p => p._id);
+
+    // Fetch counts in bulk
+    const [favCounts, viewCounts] = await Promise.all([
+      Favorite.aggregate([
+        { $match: { productId: { $in: productIds } } },
+        { $group: { _id: "$productId", count: { $sum: 1 } } }
+      ]).catch(() => []),
+      Interaction.aggregate([
+        { $match: { targetId: { $in: productIds }, targetType: "PRODUCT", type: "VIEW" } },
+        { $group: { _id: "$targetId", count: { $sum: 1 } } }
+      ]).catch(() => [])
+    ]);
+
+    const favMap = new Map(favCounts.map(f => [f._id.toString(), f.count]));
+    const viewMap = new Map(viewCounts.map(v => [v._id.toString(), v.count]));
+
+    const enriched = products.map((p: any) => ({
+      ...p,
+      id: p._id.toString(),
+      favCount: favMap.get(p._id.toString()) || 0,
+      viewCount: viewMap.get(p._id.toString()) || 0,
+      statut: p.statut || "ACTIVE",
+    }));
 
     return NextResponse.json({ success: true, products: enriched });
   } catch (error) {

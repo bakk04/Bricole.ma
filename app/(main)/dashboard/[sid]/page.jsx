@@ -7,7 +7,7 @@ import {
     Search, X, Upload, CheckCircle, AlertCircle, BarChart2,
     Users, MessageSquare, Bell, LogOut, Settings, ChevronRight,
     Minus, Layers, Activity, Clock, DollarSign, Zap, Shield,
-    ShieldCheck, CreditCard, Download, QrCode, Loader2, Share2,
+    ShieldCheck, CreditCard, Download, QrCode, Loader2, Share2, MapPin,
 } from "lucide-react";
 import styles from "../dashboard.module.css";
 import { useRouter } from "next/navigation";
@@ -391,10 +391,13 @@ function VerificationModal({ onClose, onSuccess }) {
 
                     {step === 3 && (
                         <div className={styles.verifySuccess}>
-                            <div className={styles.successIcon}><CheckCircle size={48} color="var(--success)" /></div>
-                            <h3>Compte vérifié !</h3>
-                            <p>Félicitations, vous êtes désormais un artisan certifié Bricole.ma. Votre badge est actif.</p>
-                            <button className={`${styles.btn} ${styles.btnPrimary}`} style={{width:'100%', marginTop: 20}} onClick={onClose}>Continuer</button>
+                            <div className={styles.successIconWrap}>
+                                <div className={styles.successRing} />
+                                <CheckCircle size={56} color="var(--success)" />
+                            </div>
+                            <h3 className={styles.successTitle}>Compte vérifié avec succès !</h3>
+                            <p className={styles.successDesc}>Félicitations, vous êtes désormais un artisan certifié <b>Bricole.ma</b>. Votre badge de confiance est actif sur votre profil.</p>
+                            <button className={`${styles.btn} ${styles.btnPrimary}`} style={{width:'100%', marginTop: 24, height: 48}} onClick={onClose}>Accéder au Dashboard</button>
                         </div>
                     )}
                 </div>
@@ -412,62 +415,89 @@ function VerificationModal({ onClose, onSuccess }) {
 /* ─── Digital Business Card Modal ─────────────────────────── */
 function DigitalCardModal({ profile, onClose }) {
     const cardRef = useRef();
-    const publicProfileUrl = `https://bricole.ma/profile/${profile?._id || 'artisan'}`;
+    // Correct URL for public profile
+    const publicProfileUrl = `${window.location.origin}/profile/${profile?._id || profile?.userId}`;
 
     const download = async () => {
         if (!cardRef.current) return;
-        const dataUrl = await toPng(cardRef.current, { cacheBust: true });
-        const link = document.createElement('a');
-        link.download = `carte-pro-${profile?.nomComplet?.replace(/\s+/g, '-')}.png`;
-        link.href = dataUrl;
-        link.click();
+        try {
+            const dataUrl = await toPng(cardRef.current, { 
+                cacheBust: true,
+                style: { borderRadius: '0' } // Ensure sharp edges for download
+            });
+            const link = document.createElement('a');
+            link.download = `carte-pro-${profile?.nomComplet?.replace(/\s+/g, '-')}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error("Card download error:", err);
+        }
     };
 
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modal} style={{maxWidth: 400}} onClick={e => e.stopPropagation()}>
+            <div className={styles.modal} style={{maxWidth: 440}} onClick={e => e.stopPropagation()}>
                 <div className={styles.modalHead}>
-                    <div className={styles.modalTitle}>Ma Carte Pro</div>
+                    <div className={styles.modalTitle}>Ma Carte Pro Digitale</div>
                     <button className={styles.modalClose} onClick={onClose}><X size={13} /></button>
                 </div>
-                <div className={styles.modalBody} style={{background: 'var(--bg)', padding: '20px'}}>
+                <div className={styles.modalBody} style={{background: 'var(--surface-alt)', padding: '24px'}}>
                     <div className={styles.cardPreview} ref={cardRef}>
+                        {/* Zelij Background Pattern */}
+                        <div className={styles.cardZelij} />
+                        
                         <div className={styles.cardInner}>
                             <div className={styles.cardHeader}>
-                                <div className={styles.cardLogo}><Zap size={16} /> Bricole.ma</div>
-                                <div className={styles.cardBadge}><ShieldCheck size={10} /> Artisan Vérifié</div>
+                                <div className={styles.cardLogo}>
+                                    <div className={styles.cardLogoIcon}><Zap size={14} fill="currentColor" /></div>
+                                    <span>Bricole.ma</span>
+                                </div>
+                                <div className={styles.cardBadge}>
+                                    <ShieldCheck size={10} /> 
+                                    <span>Artisan Vérifié</span>
+                                </div>
                             </div>
                             
                             <div className={styles.cardMain}>
                                 <div className={styles.cardUser}>
                                     <div className={styles.cardAvatar}>
-                                        <img src={profile?.photoProfil} alt="" />
+                                        {profile?.photoProfil 
+                                            ? <img src={profile.photoProfil} alt="" referrerPolicy="no-referrer" />
+                                            : <div className={styles.cardAvatarFallback}>{initials(profile?.nomComplet)}</div>
+                                        }
                                     </div>
                                     <div className={styles.cardInfo}>
                                         <div className={styles.cardName}>{profile?.nomComplet}</div>
                                         <div className={styles.cardRole}>{profile?.metierId?.nom || "Artisan Expert"}</div>
-                                        <div className={styles.cardCity}>{profile?.ville}</div>
+                                        <div className={styles.cardCity}>
+                                            <MapPin size={10} /> {profile?.ville || "Maroc"}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className={styles.cardQR}>
-                                    <QRCodeSVG value={publicProfileUrl} size={80} level="H" includeMargin={true} />
-                                    <span>Scannez pour voir mon profil</span>
+                                    <div className={styles.qrWrapper}>
+                                        <QRCodeSVG value={publicProfileUrl} size={64} level="H" includeMargin={false} />
+                                    </div>
+                                    <span>Scanner Profil</span>
                                 </div>
                             </div>
                             
                             <div className={styles.cardFooter}>
-                                <div>Membre depuis {new Date(profile?.createdAt).getFullYear()}</div>
-                                <div className={styles.cardContact}>{profile?.telephone}</div>
+                                <div className={styles.cardSince}>Membre depuis {new Date(profile?.createdAt || Date.now()).getFullYear()}</div>
+                                <div className={styles.cardContact}>{profile?.telephone || "bricole.ma"}</div>
                             </div>
                         </div>
                     </div>
 
                     <div className={styles.cardActions}>
                         <button className={`${styles.btn} ${styles.btnPrimary}`} style={{flex:1}} onClick={download}>
-                            <Download size={14} /> Télécharger Image
+                            <Download size={14} /> Enregistrer l'image
                         </button>
-                        <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => navigator.clipboard.writeText(publicProfileUrl)}>
-                            <Share2 size={14} /> Partager
+                        <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => {
+                            navigator.clipboard.writeText(publicProfileUrl);
+                            alert("Lien copié !");
+                        }}>
+                            <Share2 size={14} /> Copier lien
                         </button>
                     </div>
                 </div>
@@ -549,27 +579,31 @@ export default function ArtisanDashboard() {
     useEffect(() => {
         if (!synced || status === "loading") return;
 
-        (async () => {
+        // Fetching profile separately as it's the most critical for UI identity
+        getData("/artisan/profile")
+            .then(p => setProfile(p.profile))
+            .catch(e => console.error("Profile load error:", e));
+
+        // Fetching remaining data in parallel but updating independently to show data as it arrives
+        const fetchRemaining = async () => {
             try {
-                const [p, s, prods, cats] = await Promise.all([
-                    getData("/artisan/profile"),
+                // We keep Promise.all for stats and products as they are the "meat" of the dashboard
+                const [s, prods, cats] = await Promise.all([
                     getData("/artisan/stats"),
                     getData("/artisan/products"),
                     getData("/categories"),
                 ]);
-                setProfile(p.profile);
                 setStats(s.stats);
                 setProducts(prods.products ?? []);
                 setCategories(cats.categories ?? []);
             } catch (e) {
-                console.error("Dashboard load error:", e);
-                if (e.response?.status === 401) {
-                    // router.push("/login");
-                }
+                console.error("Dashboard data load error:", e);
             } finally {
                 setLoading(false);
             }
-        })();
+        };
+
+        fetchRemaining();
     }, [synced, status]);
 
     /* ── Visit chart mock ── */

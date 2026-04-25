@@ -18,15 +18,19 @@ export async function GET(request: NextRequest) {
       query.categoryId = categoryId;
     }
 
-    // Récupérer les 10 derniers services
+    // Récupérer les 10 derniers services de manière optimisée
     const products = await ProductService.find(query)
-        .populate("categoryId")
+        .populate({
+          path: "categoryId",
+          select: "nom slug"
+        })
         .populate({
           path: "artisanId",
           select: "ville estVerifie nomComplet"
         })
         .sort({ createdAt: -1 })
-        .limit(10)
+        .limit(12) // Augmenter légèrement pour une meilleure grille
+        .select("-description") // Exclure la description pour alléger le JSON (non utilisée dans la grille)
         .lean();
 
     const formatted = products.map((p: any) => ({

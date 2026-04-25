@@ -326,7 +326,8 @@ interface CategorieExploreProps {
 const CategorieExplore: React.FC<CategorieExploreProps> = ({ listingsData: initialData }) => {
     const [listingsData, setListingsData] = useState<ListingItem[]>(initialData || []);
     const [active, setActive] = useState("all");
-    const [loading, setLoading] = useState(!initialData);
+    const [loading, setLoading] = useState(!initialData || initialData.length === 0);
+    const [dataLoaded, setDataLoaded] = useState(!!initialData && initialData.length > 0);
     const scrollRef = useRef<HTMLDivElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);
 
@@ -334,16 +335,19 @@ const CategorieExplore: React.FC<CategorieExploreProps> = ({ listingsData: initi
         if (initialData && initialData.length > 0) {
             setListingsData(initialData);
             setLoading(false);
+            setDataLoaded(true);
             return;
         }
-        (async () => {
+
+        // Only fetch if initialData is missing or empty
+        const fetchProducts = async () => {
             try {
                 setLoading(true);
                 const res = await getData("/products") as any;
                 const formatted: ListingItem[] = (res.products || []).map((p: any) => ({
                     id: p.id,
                     title: p.title,
-                    description: p.description,
+                    description: p.description || "",
                     price: p.price,
                     city: p.city || "Maroc",
                     imageUrl: p.imageUrl,
@@ -354,13 +358,19 @@ const CategorieExplore: React.FC<CategorieExploreProps> = ({ listingsData: initi
                     createdAt: p.createdAt,
                 }));
                 setListingsData(formatted);
+                // Petit délai pour laisser le temps au navigateur de préparer le rendu
+                setTimeout(() => {
+                    setLoading(false);
+                    setDataLoaded(true);
+                }, 100);
             } catch (e) {
                 console.error("Erreur:", e);
-            } finally {
                 setLoading(false);
             }
-        })();
-    }, []);
+        };
+
+        fetchProducts();
+    }, [initialData]);
 
     const categories = useMemo(() => {
         const map = new Map();

@@ -127,37 +127,34 @@ export async function GET() {
         }).catch(() => 0),
       ]);
 
-    // Re-calculer favoritesOnProducts avec les vrais IDs
-    let actualFavsOnProducts = 0;
-    if (products && (products as any[]).length > 0) {
-      actualFavsOnProducts = await Favorite.countDocuments({
-        productId: { $in: (products as any[]).map((p) => p._id) },
-      }).catch(() => 0);
-    }
-
-    const reviewCount = reviewsAgg[0]?.count ?? 0;
-
+    const productIds = (products as any[]).map(p => p._id);
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const weeklyInteractions = await Interaction.aggregate([
-      {
-        $match: {
-          targetId: artisan._id,
-          targetType: "ARTISAN",
-          type: "VIEW",
-          createdAt: { $gte: sevenDaysAgo },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+    // Optimized: Fetch counts in bulk
+    const [actualFavsOnProducts, weeklyInteractions] = await Promise.all([
+      productIds.length > 0 
+        ? Favorite.countDocuments({ productId: { $in: productIds } }).catch(() => 0)
+        : Promise.resolve(0),
+      Interaction.aggregate([
+        {
+          $match: {
+            targetId: artisan._id,
+            targetType: "ARTISAN",
+            type: "VIEW",
+            createdAt: { $gte: sevenDaysAgo },
           },
-          count: { $sum: 1 },
         },
-      },
-    ]).catch(() => []);
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ]).catch(() => [])
+    ]);
 
     const visitsPerDay = [];
     let weekViews = 0;
@@ -175,16 +172,14 @@ export async function GET() {
       totalFavs: favoritesOnArtisan + actualFavsOnProducts,
       weekViews,
       visitsPerDay,
-      reviewCount,
+      reviewCount: (reviewsAgg as any[])?.[0]?.count ?? 0,
       unreadMessages,
     };
 
     // Get last 5 interactions for activity feed
+    // Optimized: targetId and targetType are indexed. $in is generally efficient.
     const recentInteractions = await Interaction.find({
-        $or: [
-          { targetId: artisan._id, targetType: "ARTISAN" },
-          { targetId: { $in: (products as any[]).map(p => p._id) }, targetType: "PRODUCT" }
-        ]
+        targetId: { $in: [artisan._id, ...productIds] }
       })
       .sort({ createdAt: -1 })
       .limit(5)
