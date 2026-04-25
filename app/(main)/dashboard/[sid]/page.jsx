@@ -415,8 +415,8 @@ function VerificationModal({ onClose, onSuccess }) {
 /* ─── Digital Business Card Modal ─────────────────────────── */
 function DigitalCardModal({ profile, onClose }) {
     const cardRef = useRef();
-    // Correct URL for public profile
-    const publicProfileUrl = `${window.location.origin}/profile/${profile?._id || profile?.userId}`;
+    // Correct URL for public profile - using the explore/details route which shows catalog and bio
+    const publicProfileUrl = `${window.location.origin}/explore/details/${profile?._id || profile?.userId}`;
 
     const download = async () => {
         if (!cardRef.current) return;
@@ -461,8 +461,8 @@ function DigitalCardModal({ profile, onClose }) {
                             <div className={styles.cardMain}>
                                 <div className={styles.cardUser}>
                                     <div className={styles.cardAvatar}>
-                                        {profile?.photoProfil 
-                                            ? <img src={profile.photoProfil} alt="" referrerPolicy="no-referrer" />
+                                        {profile?.photoProfil || profile?.userId?.profileImage
+                                            ? <img src={profile.photoProfil || profile.userId.profileImage} alt="" referrerPolicy="no-referrer" />
                                             : <div className={styles.cardAvatarFallback}>{initials(profile?.nomComplet)}</div>
                                         }
                                     </div>
@@ -727,6 +727,7 @@ export default function ArtisanDashboard() {
     /* ── Page titles ── */
     const PAGE = {
         overview:  { title: "Vue d'ensemble",      sub: "Activité et performances de votre espace" },
+        leads:     { title: "Missions (Leads)",     sub: "Découvrez des opportunités de travail" },
         catalogue: { title: "Catalogue services",   sub: "Gérez vos services et photos" },
         stats:     { title: "Statistiques",         sub: "Analyse détaillée de votre activité" },
         reviews:   { title: "Avis clients",         sub: "Gérez votre réputation" },

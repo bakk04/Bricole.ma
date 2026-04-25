@@ -2364,8 +2364,29 @@
 .cardContact { font-weight: 700; color: #111827; }
 .cardActions {
     display: flex;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-xl);
+    gap: 12px;
+    margin-top: 24px;
+}
+.btnGhost {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    background: white;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-medium);
+    transition: all 0.2s ease;
+    flex: 1;
+}
+.btnGhost:hover {
+    background: var(--surface-alt);
+    border-color: var(--text-quaternary);
+    color: var(--text-primary);
 }
 
 /* ─────────────────────────────────────────────────────────────
