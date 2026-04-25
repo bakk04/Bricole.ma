@@ -111,13 +111,13 @@ const Header: React.FC = () => {
                         <ul className="main-menu__list">
                             <li>
                                 <Link href="/" className={`${isActive('/', true)} nav-link-item`}>
-                                    <Home className="nav-icon" size={18} aria-hidden />
+                                    <Home className="nav-icon" size={18} color={isActive('/', true) ? '#1478f1' : 'currentColor'} aria-hidden />
                                     <span>Home</span>
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/about" className={`${isActive('/about')} nav-link-item`}>
-                                    <Info className="nav-icon" size={18} aria-hidden />
+                                    <Info className="nav-icon" size={18} color={isActive('/about') ? '#1478f1' : 'currentColor'} aria-hidden />
                                     <span>About Us</span>
                                 </Link>
                             </li>
@@ -125,15 +125,15 @@ const Header: React.FC = () => {
                             <li className={`dropdown ${openDropdown === 'explore' ? 'open' : ''}`}>
                                 <button
                                     type="button"
-                                    className={`dropdown-trigger ${isActive('/explore', true)}`}
+                                    className={`dropdown-trigger ${isActive('/explore') ? 'active' : ''}`}
                                     onClick={(e) => { e.stopPropagation(); toggleDropdown('explore') }}
                                 >
-                                    <Compass className="nav-icon" size={18} aria-hidden />
-                                    <span>Explore</span>
-                                    <ChevronDown className="d-lg-block d-none dropdown-chevron" size={14} style={{ marginLeft: '4px' }} />
+                                    <Compass className="nav-icon" size={18} color={isActive('/explore') ? '#1478f1' : 'currentColor'} aria-hidden />
+                                    <span className={isActive('/explore') ? 'color-primary' : ''}>Explore</span>
+                                    <ChevronDown className="d-lg-block d-none dropdown-chevron" size={14} color={isActive('/explore') ? '#1478f1' : 'currentColor'} style={{ marginLeft: '4px' }} />
                                 </button>
                                 <ul>
-                                    <li><Link href="/explore" onClick={() => setOpenDropdown(null)}>All Regions</Link></li>
+                                    <li><Link href="/explore" className={pathname === '/explore' ? 'active' : ''} onClick={() => setOpenDropdown(null)}>All Regions</Link></li>
                                     <li><Link href="/explore?city=Casablanca" onClick={() => setOpenDropdown(null)}>Casablanca</Link></li>
                                     <li><Link href="/explore?city=Rabat" onClick={() => setOpenDropdown(null)}>Rabat</Link></li>
                                     <li><Link href="/explore?city=Tanger" onClick={() => setOpenDropdown(null)}>Tanger</Link></li>
@@ -145,12 +145,12 @@ const Header: React.FC = () => {
                             <li className={`dropdown ${openDropdown === 'smart-tools' ? 'open' : ''}`}>
                                 <button
                                     type="button"
-                                    className={`dropdown-trigger ${isActive('/tools')}`}
+                                    className={`dropdown-trigger ${isActive('/tools') ? 'active' : ''}`}
                                     onClick={(e) => { e.stopPropagation(); toggleDropdown('smart-tools') }}
                                 >
-                                    <Cpu className="nav-icon" size={18} aria-hidden />
-                                    <span>Smart Tools</span>
-                                    <ChevronDown className="d-lg-block d-none dropdown-chevron" size={14} style={{ marginLeft: '4px' }} />
+                                    <Cpu className="nav-icon" size={18} color={isActive('/tools') ? '#1478f1' : 'currentColor'} aria-hidden />
+                                    <span className={isActive('/tools') ? 'color-primary' : ''}>Smart Tools</span>
+                                    <ChevronDown className="d-lg-block d-none dropdown-chevron" size={14} color={isActive('/tools') ? '#1478f1' : 'currentColor'} style={{ marginLeft: '4px' }} />
                                 </button>
                                 <ul>
                                     <li>
@@ -168,7 +168,7 @@ const Header: React.FC = () => {
 
                             <li>
                                 <Link href="/contact" className={`${isActive('/contact')} nav-link-item`}>
-                                    <Mail className="nav-icon" size={18} aria-hidden />
+                                    <Mail className="nav-icon" size={18} color={isActive('/contact') ? '#1478f1' : 'currentColor'} aria-hidden />
                                     <span>Contact</span>
                                 </Link>
                             </li>

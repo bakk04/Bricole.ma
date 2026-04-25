@@ -385,6 +385,11 @@ export default function HeroSection() {
     const handleSuggestionClick = (text: string) => {
         setSearchQuery(text);
         setShowSuggestions(false);
+        const params = new URLSearchParams();
+        params.set('q', text);
+        if (locInputRef.current?.value) params.set('location', locInputRef.current.value);
+        if (selectedCategory) params.set('category', selectedCategory);
+        router.push(`/explore?${params.toString()}`);
     };
 
     return (

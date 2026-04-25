@@ -2,8 +2,8 @@ import React from 'react'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import BottomNav from '../../components/BottomNav'
-import { ScrollToTopIcon } from '../../components/LayoutIcons'
 import { AuthProvider } from "../api/context/AuthContext"
+import Script from 'next/script'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -16,10 +16,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </AuthProvider>
 
             <BottomNav />
-
-            <button className="scrollToTopBtn" aria-label="Scroll to top">
-                <ScrollToTopIcon />
-            </button>
+            <Script
+                src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"
+                strategy="afterInteractive"
+            />
+            <Script
+                src="https://files.bpcontent.cloud/2025/10/26/17/20251026170722-KH7OBXON.js"
+                strategy="afterInteractive"
+            />
         </>
     )
 }
