@@ -7,11 +7,14 @@ import {
     Search, X, Upload, CheckCircle, AlertCircle, BarChart2,
     Users, MessageSquare, Bell, LogOut, Settings, ChevronRight,
     Minus, Layers, Activity, Clock, DollarSign, Zap, Shield,
+    ShieldCheck, CreditCard, Download, QrCode, Loader2, Share2,
 } from "lucide-react";
 import styles from "../dashboard.module.css";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getData, postData, putData, deleteData } from "@/lib/api";
+import { QRCodeSVG } from "qrcode.react";
+import { toPng } from "html-to-image";
 
 /* ─── Helpers ───────────────────────────────────────────────── */
 // ... (initials, fmtNum, etc. omitted for brevity if replace handles it, but I must provide full context)
@@ -313,6 +316,166 @@ function ProductModal({ product, categories = [], onSave, onClose }) {
     );
 }
 
+/* ─── Identity Verification Modal ─────────────────────────── */
+function VerificationModal({ onClose, onSuccess }) {
+    const [step, setStep] = useState(1); // 1: Upload, 2: Loading, 3: Success
+    const [files, setFiles] = useState({ recto: null, verso: null });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const fileRef = useRef({ recto: null, verso: null });
+
+    const handleFileChange = (side, file) => {
+        if (!file) return;
+        setFiles(f => ({ ...f, [side]: file }));
+    };
+
+    const submit = async () => {
+        if (!files.recto || !files.verso) return setError("Veuillez uploader les deux faces.");
+        setLoading(true);
+        setError("");
+        
+        try {
+            const formData = new FormData();
+            formData.append("recto", files.recto);
+            formData.append("verso", files.verso);
+
+            const res = await postData("/artisan/verify", formData);
+            if (res.success) {
+                setStep(3);
+                onSuccess(res.profile);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "Erreur lors de la vérification.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className={styles.modalOverlay} onClick={onClose}>
+            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                <div className={styles.modalHead}>
+                    <div className={styles.modalTitle}>Vérification d'identité</div>
+                    <button className={styles.modalClose} onClick={onClose}><X size={13} /></button>
+                </div>
+                <div className={styles.modalBody}>
+                    {step === 1 && (
+                        <div className={styles.verifyContent}>
+                            <div className={styles.verifyInfo}>
+                                <div className={styles.verifyIcon}><ShieldCheck size={32} color="var(--primary)" /></div>
+                                <p>Pour obtenir votre badge <b>Vérifié</b> et accéder à toutes les fonctionnalités premium, veuillez uploader une copie nette de votre CIN.</p>
+                            </div>
+
+                            <div className={styles.uploadGrid}>
+                                <div className={styles.uploadBox} onClick={() => fileRef.current.recto.click()}>
+                                    <input type="file" ref={el => fileRef.current.recto = el} style={{display:'none'}} onChange={e => handleFileChange('recto', e.target.files[0])} />
+                                    {files.recto ? <div className={styles.fileSuccess}><CheckCircle size={20} /> <span>Recto chargé</span></div> : <><Upload size={20} /><p>Recto de la CIN</p></>}
+                                </div>
+                                <div className={styles.uploadBox} onClick={() => fileRef.current.verso.click()}>
+                                    <input type="file" ref={el => fileRef.current.verso = el} style={{display:'none'}} onChange={e => handleFileChange('verso', e.target.files[0])} />
+                                    {files.verso ? <div className={styles.fileSuccess}><CheckCircle size={20} /> <span>Verso chargé</span></div> : <><Upload size={20} /><p>Verso de la CIN</p></>}
+                                </div>
+                            </div>
+                            
+                            {error && <div className={styles.errorBox}>{error}</div>}
+                        </div>
+                    )}
+
+                    {step === 2 || loading ? (
+                        <div className={styles.verifyLoading}>
+                            <div className={styles.spinner}><Loader2 size={40} /></div>
+                            <h3>Analyse sécurisée en cours...</h3>
+                            <p>Nos algorithmes vérifient l'authenticité de vos documents. Ne fermez pas cette fenêtre.</p>
+                        </div>
+                    ) : null}
+
+                    {step === 3 && (
+                        <div className={styles.verifySuccess}>
+                            <div className={styles.successIcon}><CheckCircle size={48} color="var(--success)" /></div>
+                            <h3>Compte vérifié !</h3>
+                            <p>Félicitations, vous êtes désormais un artisan certifié Bricole.ma. Votre badge est actif.</p>
+                            <button className={`${styles.btn} ${styles.btnPrimary}`} style={{width:'100%', marginTop: 20}} onClick={onClose}>Continuer</button>
+                        </div>
+                    )}
+                </div>
+                {step === 1 && !loading && (
+                    <div className={styles.modalFooter}>
+                        <button className={`${styles.btn} ${styles.btnGhost}`} onClick={onClose}>Plus tard</button>
+                        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={submit} disabled={!files.recto || !files.verso}>Lancer la vérification</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+/* ─── Digital Business Card Modal ─────────────────────────── */
+function DigitalCardModal({ profile, onClose }) {
+    const cardRef = useRef();
+    const publicProfileUrl = `https://bricole.ma/profile/${profile?._id || 'artisan'}`;
+
+    const download = async () => {
+        if (!cardRef.current) return;
+        const dataUrl = await toPng(cardRef.current, { cacheBust: true });
+        const link = document.createElement('a');
+        link.download = `carte-pro-${profile?.nomComplet?.replace(/\s+/g, '-')}.png`;
+        link.href = dataUrl;
+        link.click();
+    };
+
+    return (
+        <div className={styles.modalOverlay} onClick={onClose}>
+            <div className={styles.modal} style={{maxWidth: 400}} onClick={e => e.stopPropagation()}>
+                <div className={styles.modalHead}>
+                    <div className={styles.modalTitle}>Ma Carte Pro</div>
+                    <button className={styles.modalClose} onClick={onClose}><X size={13} /></button>
+                </div>
+                <div className={styles.modalBody} style={{background: 'var(--bg)', padding: '20px'}}>
+                    <div className={styles.cardPreview} ref={cardRef}>
+                        <div className={styles.cardInner}>
+                            <div className={styles.cardHeader}>
+                                <div className={styles.cardLogo}><Zap size={16} /> Bricole.ma</div>
+                                <div className={styles.cardBadge}><ShieldCheck size={10} /> Artisan Vérifié</div>
+                            </div>
+                            
+                            <div className={styles.cardMain}>
+                                <div className={styles.cardUser}>
+                                    <div className={styles.cardAvatar}>
+                                        <img src={profile?.photoProfil} alt="" />
+                                    </div>
+                                    <div className={styles.cardInfo}>
+                                        <div className={styles.cardName}>{profile?.nomComplet}</div>
+                                        <div className={styles.cardRole}>{profile?.metierId?.nom || "Artisan Expert"}</div>
+                                        <div className={styles.cardCity}>{profile?.ville}</div>
+                                    </div>
+                                </div>
+                                <div className={styles.cardQR}>
+                                    <QRCodeSVG value={publicProfileUrl} size={80} level="H" includeMargin={true} />
+                                    <span>Scannez pour voir mon profil</span>
+                                </div>
+                            </div>
+                            
+                            <div className={styles.cardFooter}>
+                                <div>Membre depuis {new Date(profile?.createdAt).getFullYear()}</div>
+                                <div className={styles.cardContact}>{profile?.telephone}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.cardActions}>
+                        <button className={`${styles.btn} ${styles.btnPrimary}`} style={{flex:1}} onClick={download}>
+                            <Download size={14} /> Télécharger Image
+                        </button>
+                        <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => navigator.clipboard.writeText(publicProfileUrl)}>
+                            <Share2 size={14} /> Partager
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ─── Sidebar nav ────────────────────────────────────────────── */
 const NAV = [
     { key: "overview",   Icon: LayoutDashboard, label: "Tableau de bord" },
@@ -321,6 +484,7 @@ const NAV = [
     { key: "messages",   Icon: MessageSquare,    label: "Messages" },
     { key: "stats",      Icon: BarChart2,        label: "Statistiques" },
     { key: "reviews",    Icon: Star,             label: "Avis clients" },
+    { key: "card",       Icon: CreditCard,       label: "Ma Carte Pro", reward: true },
 ];
 
 /* ══════════════════════════════════════════════════════════════
@@ -350,6 +514,8 @@ export default function ArtisanDashboard() {
     const [filter, setFilter]       = useState("all");  // all | active | paused
     const [search, setSearch]       = useState("");
     const [modalProduct, setModalProduct] = useState(undefined); // undefined=closed, null=new, obj=edit
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [showCardModal, setShowCardModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
 
     /* Toast */
@@ -550,14 +716,24 @@ export default function ArtisanDashboard() {
 
                     {/* Nav — Horizontal scrolling on mobile, vertical on desktop */}
                     <nav className={styles.sidebarNav}>
-                        {NAV.map(({ key, Icon, label }) => (
+                        {NAV.map(({ key, Icon, label, reward }) => (
                             <button key={key}
-                                    className={`${styles.navItem} ${navKey === key ? styles.active : ""}`}
-                                    onClick={() => setNavKey(key)}>
+                                    className={`${styles.navItem} ${navKey === key ? styles.active : ""} ${reward ? styles.navReward : ""}`}
+                                    onClick={() => {
+                                        if (key === 'card') {
+                                            if (profile?.estVerifie) setShowCardModal(true);
+                                            else showToast("Veuillez d'abord vérifier votre compte", "error");
+                                        } else {
+                                            setNavKey(key);
+                                        }
+                                    }}>
                                 <Icon size={16} />
                                 <span>{label}</span>
                                 {key === "messages" && stats?.unreadMessages > 0 && (
                                     <span className={styles.navBadge}>{stats.unreadMessages}</span>
+                                )}
+                                {key === "card" && !profile?.estVerifie && (
+                                    <span className={styles.navLock}><Clock size={10} /></span>
                                 )}
                             </button>
                         ))}
@@ -573,6 +749,13 @@ export default function ArtisanDashboard() {
                             <LogOut size={16} />
                             <span>Déconnexion</span>
                         </button>
+
+                        {!profile?.estVerifie && (
+                            <button className={`${styles.navItem} ${styles.navItemVerify}`} onClick={() => setShowVerifyModal(true)}>
+                                <ShieldCheck size={16} />
+                                <span>Vérifier mon compte</span>
+                            </button>
+                        )}
                     </nav>
 
                     {/* User — Responsive (hidden on mobile via CSS) */}
@@ -584,7 +767,10 @@ export default function ArtisanDashboard() {
                         <div className={styles.sidebarUserInfo}>
                             <div className={styles.sidebarUserName}>{profile?.nomComplet ?? "Artisan"}</div>
                             <div className={styles.sidebarUserRole}>
-                                {profile?.estVerifie ? "✓ Vérifié" : "Non vérifié"}
+                                {profile?.estVerifie 
+                                    ? <span className={styles.verifiedBadge}><ShieldCheck size={10} /> Vérifié</span> 
+                                    : "Non vérifié"
+                                }
                             </div>
                         </div>
                     </div>
@@ -942,6 +1128,21 @@ export default function ArtisanDashboard() {
                     item={deleteTarget}
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteTarget(null)}
+                />
+            )}
+            {showVerifyModal && (
+                <VerificationModal 
+                    onClose={() => setShowVerifyModal(false)} 
+                    onSuccess={(newProfile) => {
+                        setProfile(newProfile);
+                        showToast("Félicitations ! Votre compte est vérifié.");
+                    }} 
+                />
+            )}
+            {showCardModal && (
+                <DigitalCardModal 
+                    profile={profile} 
+                    onClose={() => setShowCardModal(false)} 
                 />
             )}
 
