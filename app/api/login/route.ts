@@ -37,8 +37,10 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim();
     
-    // Utilisation du modèle User avec .select("+password") car il est en select: false dans le schéma
-    const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    // Recherche insensible à la casse
+    const user = await User.findOne({ 
+        email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') } 
+    }).select("+password");
 
     if (!user) {
       console.log(`Login failed: User not found for email ${normalizedEmail}`);
@@ -113,11 +115,15 @@ export async function POST(req: NextRequest) {
         throw new Error("Erreur de configuration serveur.");
     }
 
-    // Générer un jeton de navigation (Session-Bound Routing)
-    const urlToken = crypto.randomBytes(8).toString('hex');
+    // Générer un jeton de navigation (Session-Bound Routing) si pas existant
+    const urlToken = user.urlToken || crypto.randomBytes(8).toString('hex');
+    if (!user.urlToken) {
+        user.urlToken = urlToken;
+        await user.save();
+    }
 
     const token = jwt.sign(
-        { userId: user._id.toString(), email: user.email, urlToken: urlToken },
+        { userId: user._id.toString(), email: user.email, urlToken: urlToken, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: "30d" }
     );

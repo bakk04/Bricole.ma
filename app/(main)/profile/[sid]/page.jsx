@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
 import {
     User, Mail, Shield, Hash, Heart, Activity, Settings,
     Edit3, LogOut, Star, MapPin, CheckCircle, FileText,
     Bell, AtSign, Globe, Moon, MessageCircle, Phone, Calendar,
     Package, AlertCircle, RefreshCw, ChevronRight, ImageOff,
+    Check,
 } from "lucide-react";
 import styles from "../profile.module.css";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLogout } from "@/hooks/useLogout";
 import api, { getData as apiFetch } from "@/lib/api";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -234,19 +235,32 @@ function ActivityPanel() {
 }
 
 /* ─── SettingsPanel ─────────────────────────────────────────────── */
-function SettingsPanel() {
+function SettingsPanel({ user, onUpdate }) {
     const [notifs, setNotifs]   = useState({ email: true, push: false, sms: false });
     const [privacy, setPrivacy] = useState({ showProfile: true, showActivity: false });
+    const [profile, setProfile] = useState({
+        name: user?.name || "",
+        phone: user?.phone || "",
+        city: user?.city || ""
+    });
     const [saving, setSaving]   = useState(false);
 
     const save = async () => {
         setSaving(true);
         try {
-            await apiFetch("/profile/settings", {
-                method: "PUT",
-                body: JSON.stringify({ notifs, privacy }),
+            const res = await api.put("/profile/settings", { 
+                notifs, 
+                privacy,
+                ...profile
             });
-        } catch (e) { console.error(e); }
+            if (res.success) {
+                if (onUpdate) onUpdate(res.user);
+                alert("Votre profil a été mis à jour avec succès !");
+            }
+        } catch (e) { 
+            console.error(e);
+            alert("Erreur lors de la mise à jour du profil.");
+        }
         finally { setSaving(false); }
     };
 
@@ -261,30 +275,62 @@ function SettingsPanel() {
     ];
 
     return (
-        <div>
+        <div className={styles.settingsPanel}>
+            {/* Informations personnelles */}
+            <p className={styles.settingGroupTitle}>Informations du profil</p>
+            <div className={styles.settingGroup} style={{ padding: '24px', borderBottom: 'none' }}>
+                <div className={styles.formRow} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                    <div className={styles.inputGroup}>
+                        <label style={{ display:'block', fontSize:11, fontWeight:700, color:'var(--ink-400)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Nom complet</label>
+                        <input 
+                            type="text" 
+                            value={profile.name} 
+                            onChange={e => setProfile({...profile, name: e.target.value})}
+                            placeholder="Ex: Mohammed El Amrani"
+                            style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1px solid var(--border-strong)', fontSize:14, background:'var(--surface-2)', transition:'all 0.2s' }}
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label style={{ display:'block', fontSize:11, fontWeight:700, color:'var(--ink-400)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Téléphone</label>
+                        <input 
+                            type="text" 
+                            value={profile.phone} 
+                            onChange={e => setProfile({...profile, phone: e.target.value})}
+                            placeholder="Ex: 0612345678"
+                            style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1px solid var(--border-strong)', fontSize:14, background:'var(--surface-2)', transition:'all 0.2s' }}
+                        />
+                    </div>
+                </div>
+                <div className={styles.inputGroup}>
+                    <label style={{ display:'block', fontSize:11, fontWeight:700, color:'var(--ink-400)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Ville de résidence</label>
+                    <input 
+                        type="text" 
+                        value={profile.city} 
+                        onChange={e => setProfile({...profile, city: e.target.value})}
+                        placeholder="Ex: Casablanca"
+                        style={{ width:'100%', padding:'12px 14px', borderRadius:10, border:'1px solid var(--border-strong)', fontSize:14, background:'var(--surface-2)', transition:'all 0.2s' }}
+                    />
+                </div>
+            </div>
+
             {/* Notifications */}
-            <p className={styles.settingGroupTitle}>Notifications</p>
+            <p className={styles.settingGroupTitle} style={{ marginTop: 24 }}>Préférences & Sécurité</p>
             <div className={styles.settingGroup}>
                 {notifRows.map(({ Icon, key, label, desc }) => (
                     <div key={key} className={styles.settingRow} onClick={() => setNotifs(p => ({ ...p, [key]: !p[key] }))}>
-                        <div className={styles.settingIco}><Icon size={15} /></div>
+                        <div className={styles.settingIco} style={{ background: 'var(--surface-3)', color: 'var(--ink-500)' }}><Icon size={15} /></div>
                         <div className={styles.settingBody}>
-                            <div className={styles.settingLabel}>{label}</div>
+                            <div className={styles.settingLabel} style={{ fontWeight: 600 }}>{label}</div>
                             <div className={styles.settingDesc}>{desc}</div>
                         </div>
                         <Toggle on={notifs[key]} onChange={v => setNotifs(p => ({ ...p, [key]: v }))} />
                     </div>
                 ))}
-            </div>
-
-            {/* Confidentialité */}
-            <p className={styles.settingGroupTitle} style={{ marginTop: 20 }}>Confidentialité</p>
-            <div className={styles.settingGroup}>
                 {privacyRows.map(({ Icon, key, label, desc }) => (
                     <div key={key} className={styles.settingRow} onClick={() => setPrivacy(p => ({ ...p, [key]: !p[key] }))}>
-                        <div className={styles.settingIco}><Icon size={15} /></div>
+                        <div className={styles.settingIco} style={{ background: 'var(--surface-3)', color: 'var(--ink-500)' }}><Icon size={15} /></div>
                         <div className={styles.settingBody}>
-                            <div className={styles.settingLabel}>{label}</div>
+                            <div className={styles.settingLabel} style={{ fontWeight: 600 }}>{label}</div>
                             <div className={styles.settingDesc}>{desc}</div>
                         </div>
                         <Toggle on={privacy[key]} onChange={v => setPrivacy(p => ({ ...p, [key]: v }))} />
@@ -292,15 +338,15 @@ function SettingsPanel() {
                 ))}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
                 <button
                     onClick={save}
                     disabled={saving}
                     className={styles.btnPrimary}
-                    style={{ opacity: saving ? 0.7 : 1 }}
+                    style={{ opacity: saving ? 0.7 : 1, padding: '12px 28px', borderRadius: '12px', fontSize: '14px' }}
                 >
-                    {saving ? <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle size={14} />}
-                    {saving ? "Enregistrement…" : "Enregistrer"}
+                    {saving ? <RefreshCw size={14} className={styles.spin} /> : <Check size={14} />}
+                    {saving ? "Enregistrement…" : "Enregistrer les modifications"}
                 </button>
             </div>
         </div>
@@ -314,8 +360,8 @@ const TABS = [
     { key: "settings",  Icon: Settings, label: "Paramètres" },
 ];
 
-/* ─── Main Page ──────────────────────────────────────────────────── */
-export default function ProfilePage() {
+/* ─── Inner Page ─────────────────────────────────────────────────── */
+function ProfileInner() {
     const [user, setUser]    = useState(null);
     const [stats, setStats]  = useState(null);
     const [loading, setLoad] = useState(true);
@@ -325,66 +371,54 @@ export default function ProfilePage() {
     const { data: session, status }  = useSession();
     const { logout }         = useLogout();
     const router             = useRouter();
+    const searchParams       = useSearchParams();
+
+    // Set initial tab from URL if present
+    useEffect(() => {
+        const t = searchParams.get("tab");
+        if (t && TABS.some(x => x.key === t)) {
+            setTab(t);
+        }
+    }, [searchParams]);
 
     /* Google sync */
     useEffect(() => {
         (async () => {
-            // Attendre que la session soit chargée
             if (status === "loading" || synced) return;
-
-            // Si pas de session NextAuth du tout, on marque comme synchronisé (pour laisser le middleware ou l'API gérer)
-            if (status === "unauthenticated") {
-                setSynced(true);
-                return;
-            }
-
+            if (status === "unauthenticated") { setSynced(true); return; }
             const bricoleToken = session?.user?.bricoleToken;
-            
-            // Si session existe mais pas de token Bricole (ne devrait pas arriver avec Google)
-            if (!bricoleToken) {
-                setSynced(true);
-                return;
-            }
-
+            if (!bricoleToken) { setSynced(true); return; }
             try {
-                const res = await fetch("/api/auth/google-sync", {
+                await fetch("/api/auth/google-sync", {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${bricoleToken}` },
                     credentials: "include",
                 });
-                if (!res.ok) console.error("google-sync failed", await res.text());
-            } catch (e) {
-                console.error("google-sync error", e);
-            } finally {
-                setSynced(true);
-            }
+            } catch (e) { console.error("google-sync error", e); }
+            finally { setSynced(true); }
         })();
     }, [session, status, synced]);
 
-    /* Load profile + stats */
-    useEffect(() => {
-        if (!synced || status === "loading") return;
-        
+    const loadData = useCallback(() => {
         Promise.all([apiFetch("/profile"), apiFetch("/profile/stats")])
             .then(([p, s]) => {
                 if (!p.success) throw new Error("Profil introuvable.");
                 setUser(p.user); setStats(s.stats);
             })
-            .catch(e => {
-                console.error("Profile load error:", e);
-                setError(e.message);
-            })
+            .catch(e => setError(e.message))
             .finally(() => setLoad(false));
-    }, [synced, status]);
+    }, []);
 
-    /* Loading skeleton */
+    useEffect(() => {
+        if (synced && status !== "loading") loadData();
+    }, [synced, status, loadData]);
+
     if (loading) return (
         <div className={styles.page}>
             <div className={styles.heroSkeleton}><Sk w="100%" h="100%" r={0} /></div>
         </div>
     );
 
-    /* Error / unauthenticated */
     if (error || !user) return (
         <div className={styles.page}>
             <div className={styles.centerFill}>
@@ -395,17 +429,13 @@ export default function ProfilePage() {
         </div>
     );
 
-    const memberSince = user.createdAt
-        ? new Date(user.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        : null;
-
+    const memberSince = user.createdAt ? new Date(user.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : null;
     const statCells = [
-        { value: stats?.requests  ?? "—", label: "Demandes" },
-        { value: stats?.favorites ?? "—", label: "Favoris" },
-        { value: stats?.completed ?? "—", label: "Travaux" },
+        { value: stats?.requests  ?? 0, label: "Demandes" },
+        { value: stats?.favorites ?? 0, label: "Favoris" },
+        { value: stats?.completed ?? 0, label: "Travaux" },
         { value: stats?.avgRating != null ? Number(stats.avgRating).toFixed(1) : "—", label: "Note moy." },
     ];
-
     const infoRows = [
         { Icon: User,     label: "Nom complet",    value: user.name },
         { Icon: Mail,     label: "E-mail",          value: user.email },
@@ -418,101 +448,49 @@ export default function ProfilePage() {
 
     return (
         <div className={styles.page}>
-
-            {/* ══ HERO ══ */}
             <header className={styles.heroContainer}>
-                <div className={styles.heroCover}>
-                    <div className={styles.heroCoverDeco} />
-                    <div className={styles.heroCoverOverlay} />
-                </div>
-
+                <div className={styles.heroCover}><div className={styles.heroCoverDeco} /><div className={styles.heroCoverOverlay} /></div>
                 <div className={styles.heroContent}>
                     <div className={styles.heroMain}>
-
-                        {/* Avatar */}
-                        <div className={styles.avatarWrap}>
-                            <Avatar name={user.name} image={user.profileImage} size={88} />
-                            <span className={styles.onlineDot} />
-                        </div>
-
-                        {/* Identity */}
+                        <div className={styles.avatarWrap}><Avatar name={user.name} image={user.profileImage} size={88} /><span className={styles.onlineDot} /></div>
                         <div className={styles.heroMeta}>
-                            <div className={styles.roleBadge}>
-                                <Shield size={10} /> {roleFR(user.role)}
-                            </div>
+                            <div className={styles.roleBadge}><Shield size={10} /> {roleFR(user.role)}</div>
                             <h1 className={styles.heroName}>{user.name}</h1>
                             <p className={styles.heroEmail}><Mail size={13} /> {user.email}</p>
                         </div>
-
-                        {/* Actions */}
                         <div className={styles.heroActions}>
-                            <button className={styles.btnPrimary} onClick={() => router.push("/profile/edit")}>
-                                <Edit3 size={14} /> Modifier
-                            </button>
-                            <button className={styles.btnOutline} onClick={logout}>
-                                <LogOut size={14} /> Quitter
-                            </button>
+                            <button className={styles.btnPrimary} onClick={() => setTab("settings")}><Edit3 size={14} /> Modifier</button>
+                            <button className={styles.btnOutline} onClick={logout}><LogOut size={14} /> Quitter</button>
                         </div>
                     </div>
-
-                    {/* Stats */}
-                    <div className={styles.statsStrip}>
-                        {statCells.map(s => (
-                            <div key={s.label} className={styles.statCell}>
-                                <span className={styles.statVal}>{s.value}</span>
-                                <span className={styles.statLbl}>{s.label}</span>
-                            </div>
-                        ))}
-                    </div>
+                    <div className={styles.statsStrip}>{statCells.map(s => (<div key={s.label} className={styles.statCell}><span className={styles.statVal}>{s.value}</span><span className={styles.statLbl}>{s.label}</span></div>))}</div>
                 </div>
             </header>
-
-            {/* ══ BODY ══ */}
             <div className={styles.body}>
-
-                {/* Sidebar */}
                 <aside className={styles.sidebar}>
-                    <div className={styles.card}>
-                        <h2 className={styles.cardTitle}>À propos</h2>
-                        <div className={styles.infoList}>
-                            {infoRows.map(({ Icon, label, value, mono }) => (
-                                <div key={label} className={styles.infoRow}>
-                                    <div className={styles.infoIco}><Icon size={15} /></div>
-                                    <div className={styles.infoBody}>
-                                        <span className={styles.infoLabel}>{label}</span>
-                                        <span className={`${styles.infoValue} ${mono ? styles.mono : ""}`}>{value}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <div className={styles.card}><h2 className={styles.cardTitle}>À propos</h2><div className={styles.infoList}>{infoRows.map(({ Icon, label, value, mono }) => (<div key={label} className={styles.infoRow}><div className={styles.infoIco}><Icon size={15} /></div><div className={styles.infoBody}><span className={styles.infoLabel}>{label}</span><span className={`${styles.infoValue} ${mono ? styles.mono : ""}`}>{value}</span></div></div>))}</div></div>
                 </aside>
-
-                {/* Main */}
                 <main className={styles.main}>
-                    {/* Tabs */}
-                    <div className={styles.tabContainer}>
-                        {TABS.map(({ key, Icon, label }) => (
-                            <button key={key}
-                                    className={`${styles.tabBtn} ${tab === key ? styles.tabActive : ""}`}
-                                    onClick={() => setTab(key)}>
-                                <Icon size={15} /> {label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Panel */}
+                    <div className={styles.tabContainer}>{TABS.map(({ key, Icon, label }) => (<button key={key} className={`${styles.tabBtn} ${tab === key ? styles.tabActive : ""}`} onClick={() => setTab(key)}><Icon size={15} /> {label}</button>))}</div>
                     <div className={styles.cardPanel}>
                         {tab === "favorites" && <FavsPanel />}
                         {tab === "activity"  && <ActivityPanel />}
-                        {tab === "settings"  && <SettingsPanel />}
+                        {tab === "settings"  && <SettingsPanel user={user} onUpdate={(u) => { setUser(u); loadData(); }} />}
                     </div>
                 </main>
-
             </div>
-
-            {/* Spin keyframe for save button */}
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <style jsx global>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; }
+            `}</style>
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={<div className={styles.page}><div className={styles.heroSkeleton}><Sk w="100%" h="100%" r={0} /></div></div>}>
+            <ProfileInner />
+        </Suspense>
     );
 }

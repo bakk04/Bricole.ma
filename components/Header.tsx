@@ -236,7 +236,7 @@ const Header: React.FC = () => {
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><UserIcon size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Mon Espace</span>
                                                         </Link>
-                                                        <Link href={`/profile/${urlToken}/settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/profile/${urlToken}?tab=settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><Settings size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                         </Link>
@@ -250,7 +250,7 @@ const Header: React.FC = () => {
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Mon Dashboard</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
-                                                        <Link href={`/dashboard/${urlToken}/settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/dashboard/${urlToken}?tab=settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><SlidersHorizontal size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
@@ -265,7 +265,7 @@ const Header: React.FC = () => {
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Administration</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />
                                                         </Link>
-                                                        <Link href={`/profile/${urlToken}/settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
+                                                        <Link href={`/profile/${urlToken}?tab=settings`} className="orbit-nav-item hover-animate" onClick={() => setShowProfileMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px', textDecoration: 'none', boxSizing: 'border-box', transition: 'all 0.2s ease', borderRadius: '8px' }}>
                                                             <div className="orbit-nav-icon" style={{ display: 'flex', alignItems: 'center', color: '#64748b' }}><SlidersHorizontal size={14} /></div>
                                                             <span style={{ color: '#1e293b', fontWeight: '500', fontSize: '13px', flex: 1 }}>Paramètres</span>
                                                             <ChevronRight size={12} className="orbit-nav-arrow" style={{ color: '#cbd5e1' }} />

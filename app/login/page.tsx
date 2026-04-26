@@ -40,7 +40,14 @@ export default function LoginPage() {
                 const role = (session.user as any).role;
                 const urlToken = (session.user as any).urlToken;
                 const bricoleToken = (session.user as any).bricoleToken;
-                const targetPath = role === "ARTISAN" ? "/dashboard" : "/profile";
+                
+                // Correction : Redirection spécifique par rôle avec urlToken
+                let targetPath = "";
+                const userRole = role?.toUpperCase();
+                
+                if (userRole === "ADMIN") targetPath = `/admin/${urlToken}`;
+                else if (userRole === "ARTISAN") targetPath = `/dashboard/${urlToken}`;
+                else targetPath = `/profile/${urlToken}`;
 
                 // SYNCHRONISATION CRITIQUE : On crée le cookie auth_token avant de partir
                 if (bricoleToken) {
@@ -54,7 +61,7 @@ export default function LoginPage() {
                     }
                 }
 
-                router.replace(`${targetPath}/${urlToken}`);
+                router.replace(targetPath);
             }
         };
         
@@ -132,11 +139,14 @@ export default function LoginPage() {
             const role = data.user?.role;
             const urlToken = data.urlToken;
 
-            const targetPath = role === "ARTISAN" ? "/dashboard" : "/profile";
+            let targetPath = "";
+            if (role?.toUpperCase() === "ADMIN") targetPath = `/admin/${urlToken}`;
+            else if (role?.toUpperCase() === "ARTISAN") targetPath = `/dashboard/${urlToken}`;
+            else targetPath = `/profile/${urlToken}`;
             
             // On attend un peu pour que les cookies soient bien propagés en PWA
             setTimeout(() => {
-                router.replace(`${targetPath}/${urlToken}`);
+                router.replace(targetPath);
             }, 100);
         } catch (err) {
             console.error('Erreur de connexion:', err);
@@ -241,7 +251,7 @@ export default function LoginPage() {
                         type="button"
                         disabled={loading}
                         onClick={() => {
-                            signIn('google', { callbackUrl: '/profile' });
+                            signIn('google', { callbackUrl: '/login' });
                         }}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24">
