@@ -8,7 +8,7 @@ import '../styles/vendor/slick-theme.css'
 import '../styles/vendor/wow.min.css'
 import '../styles/unpkg.com/leaflet@1.9.4/dist/leaflet.css'
 import '../styles/unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css'
-
+import BotpressFix from '../components/botpress/BotpressFix'
 import Script from 'next/script'
 import { Providers } from './providers'
 import PWAClient from '../components/pwa/PWAClient'
@@ -61,32 +61,32 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <link rel="preload" href="/assets/media/hero/img-6.jpg" as="image" />
         </head>
         <body>
-        
         <Providers>
             {children}
         </Providers>
         <GlobalInteractions />
-        
+
         {/* Global Scripts - load after hydration for PWA safety */}
-        <Script 
-          src="https://code.jquery.com/jquery-3.6.3.min.js" 
+        <Script
+          src="https://code.jquery.com/jquery-3.6.3.min.js"
           strategy="afterInteractive"
         />
-        <Script 
-          src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+        <Script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
           strategy="afterInteractive"
         />
-        <Script 
-          src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js" 
+        <Script
+          src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js"
           strategy="lazyOnload"
         />
-        <Script 
-          src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js" 
+        <Script
+          src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"
           strategy="lazyOnload"
         />
-        
+
         {/* PWA Lifecycle Logic */}
         <PWAClient />
+        <BotpressFix />
         </body>
         </html>
     )

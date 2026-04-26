@@ -2,6 +2,7 @@ import React from 'react'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import BottomNav from '../../components/BottomNav'
+import BotpressFix from '../../components/botpress/BotpressFix'
 import { AuthProvider } from "../api/context/AuthContext"
 import Script from 'next/script'
 
@@ -16,6 +17,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </AuthProvider>
 
             <BottomNav />
+            <BotpressFix />
             <Script
                 src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"
                 strategy="afterInteractive"

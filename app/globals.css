@@ -24,3 +24,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Fix Botpress Chatbot position on mobile to be above BottomNav */
+@media (max-width: 768px) {
+  /* On cible le conteneur et tous les éléments injectés par botpress */
+  #bp-web-widget-container, 
+  div[id^="bp-web-widget"],
+  .bp-widget-side,
+  iframe#bp-webchat {
+    bottom: 90px !important;
+    margin-bottom: 20px !important;
+    z-index: 999999 !important;
+  }
+}
+
+
+/* Cibler le conteneur principal de Botpress v3.6 sur mobile */
+@media screen and (max-width: 768px) {
+  #bp-web-widget-container {
+    bottom: 70px !important; /* Ajuste selon la hauteur de ton BottomNav */
+    z-index: 999999 !important; /* Un z-index exagérément haut pour battre le BottomNav */
+  }
+}

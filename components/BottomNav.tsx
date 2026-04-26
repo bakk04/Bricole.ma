@@ -1,17 +1,20 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Home, Search, PlusSquare, MapPin, User as UserIcon } from 'lucide-react'
 import { useSession } from "next-auth/react"
 import { useAuth } from "@/app/api/context/AuthContext"
 import { User } from '@/types'
+import NearbyModal from './NearbyModal'
 
 const BottomNav: React.FC = () => {
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session, status: sessionStatus } = useSession()
   const { state: authState } = useAuth() as { state: { user: User | null } }
   const [mounted, setMounted] = useState(false)
+  const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false)
   
   // On ne considère l'utilisateur connecté QUE si sessionStatus est 'authenticated' 
   // OU si authState.user existe alors que sessionStatus est 'unauthenticated' (cas login classique)
@@ -22,14 +25,29 @@ const BottomNav: React.FC = () => {
   // et qu'on n'est pas dans un état de déconnexion
   const isLoggedIn = !!user && !!urlToken && sessionStatus !== 'loading' && (sessionStatus === 'authenticated' || !!authState.user)
 
+  const handlePublierClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!isLoggedIn) {
+        router.push("/login?error=Vous devez être connecté en tant qu'artisan pour publier une offre");
+    } else if (user?.role !== "ARTISAN") {
+        router.push("/login?error=Cet espace est réservé aux artisans professionnels");
+    } else {
+        router.push(`/dashboard/${urlToken}?action=add`);
+    }
+  }
+
   const navItems = [
     { id: 'home', icon: Home, href: '/', label: 'Home' },
     { id: 'explore', icon: Search, href: '/explore', label: 'Explore' },
-    { id: 'add', icon: PlusSquare, href: '/listing/add', label: 'Publier' },
+    { id: 'add', icon: PlusSquare, href: '#', label: 'Publier', onClick: handlePublierClick },
     { id: 'proxi', 
       icon: MapPin, 
-      href: '/explore', 
-      label: 'Proxi' 
+      href: '#', 
+      label: 'Proxi',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsNearbyModalOpen(true);
+      }
     },
     { id: 'profile', 
       icon: UserIcon, 
@@ -44,7 +62,7 @@ const BottomNav: React.FC = () => {
 
   useEffect(() => {
     setMounted(true)
-    const index = navItems.findIndex(item => item.href === pathname)
+    const index = navItems.findIndex(item => item.href !== '#' && item.href === pathname)
     if (index !== -1) setActiveIndex(index)
   }, [pathname, isLoggedIn, sessionStatus]) // Ajout de sessionStatus comme dépendance
 
@@ -65,15 +83,17 @@ const BottomNav: React.FC = () => {
       <div className="tg-dock-modern-final">
         {navItems.map((item, index) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          const isActive = item.href !== '#' && pathname === item.href
           
           return (
             <Link 
               key={item.id} 
               href={item.href} 
               className={`tg-link-final ${isActive ? 'tg-active-final' : ''}`}
-              onClick={() => {
-                if (isActive) {
+              onClick={(e) => {
+                if (item.onClick) {
+                  item.onClick(e);
+                } else if (isActive) {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
                 setActiveIndex(index);
@@ -101,6 +121,11 @@ const BottomNav: React.FC = () => {
           )
         })}
       </div>
+
+      <NearbyModal 
+        isOpen={isNearbyModalOpen} 
+        onClose={() => setIsNearbyModalOpen(false)} 
+      />
 
       <style jsx global>{`
         #tg-final-nav-wrapper {

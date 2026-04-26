@@ -105,7 +105,7 @@ const Header: React.FC = () => {
                     </Link>
 
                     <div className="mobile-only mobile-header-right">
-                        <Link href="/favorites">
+                        <Link href={isLoggedIn ? `/profile/${urlToken}?tab=favorites` : "/favorites"}>
                             <Heart size={24} color="#262626" />
                         </Link>
                     </div>
@@ -391,9 +391,22 @@ const Header: React.FC = () => {
                             <LanguageSwitcher />
                         </div>
 
-                        <Link href="/listing/add" className="mobile-nav__btn mobile-nav__btn--primary" onClick={() => setMobileNavOpen(false)} style={{ width: '100%' }}>
+                        <button 
+                            onClick={() => {
+                                setMobileNavOpen(false);
+                                if (!isLoggedIn) {
+                                    router.push("/login?error=Vous devez être connecté en tant qu'artisan pour publier une offre");
+                                } else if (user?.role !== "ARTISAN") {
+                                    router.push("/login?error=Cet espace est réservé aux artisans professionnels");
+                                } else {
+                                    router.push(`/dashboard/${urlToken}?action=add`);
+                                }
+                            }} 
+                            className="mobile-nav__btn mobile-nav__btn--primary" 
+                            style={{ width: '100%', border: 'none', cursor: 'pointer' }}
+                        >
                             <Plus size={18} /> Publier une offre
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

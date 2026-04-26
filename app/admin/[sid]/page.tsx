@@ -8,7 +8,9 @@ import {
     RefreshCw, ChevronRight, Plus, Download
 } from "lucide-react";
 import styles from "../adminDashboard.module.css";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useLogout } from "@/hooks/useLogout";
 import { getData, patchData, deleteData } from "@/lib/api";
 import {
     Chart as ChartJS, CategoryScale, LinearScale, PointElement,
@@ -388,6 +390,8 @@ const PAGE_TITLE: Record<string,string> = {
 
 export default function AdminDashboard() {
     const { data: session } = useSession();
+    const router = useRouter();
+    const { logout } = useLogout();
     const [navKey, setNavKey]     = useState("overview");
     const [stats,  setStats]      = useState<any>(null);
     const [users,  setUsers]      = useState<any[]>([]);
@@ -465,7 +469,7 @@ export default function AdminDashboard() {
                             </div>
                         ))}
                         <div className={styles.sidebarDivider} style={{marginTop:12}}/>
-                        <div className={`${styles.navItem} ${styles.navLogout}`} onClick={()=>signOut()}>
+                        <div className={`${styles.navItem} ${styles.navLogout}`} onClick={() => logout()}>
                             <LogOut size={15}/><span>Déconnexion</span>
                         </div>
                     </nav>
@@ -637,6 +641,20 @@ export default function AdminDashboard() {
                         </div>
                     )}
                 </main>
+
+                {/* ─ MOBILE NAV ─ */}
+                <nav className={styles.mobileNav}>
+                    {NAV.map(({key,label,Icon})=>(
+                        <div key={key} className={`${styles.mobileNavItem} ${navKey===key?styles.mobileNavItemActive:""}`} onClick={()=>navigate(key)}>
+                            <div className={styles.mobileNavIcon}><Icon size={20}/></div>
+                            <span>{label}</span>
+                        </div>
+                    ))}
+                    <div className={styles.mobileNavItem} onClick={() => logout()}>
+                        <div className={styles.mobileNavIcon}><LogOut size={20}/></div>
+                        <span>Quitter</span>
+                    </div>
+                </nav>
             </div>
         </div>
     );
