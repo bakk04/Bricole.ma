@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import ArtisanProfile from "@/models/ArtisanProfile";
 import User from "@/models/User";
+import Category from "@/models/Category";
 
 export const dynamic = "force-dynamic";
 

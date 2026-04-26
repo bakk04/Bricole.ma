@@ -75,14 +75,14 @@ export async function GET() {
         { $limit: 5 },
         {
           $lookup: {
-            from: "Categories",
+            from: "categories", // Collection Mongoose par défaut est minuscule pluralisée
             localField: "_id",
             foreignField: "_id",
             as: "category"
           }
         },
-        { $unwind: "$category" },
-        { $project: { name: "$category.nom", count: 1 } }
+        { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+        { $project: { name: { $ifNull: ["$category.nom", "Non classé"] }, count: 1 } }
       ])
     ]);
 

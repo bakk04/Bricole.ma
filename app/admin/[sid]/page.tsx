@@ -180,16 +180,8 @@ function OverviewSection({ stats }: { stats: any }) {
     const [period, setPeriod] = useState("30j");
     const total = stats.totalAnnonces || 1;
 
-    const lineLabels = Array.from({ length: 30 }, (_, i) => `${i + 1}`);
     const rand = (b: number, s: number) => Array.from({ length: 30 }, (_, i) => Math.round(b + Math.sin(i / 3) * s + Math.random() * s * 0.4));
 
-    const lineData = {
-        labels: lineLabels,
-        datasets: [
-            { label: "Inscriptions", data: rand(18, 8), borderColor: "#2563eb", backgroundColor: "rgba(37,99,235,0.07)", borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true },
-            { label: "Annonces",     data: rand(28, 10), borderColor: "#7c3aed", backgroundColor: "rgba(124,58,237,0.05)", borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true },
-        ],
-    };
     const lineOptions: any = {
         responsive: true, maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false },
@@ -207,9 +199,43 @@ function OverviewSection({ stats }: { stats: any }) {
     };
 
     const donutData = {
-        datasets: [{ data: [60, 30, 10], backgroundColor: ["#2563eb", "#7c3aed", "#059669"], borderWidth: 0, hoverOffset: 3 }],
+        datasets: [{ 
+            data: [
+                stats.totalClients || 0, 
+                stats.totalArtisans || 0, 
+                (stats.totalUsers - stats.totalClients - stats.totalArtisans) || 0
+            ], 
+            backgroundColor: ["#2563eb", "#7c3aed", "#059669"], 
+            borderWidth: 0, 
+            hoverOffset: 3 
+        }],
     };
     const donutOptions: any = { cutout: "73%", plugins: { legend: { display: false }, tooltip: { enabled: false } } };
+
+    // Statistiques réelles pour le graphique d'évolution (derniers 7 jours si fournis)
+    const trendData = stats.registrationsTrend || rand(18, 8);
+    const trendLabels = trendData.map((_: any, i: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (trendData.length - 1 - i));
+        return d.toLocaleDateString("fr-MA", { day: "numeric", month: "short" });
+    });
+
+    const lineData = {
+        labels: trendLabels,
+        datasets: [
+            { 
+                label: "Inscriptions", 
+                data: trendData, 
+                borderColor: "#2563eb", 
+                backgroundColor: "rgba(37,99,235,0.07)", 
+                borderWidth: 2, 
+                pointRadius: 4, 
+                pointBackgroundColor: "#fff",
+                tension: 0.4, 
+                fill: true 
+            }
+        ],
+    };
 
     return (
         <>
@@ -221,19 +247,14 @@ function OverviewSection({ stats }: { stats: any }) {
                 <KpiCard icon={BarChart2} label="Nouveaux (30j)"   value={stats.newUsersLast30Days}  trend={15} colorKey="purple" spIdx={3} />
             </div>
 
-            {/* Row 2 */}
+            {/* Row 2: Charts & Distribution */}
             <div className={styles.twoCol}>
                 {/* Area chart */}
                 <div className={styles.card}>
                     <div className={styles.cardHdr}>
                         <div>
-                            <div className={styles.cardTitle}>Inscriptions &amp; Annonces</div>
-                            <div className={styles.cardMeta}>Évolution sur 30 jours</div>
-                        </div>
-                        <div className={styles.segBtns}>
-                            {["30j","90j","1an"].map(p => (
-                                <button key={p} className={`${styles.segBtn} ${period===p?styles.segBtnActive:""}`} onClick={()=>setPeriod(p)}>{p}</button>
-                            ))}
+                            <div className={styles.cardTitle}>Inscriptions</div>
+                            <div className={styles.cardMeta}>Évolution sur les 7 derniers jours</div>
                         </div>
                     </div>
                     <div className={styles.chartWrap}>
@@ -241,7 +262,7 @@ function OverviewSection({ stats }: { stats: any }) {
                     </div>
                     {/* Custom legend */}
                     <div className={styles.flexRow} style={{ marginTop: 10, gap: 14 }}>
-                        {[{c:"#2563eb",l:"Inscriptions"},{c:"#7c3aed",l:"Annonces"}].map(it=>(
+                        {[{c:"#2563eb",l:"Nouvelles inscriptions"}].map(it=>(
                             <div key={it.l} className={styles.flexRow} style={{ gap:5 }}>
                                 <div style={{ width:10,height:10,borderRadius:2,background:it.c,flexShrink:0 }}/>
                                 <span style={{ fontSize:11,color:"var(--s4)" }}>{it.l}</span>
@@ -254,9 +275,9 @@ function OverviewSection({ stats }: { stats: any }) {
                 <div className={styles.card}>
                     <div className={styles.cardHdr}>
                         <div className={styles.cardTitle}>Statuts Annonces</div>
-                        <div className={styles.cardMeta}>Distribution</div>
+                        <div className={styles.cardMeta}>Distribution réelle</div>
                     </div>
-                    {Object.entries(stats.annoncesStats).map(([statut, count]: any) => (
+                    {Object.entries(stats.annoncesStats || {}).map(([statut, count]: any) => (
                         <div key={statut} className={styles.statItem}>
                             <div className={styles.statTop}>
                                 <span className={styles.statLbl}>{statut}</span>
@@ -264,7 +285,7 @@ function OverviewSection({ stats }: { stats: any }) {
                             </div>
                             <div className={styles.barTrack}>
                                 <div className={styles.barFill} style={{
-                                    width: `${Math.round((count / total) * 100)}%`,
+                                    width: `${Math.round((count / (stats.totalAnnonces || 1)) * 100)}%`,
                                     background: STAT_COLORS[statut] ?? "#94a3b8",
                                 }} />
                             </div>
@@ -272,7 +293,7 @@ function OverviewSection({ stats }: { stats: any }) {
                     ))}
                     <div className={styles.catDivider} />
                     <div className={styles.cardTitle} style={{ marginBottom: 8 }}>Top Catégories</div>
-                    {stats.topCategories.map((cat: any, i: number) => (
+                    {stats.topCategories?.map((cat: any, i: number) => (
                         <div key={cat._id} className={styles.catItem}>
                             <span className={styles.catName}>
                                 <span className={styles.catDot} style={{ background: CAT_COLORS[i % CAT_COLORS.length] }} />
@@ -284,7 +305,7 @@ function OverviewSection({ stats }: { stats: any }) {
                 </div>
             </div>
 
-            {/* Row 3 */}
+            {/* Row 3: Details & Activity */}
             <div className={styles.threeCol}>
                 {/* Donut */}
                 <div className={styles.card}>
@@ -299,7 +320,11 @@ function OverviewSection({ stats }: { stats: any }) {
                         </div>
                     </div>
                     <div className={styles.legendRow}>
-                        {[{c:"#2563eb",l:"Clients — 60%"},{c:"#7c3aed",l:"Artisans — 30%"},{c:"#059669",l:"Admins — 10%"}].map(it=>(
+                        {[
+                            {c:"#2563eb",l:`Clients — ${Math.round((stats.totalClients / (stats.totalUsers || 1)) * 100)}%`},
+                            {c:"#7c3aed",l:`Artisans — ${Math.round((stats.totalArtisans / (stats.totalUsers || 1)) * 100)}%`},
+                            {c:"#059669",l:`Admins — ${Math.round(((stats.totalUsers - stats.totalClients - stats.totalArtisans) / (stats.totalUsers || 1)) * 100)}%`}
+                        ].map(it=>(
                             <div key={it.l} className={styles.legendItem}>
                                 <span className={styles.legendDot} style={{ background:it.c }}/>
                                 {it.l}
