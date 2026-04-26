@@ -5,14 +5,14 @@ import {
     LayoutDashboard, Package, Star, Eye, Heart, TrendingUp,
     TrendingDown, Plus, Edit2, Trash2, Pause, Play, Image,
     Search, X, Upload, CheckCircle, AlertCircle, BarChart2,
-    Users, MessageSquare, Bell, LogOut, Settings, ChevronRight,
-    Minus, Layers, Activity, Clock, DollarSign, Zap, Shield,
-    ShieldCheck, CreditCard, Download, QrCode, Loader2, Share2, MapPin,
+    Users, MessageSquare, LogOut, Settings, ChevronRight,
+    Minus, Activity, Clock, Zap, Shield,
+    ShieldCheck, CreditCard, Download, Loader2, Share2, MapPin, Phone,
 } from "lucide-react";
 import styles from "../dashboard.module.css";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { getData, postData, putData, deleteData } from "@/lib/api";
+import { getData, postData, putData, deleteData, patchData } from "@/lib/api";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
 
@@ -509,7 +509,7 @@ function DigitalCardModal({ profile, onClose }) {
 /* ─── Sidebar nav ────────────────────────────────────────────── */
 const NAV = [
     { key: "overview",   Icon: LayoutDashboard, label: "Tableau de bord" },
-    { key: "leads",      Icon: Zap,             label: "Missions (Leads)" },
+    { key: "leads",      Icon: Zap,             label: "Missions" },
     { key: "catalogue",  Icon: Package,         label: "Catalogue" },
     { key: "messages",   Icon: MessageSquare,    label: "Messages" },
     { key: "stats",      Icon: BarChart2,        label: "Statistiques" },
@@ -533,12 +533,9 @@ export default function ArtisanDashboard() {
     const [loading, setLoading]     = useState(true);
     const [synced, setSynced]       = useState(false);
 
-    // Mock data for new sections
-    const [leads, setLeads] = useState([
-        { id: 1, titre: "Peinture appartement 80m²", ville: "Casablanca", budget: 4500, time: "Il y a 2h", cat: "Peinture" },
-        { id: 2, titre: "Réparation fuite salle de bain", ville: "Rabat", budget: 800, time: "Il y a 5h", cat: "Plomberie" },
-        { id: 3, titre: "Installation climatisation", ville: "Marrakech", budget: 1200, time: "Hier", cat: "Climatisation" },
-    ]);
+    // Real missions state
+    const [missions, setMissions] = useState([]);
+    const [missionsLoading, setMissionsLoading] = useState(false);
 
     /* Catalogue UI */
     const [filter, setFilter]       = useState("all");  // all | active | paused
@@ -605,6 +602,52 @@ export default function ArtisanDashboard() {
 
         fetchRemaining();
     }, [synced, status]);
+
+    /* ── Missions actions ── */
+    const fetchMissions = useCallback(async () => {
+        setMissionsLoading(true);
+        try {
+            const res = await getData("/missions");
+            if (res.success) setMissions(res.missions);
+        } catch (e) {
+            console.error("Missions load error:", e);
+        } finally {
+            setMissionsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (navKey === "leads") {
+            fetchMissions();
+        }
+    }, [navKey, fetchMissions]);
+
+    const handleMissionAction = async (missionId, newStatut) => {
+        try {
+            const res = await patchData("/missions", { missionId, statut: newStatut });
+            if (res.success) {
+                setMissions(ms => ms.map(m => m._id === missionId ? { ...m, statut: newStatut } : m));
+                showToast(`Mission ${newStatut === "ACCEPTED" ? "acceptée" : "refusée"} ✓`);
+            }
+        } catch (e) {
+            console.error("Mission action error:", e);
+            showToast("Erreur lors de la mise à jour", "error");
+        }
+    };
+
+    const handleDeleteMission = async (missionId) => {
+        if (!confirm("Voulez-vous vraiment supprimer cette mission ?")) return;
+        try {
+            const res = await deleteData(`/missions?id=${missionId}`);
+            if (res.success) {
+                setMissions(ms => ms.filter(m => m._id !== missionId));
+                showToast("Mission supprimée");
+            }
+        } catch (e) {
+            console.error("Mission delete error:", e);
+            showToast("Erreur lors de la suppression", "error");
+        }
+    };
 
     /* ── Visit chart mock ── */
     const visitData = WEEK_DAYS.map((l, i) => ({
@@ -727,7 +770,7 @@ export default function ArtisanDashboard() {
     /* ── Page titles ── */
     const PAGE = {
         overview:  { title: "Vue d'ensemble",      sub: "Activité et performances de votre espace" },
-        leads:     { title: "Missions (Leads)",     sub: "Découvrez des opportunités de travail" },
+        leads:     { title: "Missions",             sub: "Gérez vos demandes de réservation" },
         catalogue: { title: "Catalogue services",   sub: "Gérez vos services et photos" },
         stats:     { title: "Statistiques",         sub: "Analyse détaillée de votre activité" },
         reviews:   { title: "Avis clients",         sub: "Gérez votre réputation" },
@@ -961,6 +1004,122 @@ export default function ArtisanDashboard() {
                                     </div>
                                 </div>
                             </>
+                        )}
+
+                        {/* ════ MISSIONS (LEADS) ════ */}
+                        {navKey === "leads" && (
+                            <div className={styles.missionsSection}>
+                                <div className={styles.missionsHeader}>
+                                    <div className={styles.missionsStats}>
+                                        <div className={styles.mStat}>
+                                            <span className={styles.mStatVal}>{missions.length}</span>
+                                            <span className={styles.mStatLbl}>Total</span>
+                                        </div>
+                                        <div className={styles.mStat}>
+                                            <span className={styles.mStatVal}>{missions.filter(m => m.statut === "PENDING").length}</span>
+                                            <span className={styles.mStatLbl}>En attente</span>
+                                        </div>
+                                        <div className={styles.mStat}>
+                                            <span className={styles.mStatVal}>{missions.filter(m => m.statut === "ACCEPTED").length}</span>
+                                            <span className={styles.mStatLbl}>Acceptées</span>
+                                        </div>
+                                    </div>
+                                    <button className={styles.refreshBtn} onClick={fetchMissions} disabled={missionsLoading}>
+                                        <Activity size={14} className={missionsLoading ? styles.spin : ""} /> Actualiser
+                                    </button>
+                                </div>
+
+                                {missionsLoading ? (
+                                    <div className={styles.missionsGrid}>
+                                        {[1, 2, 3].map(i => <Sk key={i} w="100%" h={180} r={24} style={{ marginBottom: 16 }} />)}
+                                    </div>
+                                ) : missions.length === 0 ? (
+                                    <div className={styles.empty}>
+                                        <div className={styles.emptyIconWrap}><Zap size={24} /></div>
+                                        <div className={styles.emptyTitle}>Aucune mission</div>
+                                        <div className={styles.emptyBody}>Les demandes de réservation de vos services apparaîtront ici.</div>
+                                    </div>
+                                ) : (
+                                    <div className={styles.missionsList}>
+                                        {missions.map((m, i) => (
+                                            <div key={m._id} className={styles.missionCard} style={{ animationDelay: `${i * 50}ms` }}>
+                                                <div className={styles.missionCardHead}>
+                                                    <div className={styles.missionStatus}>
+                                                        <span className={`${styles.statusPill} ${styles['status' + m.statut]}`}>
+                                                            {m.statut === "PENDING" ? "En attente" : m.statut === "ACCEPTED" ? "Acceptée" : "Refusée"}
+                                                        </span>
+                                                        <span className={styles.missionDate}><Clock size={11} /> {timeAgo(m.createdAt)}</span>
+                                                    </div>
+                                                    <div className={styles.missionPrice}>{fmtPrice(m.prix)}</div>
+                                                </div>
+
+                                                <div className={styles.missionCardBody}>
+                                                    <div className={styles.missionClient}>
+                                                        {m.clientId?.profileImage 
+                                                            ? <img src={m.clientId.profileImage} className={styles.clientAvatar} alt="" />
+                                                            : <div className={styles.clientAvatarFallback}>{initials(m.clientId?.name || m.clientId?.email)}</div>
+                                                        }
+                                                        <div style={{ flex: 1 }}>
+                                                            <div className={styles.clientName}>{m.clientId?.name || m.clientId?.prenom || "Client"}</div>
+                                                            <div className={styles.clientMeta}>
+                                                                <span><MapPin size={11} /> {m.clientId?.email}</span>
+                                                                {m.clientId?.telephone && <span><Phone size={11} /> {m.clientId?.telephone}</span>}
+                                                            </div>
+                                                        </div>
+                                                        {m.clientId?.telephone && (
+                                                            <div className={styles.clientQuickActions}>
+                                                                <a href={`tel:${m.clientId.telephone}`} className={styles.quickActionBtn} title="Appeler">
+                                                                    <Phone size={14} />
+                                                                </a>
+                                                                <a href={`https://wa.me/212${m.clientId.telephone.replace(/\D/g, '').startsWith('0') ? m.clientId.telephone.replace(/\D/g, '').slice(1) : m.clientId.telephone.replace(/\D/g, '')}`} 
+                                                                   target="_blank" 
+                                                                   className={`${styles.quickActionBtn} ${styles.quickWhatsapp}`} 
+                                                                   title="WhatsApp">
+                                                                    <MessageSquare size={14} />
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={styles.missionDetails}>
+                                                        <h3 className={styles.missionTitle}>{m.titre}</h3>
+                                                        <p className={styles.missionMsg}>{m.message || "Aucun message particulier."}</p>
+                                                        <div className={styles.missionDateFull}>
+                                                            <Clock size={12} /> Reçu le {new Date(m.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute:'2-digit' })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className={styles.missionCardFooter}>
+                                                    <div className={styles.missionActions}>
+                                                        {m.statut === "PENDING" && (
+                                                            <>
+                                                                <button className={`${styles.mActionBtn} ${styles.btnAccept}`} 
+                                                                        onClick={() => handleMissionAction(m._id, "ACCEPTED")}>
+                                                                    <CheckCircle size={14} /> Accepter
+                                                                </button>
+                                                                <button className={`${styles.mActionBtn} ${styles.btnRefuse}`}
+                                                                        onClick={() => handleMissionAction(m._id, "REJECTED")}>
+                                                                    <X size={14} /> Refuser
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {m.statut === "ACCEPTED" && m.clientId?.telephone && (
+                                                            <a href={`tel:${m.clientId.telephone}`} className={`${styles.mActionBtn} ${styles.btnCall}`}>
+                                                                <Phone size={14} /> Appeler le client
+                                                            </a>
+                                                        )}
+                                                        <button className={`${styles.mActionBtn} ${styles.btnDelete}`}
+                                                                onClick={() => handleDeleteMission(m._id)}>
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* ════ CATALOGUE ════ */}

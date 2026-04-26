@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
@@ -221,7 +222,7 @@ function RecoCard({ rec, index }: { rec: any; index: number }) {
           </span>
                 </div>
                 <span className={styles.recoCity}>
-          <MapPin size={10} /> {rec.city}
+          <MapPin size={10} /> {rec.city || 'Maroc'}
         </span>
                 <div className={styles.recoFooter}>
                     <div className={styles.recoPrice}>
@@ -241,6 +242,7 @@ function RecoCard({ rec, index }: { rec: any; index: number }) {
 export default function ServiceDetailsPage() {
     const { sid } = useParams();
     const router  = useRouter();
+    const { data: session } = useSession();
 
     const [data,      setData]      = useState<any>(null);
     const [loading,   setLoading]   = useState(true);
@@ -354,6 +356,9 @@ export default function ServiceDetailsPage() {
     const { product, artisan, reviews = [], recommendations = [] } = data;
     const images = product.images?.length ? product.images : [product.imageUrl || '/media/images/placeholder.jpg'];
     const rating = artisan?.rating || 4.8;
+    
+    // Déterminer si l'utilisateur actuel est le propriétaire du service
+    const isOwner = session?.user?.id === artisan?.userId || session?.user?.email === artisan?.email;
 
     const handleShare = async () => {
         if (navigator.share) await navigator.share({ title: product.title, url: window.location.href });
@@ -591,24 +596,37 @@ export default function ServiceDetailsPage() {
 
                             <div className={styles.bookActions}>
                                 {/* ── Animated booking button ── */}
-                                <BookingButton onBook={handleBooking} loading={booking} />
+                                {isOwner ? (
+                                    <button className={styles.btnPrimary} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
+                                        <span className={styles.btnPrimaryInner}>
+                                            <ShieldCheck size={16} /> C'est votre service
+                                        </span>
+                                    </button>
+                                ) : (
+                                    <BookingButton onBook={handleBooking} loading={booking} />
+                                )}
 
                                 {/* Support buttons */}
                                 <div className={styles.supportBtns}>
                                     <button className={styles.supportBtn} style={{ '--delay': '0ms' } as React.CSSProperties}
-                                            onClick={() => window.location.href = `tel:${artisan?.phone || '#'}`}>
+                                            onClick={() => {
+                                                if (artisan?.phone) window.location.href = `tel:${artisan.phone}`;
+                                                else toast({ title: 'Information', description: "Le numéro de téléphone n'est pas disponible." });
+                                            }}>
                                         <span className={styles.supportBtnIcon}><Phone size={16} /></span>
                                         <span className={styles.supportBtnLabel}><strong>Appeler</strong><small>Disponible maintenant</small></span>
                                         <span className={styles.supportBtnArrow}>→</span>
                                     </button>
 
-                                    <button className={styles.supportBtn} style={{ '--delay': '60ms' } as React.CSSProperties}>
-                                        <span className={styles.supportBtnIcon}><MessageCircle size={16} /></span>
-                                        <span className={styles.supportBtnLabel}><strong>Message</strong><small>Réponse en &lt; 2h</small></span>
-                                        <span className={styles.supportBtnArrow}>→</span>
-                                    </button>
-
-                                    <button className={`${styles.supportBtn} ${styles.supportBtnWhatsapp}`} style={{ '--delay': '120ms' } as React.CSSProperties}>
+                                    <button className={`${styles.supportBtn} ${styles.supportBtnWhatsapp}`} style={{ '--delay': '120ms' } as React.CSSProperties}
+                                            onClick={() => {
+                                                if (artisan?.phone) {
+                                                    const phone = artisan.phone.replace(/\D/g, '');
+                                                    window.open(`https://wa.me/212${phone.startsWith('0') ? phone.slice(1) : phone}?text=Bonjour, je suis intéressé par votre service: ${product.title}`, '_blank');
+                                                } else {
+                                                    toast({ title: 'Information', description: "Le numéro WhatsApp n'est pas disponible." });
+                                                }
+                                            }}>
                     <span className={styles.supportBtnIcon}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
@@ -637,28 +655,16 @@ export default function ServiceDetailsPage() {
                     <section className={styles.recoSection}>
                         <div className={styles.recoHeader}>
                             <div>
-                                <h3 className={styles.recoTitle}>Vous aimerez aussi</h3>
-                                <p className={styles.recoSubtitle}>Services similaires à {product.city || 'votre région'}</p>
+                                <h3 className={styles.recoTitle}>Services similaires</h3>
+                                <p className={styles.recoSubtitle}>Découvrez d'autres services de la même catégorie</p>
                             </div>
-                            <Link href="/explore" className={styles.recoSeeAll}>Voir tout →</Link>
+                            <Link href={`/explore?category=${product.categoryId || 'all'}`} className={styles.recoSeeAll}>Voir tout →</Link>
                         </div>
 
-                        {/* City group */}
                         <div className={styles.recoGroup}>
-                            <div className={styles.recoGroupLabel}><MapPin size={13} /> Même ville · {product.city || 'Maroc'}</div>
                             <div className={styles.recoScroll}>
                                 {recommendations.slice(0, 6).map((rec: any, i: number) => (
                                     <RecoCard key={rec.id} rec={rec} index={i} />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Category group */}
-                        <div className={styles.recoGroup}>
-                            <div className={styles.recoGroupLabel}><Award size={13} /> Même catégorie · {product.categoryName || 'Services'}</div>
-                            <div className={styles.recoScroll}>
-                                {[...recommendations].reverse().slice(0, 6).map((rec: any, i: number) => (
-                                    <RecoCard key={`cat-${rec.id}`} rec={rec} index={i} />
                                 ))}
                             </div>
                         </div>
@@ -672,12 +678,21 @@ export default function ServiceDetailsPage() {
                     <strong>{product.price} DH</strong><span>/ intervention</span>
                 </div>
                 <div className={styles.mobileBarBtns}>
-                    <button className={styles.mobilePhone} onClick={() => window.location.href = `tel:${artisan?.phone || '#'}`}>
+                    <button className={styles.mobilePhone} onClick={() => {
+                        if (artisan?.phone) window.location.href = `tel:${artisan.phone}`;
+                    }}>
                         <Phone size={16} />
                     </button>
-                    <button className={styles.mobilePrimary} onClick={() => handleBooking()} disabled={booking}>
-                        {booking ? <Loader2 size={16} style={{ animation: 'spin .7s linear infinite' }} /> : 'Réserver'}
-                    </button>
+                    
+                    {isOwner ? (
+                        <button className={styles.mobilePrimary} disabled style={{ opacity: 0.7 }}>
+                            C'est le vôtre
+                        </button>
+                    ) : (
+                        <button className={styles.mobilePrimary} onClick={() => handleBooking()} disabled={booking}>
+                            {booking ? <Loader2 size={16} style={{ animation: 'spin .7s linear infinite' }} /> : 'Réserver'}
+                        </button>
+                    )}
                 </div>
             </div>
 

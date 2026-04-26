@@ -149,7 +149,7 @@ export default function ExplorePage() {
     const [activeCat, setActiveCat] = useState<string>(searchParams.get('category') || 'all');
     const [query, setQuery]         = useState(searchParams.get('q') || '');
     const [location, setLocation]   = useState(searchParams.get('location') || '');
-    const [showMap, setShowMap]     = useState(false);
+    const [showMap, setShowMap]     = useState(true);
     const [hoverId, setHoverId]     = useState<string | null>(null);
     const [filterOpen, setFilterOpen] = useState(false);
     const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false);
@@ -182,8 +182,25 @@ export default function ExplorePage() {
             'oujda':       [34.6805, -1.9076],
             'kenitra':     [34.2610, -6.5802],
             'tetouan':     [35.5785, -5.3684],
+            'safi':        [32.2994, -9.2372],
+            'el jadida':   [33.2316, -8.5007],
+            'nador':       [35.1681, -2.9335],
+            'beni mellal': [32.3373, -6.3498],
+            'mohammadia':  [33.6835, -7.3847],
         };
         return cities[cityName?.toLowerCase() ?? ''] || [33.5731, -7.5898];
+    };
+
+    // Helper pour générer un décalage stable basé sur l'ID
+    const getStableOffset = (id: string): [number, number] => {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            hash = id.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        // Utilisation du hash pour générer un lat/lng décalé mais fixe
+        const latOff = ((Math.abs(hash) % 1000) / 1000 - 0.5) * 0.04;
+        const lngOff = ((Math.abs(hash >> 5) % 1000) / 1000 - 0.5) * 0.04;
+        return [latOff, lngOff];
     };
 
     useEffect(() => {
@@ -198,10 +215,11 @@ export default function ExplorePage() {
                 if (pR.success) {
                     setServices(pR.products.map((p: any) => {
                         const base = getCoords(p.city);
+                        const [latOff, lngOff] = getStableOffset(p.id || p._id || '0');
                         return {
                             ...p,
-                            _lat: base[0] + (Math.random() - 0.5) * 0.05,
-                            _lng: base[1] + (Math.random() - 0.5) * 0.05,
+                            _lat: base[0] + latOff,
+                            _lng: base[1] + lngOff,
                         };
                     }));
                 }
