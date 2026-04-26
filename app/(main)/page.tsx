@@ -507,6 +507,7 @@ export default function HeroSection() {
           flex: 1 1 0%; 
           min-width: 0; 
           height: 100%; 
+          border: none; outline: none; background: transparent;
           border-radius: 100px; transition: background 0.2s ease;
           cursor: text; gap: 14px; 
         }

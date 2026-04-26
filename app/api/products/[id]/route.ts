@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import ProductService from "@/models/ProductService";
 import ArtisanProfile from "@/models/ArtisanProfile";
 import Review from "@/models/Review";
+import Mission from "@/models/Mission";
+import { getSessionUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     try {
         await connectDB();
         const { id } = await params;
+        const user = await getSessionUser();
 
         // 1. Récupérer le service
         const product: any = await ProductService.findById(id).populate("categoryId", "nom").lean();
@@ -17,7 +20,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             return NextResponse.json({ success: false, message: "Service introuvable" }, { status: 404 });
         }
 
-        // 2. Récupérer le profil de l'artisan
+        // 2. Vérifier si l'utilisateur a déjà réservé ce service
+        let alreadyBooked = false;
+        if (user) {
+            const existingMission = await Mission.findOne({
+                clientId: user.id,
+                productId: id,
+                statut: { $in: ["PENDING", "ACCEPTED"] }
+            });
+            alreadyBooked = !!existingMission;
+        }
+
+        // 3. Récupérer le profil de l'artisan
         // On essaie d'abord par _id (si artisanId est une ref vers le profil)
         // Puis par userId (au cas où la donnée serait stockée avec l'ID user)
         let artisan: any = await ArtisanProfile.findById(product.artisanId)
@@ -47,6 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
         return NextResponse.json({
             success: true,
+            alreadyBooked,
             product: {
                 ...product,
                 id: product._id.toString(),

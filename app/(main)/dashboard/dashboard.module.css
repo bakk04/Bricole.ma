@@ -2311,33 +2311,142 @@
     align-items: center;
     gap: 16px;
 }
-.cardAvatar {
-    width: 72px;
-    height: 72px;
-    border-radius: 18px;
+.cardPreview {
+    width: 100%;
+    aspect-ratio: 1.6 / 1;
+    background: #ffffff;
+    border-radius: 12px;
+    position: relative;
     overflow: hidden;
-    border: 3px solid white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: #111827;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid rgba(26, 79, 214, 0.15); /* Subtil bord bleu */
 }
-.cardAvatar img { width: 100%; height: 100%; object-fit: cover; }
-.cardAvatarFallback {
-    width: 100%; height: 100%;
-    background: var(--primary);
+.cardZelij {
+    position: absolute;
+    inset: 0;
+    background-image: url('/assets/media/zelij.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.12; /* Zelij plus visible mais reste pro */
+    mix-blend-mode: multiply;
+    z-index: 1;
+}
+.cardInner {
+    padding: 22px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.cardLogo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    font-size: 14px; /* Taille plus réaliste */
+    color: #1a4fd6; /* Bleu brand */
+    letter-spacing: -0.01em;
+}
+.cardLogoIcon {
+    width: 22px;
+    height: 22px;
+    background: #1a4fd6;
     color: white;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+.cardBadge {
+    background: rgba(26, 79, 214, 0.08);
+    color: #1a4fd6;
+    font-size: 9px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-weight: 700;
-    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid rgba(26, 79, 214, 0.15);
+}
+.cardMain {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0;
+}
+.cardUser {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.cardAvatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px; /* Carré arrondi plus moderne pour carte */
+    overflow: hidden;
+    border: 2px solid #ffffff;
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.cardAvatar img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover;
+    display: block;
+}
+.cardAvatarFallback {
+    width: 100%; 
+    height: 100%;
+    background: #f3f4f6;
+    color: #9ca3af !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+    font-size: 22px !important;
 }
 .cardInfo {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-.cardName { font-size: 19px; font-weight: 800; color: #111827; }
-.cardRole { font-size: 13px; color: var(--primary); font-weight: 600; }
-.cardCity { font-size: 11px; color: #6b7280; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.cardName { 
+    font-size: 16px; /* Taille réduite pour un meilleur équilibre */
+    font-weight: 800; 
+    color: #111827; 
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+}
+.cardRole { 
+    font-size: 11px; /* Plus petit pour équilibre */
+    color: #1a4fd6; /* Bleu créatif */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.cardCity { 
+    font-size: 11px; 
+    color: #6b7280; 
+    display: flex; 
+    align-items: center; 
+    gap: 5px; 
+    margin-top: 1px; 
+}
 .cardQR {
     display: flex;
     flex-direction: column;
@@ -2346,47 +2455,78 @@
 }
 .qrWrapper {
     background: white;
-    padding: 6px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid #f3f4f6;
 }
-.cardQR span { font-size: 9px; font-weight: 700; color: #374151; opacity: 0.8; }
+.cardQR span { 
+    font-size: 8px; 
+    font-weight: 700; 
+    color: #9ca3af; 
+    text-transform: uppercase;
+}
 .cardFooter {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 11px;
-    color: #4b5563;
-    border-top: 1px solid rgba(0,0,0,0.06);
+    font-size: 10px; /* Uniformisé */
+    color: #9ca3af;
+    border-top: 1px solid #f3f4f6;
     padding-top: 14px;
 }
-.cardContact { font-weight: 700; color: #111827; }
+.cardContact { 
+    font-weight: 700; 
+    color: #4b5563; 
+    font-size: 11px;
+}
+
 .cardActions {
     display: flex;
     gap: 12px;
     margin-top: 24px;
+    width: 100%;
+}
+
+.btnDownload, .btnCopy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+    flex: 1; /* Equal width */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    width: 50%;
+}
+
+.btnDownload:hover, .btnCopy:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #111827;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 .btnGhost {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-radius: var(--radius-md);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
-    background: white;
+    background: transparent;
     color: var(--text-secondary);
-    border: 1px solid var(--border-medium);
+    border: 1px solid var(--border);
     transition: all 0.2s ease;
-    flex: 1;
-}
-.btnGhost:hover {
-    background: var(--surface-alt);
-    border-color: var(--text-quaternary);
-    color: var(--text-primary);
 }
 
 /* ─────────────────────────────────────────────────────────────

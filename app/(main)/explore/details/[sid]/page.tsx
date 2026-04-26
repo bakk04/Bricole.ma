@@ -96,28 +96,27 @@ function ArtisanAvatar({ name, image, style: avatarStyle }: { name: string; imag
 ══════════════════════════════ */
 const CONFETTI_COLORS = ['#3b82f6','#60a5fa','#fbbf24','#34d399','#f472b6','#a78bfa'];
 
-function BookingButton({ onBook, loading }: { onBook: () => Promise<boolean>; loading: boolean }) {
-    const [booked, setBooked]       = useState(false);
+function BookingButton({ onBook, loading, alreadyBooked: initialBooked }: { onBook: () => Promise<boolean>; loading: boolean; alreadyBooked?: boolean }) {
+    const [booked, setBooked]       = useState(initialBooked || false);
     const [busy,   setBusy]         = useState(false);
     const [ripples, setRipples]     = useState<{ id: number; x: number; y: number }[]>([]);
     const [confetti, setConfetti]   = useState<{ id: number; x: number; y: number; color: string; cx: string; cy: string; cr: string }[]>([]);
     const btnRef = useRef<HTMLButtonElement>(null);
     const idRef  = useRef(0);
 
+    // Sync state with prop
+    useEffect(() => {
+        if (initialBooked) setBooked(true);
+    }, [initialBooked]);
+
     const handleClick = useCallback(async (e: React.MouseEvent<HTMLButtonElement>) => {
-        if (busy) return;
+        if (busy || booked) return;
 
         // ripple
         const rect = btnRef.current!.getBoundingClientRect();
         const rid = ++idRef.current;
         setRipples(r => [...r, { id: rid, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
         setTimeout(() => setRipples(r => r.filter(x => x.id !== rid)), 600);
-
-        if (booked) {
-            // cancel booking — instant toggle, no API needed here
-            setBooked(false);
-            return;
-        }
 
         // book
         setBusy(true);
@@ -150,8 +149,9 @@ function BookingButton({ onBook, loading }: { onBook: () => Promise<boolean>; lo
             ref={btnRef}
             className={`${styles.btnPrimary} ${booked ? styles.btnPrimaryBooked : ''}`}
             onClick={handleClick}
-            disabled={busy || loading}
-            aria-label={booked ? 'Annuler la réservation' : 'Réserver ce service'}
+            disabled={busy || loading || booked}
+            style={booked ? { cursor: 'not-allowed', background: '#10b981', opacity: 0.9 } : {}}
+            aria-label={booked ? 'Service déjà réservé' : 'Réserver ce service'}
         >
             {/* shimmer — only idle */}
             {!booked && <span className={styles.btnPrimaryShimmer} aria-hidden />}
@@ -179,7 +179,7 @@ function BookingButton({ onBook, loading }: { onBook: () => Promise<boolean>; lo
         {busy ? (
             <><Loader2 size={16} style={{ animation: 'spin .7s linear infinite' }} /> Réservation…</>
         ) : booked ? (
-            <><span className={styles.btnCheckIcon}><Check size={16} strokeWidth={3} /></span> Réservé · Annuler</>
+            <><span className={styles.btnCheckIcon}><Check size={16} strokeWidth={3} /></span> Service déjà réservé</>
         ) : (
             'Réserver ce service'
         )}
@@ -357,8 +357,13 @@ export default function ServiceDetailsPage() {
     const images = product.images?.length ? product.images : [product.imageUrl || '/media/images/placeholder.jpg'];
     const rating = artisan?.rating || 4.8;
     
-    // Déterminer si l'utilisateur actuel est le propriétaire du service
-    const isOwner = session?.user?.id === artisan?.userId || session?.user?.email === artisan?.email;
+    // Déterminer si l'utilisateur actuel est le propriétaire du service (vérification sécurisée)
+    const isOwner = Boolean(
+        session?.user && artisan && (
+            (session.user.id && session.user.id === artisan.userId) || 
+            (session.user.email && artisan.email && session.user.email === artisan.email)
+        )
+    );
 
     const handleShare = async () => {
         if (navigator.share) await navigator.share({ title: product.title, url: window.location.href });
@@ -603,7 +608,7 @@ export default function ServiceDetailsPage() {
                                         </span>
                                     </button>
                                 ) : (
-                                    <BookingButton onBook={handleBooking} loading={booking} />
+                                    <BookingButton onBook={handleBooking} loading={booking} alreadyBooked={data?.alreadyBooked} />
                                 )}
 
                                 {/* Support buttons */}
@@ -687,6 +692,10 @@ export default function ServiceDetailsPage() {
                     {isOwner ? (
                         <button className={styles.mobilePrimary} disabled style={{ opacity: 0.7 }}>
                             C'est le vôtre
+                        </button>
+                    ) : data?.alreadyBooked ? (
+                        <button className={styles.mobilePrimary} disabled style={{ opacity: 0.8, background: '#10b981' }}>
+                            <Check size={16} /> Déjà réservé
                         </button>
                     ) : (
                         <button className={styles.mobilePrimary} onClick={() => handleBooking()} disabled={booking}>

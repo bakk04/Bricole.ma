@@ -415,22 +415,35 @@ function VerificationModal({ onClose, onSuccess }) {
 /* ─── Digital Business Card Modal ─────────────────────────── */
 function DigitalCardModal({ profile, onClose }) {
     const cardRef = useRef();
-    // Correct URL for public profile - using the explore/details route which shows catalog and bio
-    const publicProfileUrl = `${window.location.origin}/explore/details/${profile?._id || profile?.userId}`;
+    // Use the explicit artisans/[id] route
+    const artisanId = profile?._id || profile?.userId?._id || profile?.userId;
+    const publicProfileUrl = `${window.location.origin}/artisans/${artisanId}`;
 
     const download = async () => {
         if (!cardRef.current) return;
         try {
-            const dataUrl = await toPng(cardRef.current, { 
+            // Options ultra-compatibles pour html-to-image
+            const options = {
                 cacheBust: true,
-                style: { borderRadius: '0' } // Ensure sharp edges for download
-            });
+                style: { borderRadius: '0' },
+                fontEmbedCSS: '', 
+                filter: (node) => {
+                    const tag = node.tagName ? node.tagName.toLowerCase() : '';
+                    // On filtre les link externes qui causent la SecurityError
+                    return tag !== 'link'; 
+                },
+                backgroundColor: '#ffffff',
+                pixelRatio: 2, 
+            };
+
+            const dataUrl = await toPng(cardRef.current, options);
             const link = document.createElement('a');
-            link.download = `carte-pro-${profile?.nomComplet?.replace(/\s+/g, '-')}.png`;
+            link.download = `carte-pro-${profile?.nomComplet?.replace(/\s+/g, '-') || 'bricole'}.png`;
             link.href = dataUrl;
             link.click();
         } catch (err) {
             console.error("Card download error:", err);
+            alert("Accès refusé : Votre navigateur bloque la lecture des images externes. Essayez de faire une capture d'écran pour enregistrer la carte.");
         }
     };
 
@@ -443,7 +456,6 @@ function DigitalCardModal({ profile, onClose }) {
                 </div>
                 <div className={styles.modalBody} style={{background: 'var(--surface-alt)', padding: '24px'}}>
                     <div className={styles.cardPreview} ref={cardRef}>
-                        {/* Zelij Background Pattern */}
                         <div className={styles.cardZelij} />
                         
                         <div className={styles.cardInner}>
@@ -454,21 +466,36 @@ function DigitalCardModal({ profile, onClose }) {
                                 </div>
                                 <div className={styles.cardBadge}>
                                     <ShieldCheck size={10} /> 
-                                    <span>Artisan Vérifié</span>
+                                    <span>Vérifié</span>
                                 </div>
                             </div>
                             
                             <div className={styles.cardMain}>
                                 <div className={styles.cardUser}>
                                     <div className={styles.cardAvatar}>
-                                        {profile?.photoProfil || profile?.userId?.profileImage
-                                            ? <img src={profile.photoProfil || profile.userId.profileImage} alt="" referrerPolicy="no-referrer" />
+                                        {(profile?.photoProfil || profile?.userId?.profileImage || profile?.userId?.image)
+                                            ? <img 
+                                                src={profile.photoProfil || profile.userId.profileImage || profile.userId.image} 
+                                                alt="" 
+                                                referrerPolicy="no-referrer" 
+                                                crossOrigin="anonymous" 
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    const parent = e.currentTarget.parentElement;
+                                                    if (parent) {
+                                                        const fallback = document.createElement('div');
+                                                        fallback.className = styles.cardAvatarFallback;
+                                                        fallback.innerText = initials(profile?.nomComplet);
+                                                        parent.appendChild(fallback);
+                                                    }
+                                                }}
+                                              />
                                             : <div className={styles.cardAvatarFallback}>{initials(profile?.nomComplet)}</div>
                                         }
                                     </div>
                                     <div className={styles.cardInfo}>
-                                        <div className={styles.cardName}>{profile?.nomComplet}</div>
-                                        <div className={styles.cardRole}>{profile?.metierId?.nom || "Artisan Expert"}</div>
+                                        <div className={styles.cardName}>{profile?.nomComplet || "Artisan"}</div>
+                                        <div className={styles.cardRole}>{profile?.metierId?.nom || profile?.specialite || "Expert Pro"}</div>
                                         <div className={styles.cardCity}>
                                             <MapPin size={10} /> {profile?.ville || "Maroc"}
                                         </div>
@@ -476,28 +503,28 @@ function DigitalCardModal({ profile, onClose }) {
                                 </div>
                                 <div className={styles.cardQR}>
                                     <div className={styles.qrWrapper}>
-                                        <QRCodeSVG value={publicProfileUrl} size={64} level="H" includeMargin={false} />
+                                        <QRCodeSVG value={publicProfileUrl} size={64} level="M" includeMargin={false} />
                                     </div>
-                                    <span>Scanner Profil</span>
+                                    <span>Scanner</span>
                                 </div>
                             </div>
                             
                             <div className={styles.cardFooter}>
-                                <div className={styles.cardSince}>Membre depuis {new Date(profile?.createdAt || Date.now()).getFullYear()}</div>
+                                <div className={styles.cardSince}>Depuis {new Date(profile?.createdAt || Date.now()).getFullYear()}</div>
                                 <div className={styles.cardContact}>{profile?.telephone || "bricole.ma"}</div>
                             </div>
                         </div>
                     </div>
 
                     <div className={styles.cardActions}>
-                        <button className={`${styles.btn} ${styles.btnPrimary}`} style={{flex:1}} onClick={download}>
-                            <Download size={14} /> Enregistrer l'image
+                        <button className={styles.btnDownload} onClick={download}>
+                            <Download size={14} /> Enregistrer
                         </button>
-                        <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => {
+                        <button className={styles.btnCopy} onClick={() => {
                             navigator.clipboard.writeText(publicProfileUrl);
                             alert("Lien copié !");
                         }}>
-                            <Share2 size={14} /> Copier lien
+                            <Share2 size={14} /> Partager
                         </button>
                     </div>
                 </div>
