@@ -4,37 +4,47 @@ import { useEffect } from "react";
 
 export default function BotpressFix() {
     useEffect(() => {
+        // Create a style element to force position
+        const style = document.createElement('style');
+        style.innerHTML = `
+            /* Force Botpress bubble above BottomNav on mobile */
+            @media (max-width: 768px) {
+                #bp-web-widget-container, 
+                div[id^="bp-web-widget"],
+                .bp-widget-side,
+                iframe#bp-webchat {
+                    bottom: 115px !important;
+                    margin-bottom: 0px !important;
+                    z-index: 2147483646 !important;
+                }
+            }
+        `;
+        
+        // Append it to the head
+        document.head.appendChild(style);
+
+        // Backup timer fix for cases where internal Botpress scripts re-apply bottom: 20px
         const applyFix = () => {
-            // Cible le bouton de la bulle Botpress (souvent un parent de l'iframe)
             const botpressContainer = document.getElementById("bp-web-widget-container") || 
                                      document.querySelector('div[id^="bp-web-widget"]');
-            
             const iframe = document.querySelector('iframe[src*="botpress"]');
-
+            
             if (botpressContainer || iframe) {
                 const target = (botpressContainer || iframe) as HTMLElement;
-                const isMobile = window.innerWidth <= 768;
-
-                // Forcer la position via styles inline avec !important
-                target.style.setProperty("bottom", isMobile ? "105px" : "90px", "important");
-                target.style.setProperty("z-index", "999999", "important");
-                
-                // Si c'est l'iframe lui-même, on s'assure qu'il ne se remet pas en bas
-                if (iframe) {
-                    (iframe as HTMLElement).style.setProperty("bottom", isMobile ? "105px" : "90px", "important");
+                if (window.innerWidth <= 768) {
+                    target.style.setProperty("bottom", "115px", "important");
                 }
             }
         };
 
-        // Exécuter plusieurs fois pour contrer les scripts de Botpress qui réinitialisent les styles
-        const interval = setInterval(applyFix, 500);
+        const interval = setInterval(applyFix, 1000);
 
-        // Nettoyer après 10 secondes (le temps que tout soit chargé)
-        const timeout = setTimeout(() => clearInterval(interval), 15000);
-
+        // Cleanup on unmount
         return () => {
             clearInterval(interval);
-            clearTimeout(timeout);
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
         };
     }, []);
 

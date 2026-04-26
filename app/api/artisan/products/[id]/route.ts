@@ -68,7 +68,7 @@ async function getAuthArtisan(): Promise<AuthContext> {
   return { user, artisan };
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getAuthArtisan();
     if (ctx.error) {
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const { artisan } = ctx;
-    const { id } = params;
+    const { id } = await params;
     const data = await request.json();
 
     await connectDB();
@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getAuthArtisan();
     if (ctx.error) {
@@ -131,7 +131,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const { artisan } = ctx;
-    const { id } = params;
+    const { id } = await params;
     const data = await request.json();
 
     await connectDB();
@@ -164,7 +164,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getAuthArtisan();
     if (ctx.error) {
@@ -175,7 +175,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const { artisan } = ctx;
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
 
