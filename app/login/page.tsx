@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import styles from './login.module.css';
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { data: session, status: sessionStatus } = useSession();
@@ -343,5 +343,23 @@ export default function LoginPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+import { Suspense } from 'react';
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className={styles.page}>
+                <div style={{ display: 'flex', height: '100vh', width: '100%', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+                    <svg className={styles.spin} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                </div>
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     );
 }

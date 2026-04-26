@@ -8,6 +8,7 @@ export interface ToastProps {
     title?: string
     description?: string
     action?: React.ReactNode
+    variant?: "default" | "destructive"
 }
 
 export type ToastActionElement = React.ReactNode
@@ -70,20 +71,28 @@ const ToastContainer = ({
             {toasts.map((toast) => (
                 <div
                     key={toast.id}
-                    className="bg-white shadow-lg rounded-xl p-4 w-80 border animate-in fade-in slide-in-from-top-2"
+                    className={`${
+                        toast.variant === "destructive"
+                            ? "bg-red-50 border-red-200 text-red-900"
+                            : "bg-white border-gray-100 text-gray-900"
+                    } shadow-lg rounded-xl p-4 w-80 border animate-in fade-in slide-in-from-top-2 relative`}
                 >
                     {toast.title && (
-                        <h4 className="font-semibold text-gray-900">{toast.title}</h4>
+                        <h4 className="font-semibold">{toast.title}</h4>
                     )}
                     {toast.description && (
-                        <p className="text-sm text-gray-600">{toast.description}</p>
+                        <p className={`text-sm ${
+                            toast.variant === "destructive" ? "text-red-700" : "text-gray-600"
+                        }`}>{toast.description}</p>
                     )}
 
                     {toast.action && <div className="mt-2">{toast.action}</div>}
 
                     <button
                         onClick={() => removeToast(toast.id)}
-                        className="absolute top-2 right-2 text-gray-400 hover:text-black"
+                        className={`absolute top-2 right-2 ${
+                            toast.variant === "destructive" ? "text-red-400 hover:text-red-900" : "text-gray-400 hover:text-black"
+                        }`}
                     >
                         ✕
                     </button>

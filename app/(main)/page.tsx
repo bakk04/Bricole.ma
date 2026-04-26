@@ -8,7 +8,7 @@ import {
     Wand2, Grid3x3, Hammer, Check, ChevronDown,
     LayoutGrid, Search, MapPin, Award
 } from 'lucide-react'
-import CategorieExplore from "../../components/CategorieExplore";
+import CategorieExplore, { ListingItem } from "../../components/CategorieExplore";
 import CitiesExplore from "../../components/CitiesExplore";
 
 /* ═══════════════════════════════════════════
@@ -313,7 +313,7 @@ export default function HeroSection() {
     const router = useRouter()
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
     const [dropdownOpen, setDropdownOpen] = useState<boolean>(false)
-    const [listings, setListings] = useState<unknown[]>([])
+    const [listings, setListings] = useState<ListingItem[]>([])
     
     // Search Suggestions Logic
     const [searchQuery, setSearchQuery] = useState("");

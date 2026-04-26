@@ -139,9 +139,9 @@ function SkeletonCard({ delay = 0 }: { delay?: number }) {
 }
 
 /* ══════════════════════
-   EXPLORE PAGE
+   EXPLORE PAGE CONTENT
 ══════════════════════ */
-export default function ExplorePage() {
+function ExploreContent() {
     const searchParams = useSearchParams();
     const [cats, setCats]           = useState<any[]>([]);
     const [services, setServices]   = useState<ServiceItem[]>([]);
@@ -473,6 +473,29 @@ export default function ExplorePage() {
                 isOpen={isNearbyModalOpen} 
                 onClose={() => setIsNearbyModalOpen(false)} 
             />
+        </div>
+    );
+}
+
+import { Suspense } from 'react';
+
+export default function ExplorePage() {
+    return (
+        <Suspense fallback={
+            <div className={styles.root}>
+                <div className={styles.headerZone} style={{ marginTop: '70px', height: '150px', background: '#f8fafc' }} />
+                <div className={styles.body}>
+                    <div className={styles.resultsPanel}>
+                        <div className={styles.grid}>
+                            {[...Array(8)].map((_, i) => (
+                                <SkeletonCard key={i} delay={i * 50} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
-            );
-            }
+        }>
+            <ExploreContent />
+        </Suspense>
+    );
+}

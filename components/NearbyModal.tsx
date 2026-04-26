@@ -171,7 +171,7 @@ export default function NearbyModal({ isOpen, onClose }: NearbyModalProps) {
                                         <div className="info-main">
                                             <div className="name-row">
                                                 <h4>{artisan.name}</h4>
-                                                {artisan.rating >= 4.5 && <ShieldCheck size={14} className="elite-icon" title="Élite Bricole" />}
+                                                {artisan.rating >= 4.5 && <ShieldCheck size={14} className="elite-icon" />}
                                             </div>
                                             <span className="cat-label">{artisan.category}</span>
                                             

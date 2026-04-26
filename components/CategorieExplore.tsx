@@ -12,7 +12,7 @@ import {
     LucideChevronLeft, LucideChevronRight, LucideSparkles
 } from 'lucide-react';
 
-interface ListingItem {
+export interface ListingItem {
     id: string;
     title: string;
     description: string;
@@ -23,6 +23,7 @@ interface ListingItem {
     categoryId?: string;
     categoryName?: string;
     isVerified?: boolean;
+    rating?: number | string;
     createdAt?: string | Date;
 }
 
@@ -355,6 +356,7 @@ const CategorieExplore: React.FC<CategorieExploreProps> = ({ listingsData: initi
                     categoryId: p.categoryId,
                     categoryName: p.categoryName,
                     isVerified: p.isVerified,
+                    rating: p.rating,
                     createdAt: p.createdAt,
                 }));
                 setListingsData(formatted);

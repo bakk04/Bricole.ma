@@ -7,16 +7,7 @@ import {
     LucideBell,
     LucideStar
 } from 'lucide-react';
-
-interface Listing {
-    id: string;
-    title: string;
-    imageUrl?: string;
-    price: number | string;
-    categoryId?: string;
-    city?: string;
-    rating?: number | string;
-}
+import { ListingItem } from './CategorieExplore';
 
 interface CityInfo {
     id: string;
@@ -25,7 +16,7 @@ interface CityInfo {
 }
 
 interface CitiesExploreProps {
-    listingsData?: Listing[];
+    listingsData?: ListingItem[];
 }
 
 import FavoriteButton from '@/components/FavoriteButton';
