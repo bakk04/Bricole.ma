@@ -17,6 +17,7 @@ import './Header.module.css'
 import { FaUser } from "react-icons/fa";
 import { useLogout } from "@/hooks/useLogout";
 import { User } from '@/types';
+import NearbyModal from './NearbyModal';
 
 const Header: React.FC = () => {
     const pathname = usePathname();
@@ -27,6 +28,7 @@ const Header: React.FC = () => {
     const [openDropdown, setOpenDropdown] = useState<string | null>(null)
     const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false)
     const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
+    const [isNearbyModalOpen, setIsNearbyModalOpen] = useState(false);
     const navRef = useRef<HTMLElement>(null)
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -155,13 +157,23 @@ const Header: React.FC = () => {
                                 </button>
                                 <ul>
                                     <li>
-                                        <Link href="/tools/search-proxy" onClick={() => setOpenDropdown(null)} className="d-flex align-items-center gap-2">
+                                        <button 
+                                            onClick={() => { setIsNearbyModalOpen(true); setOpenDropdown(null); }} 
+                                            className="d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start px-4 py-2"
+                                            style={{ color: 'white', whiteSpace: 'nowrap' }}
+                                        >
                                             <Search size={14} /> Search Proxy
-                                        </Link>
+                                        </button>
                                     </li>
                                     <li>
-                                        <Link href="/tools/chatbot" onClick={() => setOpenDropdown(null)} className="d-flex align-items-center gap-2">
-                                            <MessageSquare size={14} /> Chatbot
+                                        <Link 
+                                            href="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2025/10/26/17/20251026170722-7J5GSR1K.json" 
+                                            target="_blank"
+                                            onClick={() => setOpenDropdown(null)} 
+                                            className="d-flex align-items-center gap-2 px-4 py-2"
+                                            style={{ color: 'white', whiteSpace: 'nowrap' }}
+                                        >
+                                            <MessageSquare size={14} /> IA Chatbot
                                         </Link>
                                     </li>
                                 </ul>
@@ -350,13 +362,21 @@ const Header: React.FC = () => {
                                     </div>
                                 </li>
                                 <li style={{ paddingLeft: '15px' }}>
-                                    <Link href="/tools/search-proxy" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
-                                        <Search className="mobile-nav__icon" size={16} /> <span>Search Proxy</span>
-                                    </Link>
+                                    <button 
+                                        onClick={() => { setIsNearbyModalOpen(true); setMobileNavOpen(false); }} 
+                                        className="mobile-nav__link border-0 bg-transparent w-100 text-start"
+                                    >
+                                        <Search className="mobile-nav__icon" size={16} /> <span>Recherche Proximité</span>
+                                    </button>
                                 </li>
                                 <li style={{ paddingLeft: '15px' }}>
-                                    <Link href="/tools/chatbot" className="mobile-nav__link" onClick={() => setMobileNavOpen(false)}>
-                                        <MessageSquare className="mobile-nav__icon" size={16} /> <span>Chatbot</span>
+                                    <Link 
+                                        href="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2025/10/26/17/20251026170722-7J5GSR1K.json" 
+                                        target="_blank"
+                                        className="mobile-nav__link" 
+                                        onClick={() => setMobileNavOpen(false)}
+                                    >
+                                        <MessageSquare className="mobile-nav__icon" size={16} /> <span>IA Chatbot</span>
                                     </Link>
                                 </li>
                                 <li>
@@ -675,6 +695,10 @@ const Header: React.FC = () => {
                     .d-sm-flex.cus-btn { display: none !important; }
                 }
             `}</style>
+            <NearbyModal 
+                isOpen={isNearbyModalOpen} 
+                onClose={() => setIsNearbyModalOpen(false)} 
+            />
         </header>
     )
 }
