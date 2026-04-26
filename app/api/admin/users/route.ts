@@ -115,3 +115,29 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        const ctx = await getAuthAdmin();
+        if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
+
+        const { searchParams } = new URL(req.url);
+        const userId = searchParams.get("userId");
+
+        if (!userId) return NextResponse.json({ success: false, message: "ID utilisateur requis" }, { status: 400 });
+
+        await connectDB();
+        
+        // Supprimer l'utilisateur
+        const deletedUser = await User.findByIdAndDelete(userId);
+        if (!deletedUser) return NextResponse.json({ success: false, message: "Utilisateur non trouvé" }, { status: 404 });
+
+        // Optionnel: Supprimer aussi son profil artisan s'il existe
+        const ArtisanProfile = (await import("@/models/ArtisanProfile")).default;
+        await ArtisanProfile.findOneAndDelete({ userId: userId });
+
+        return NextResponse.json({ success: true, message: "Utilisateur et profil associés supprimés" });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    }
+}

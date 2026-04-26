@@ -1,60 +1,46 @@
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import jwt from "jsonwebtoken";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
+import User from "@/models/User";
+import Category from "@/models/Category";
 import Annonce from "@/models/Annonce";
+import ProductService from "@/models/ProductService";
+import ArtisanProfile from "@/models/ArtisanProfile";
 
 export const dynamic = "force-dynamic";
 
 async function getAuthAdmin() {
   try {
     await connectDB();
-    const session = await getServerSession(authOptions);
-    let userId = (session?.user as any)?.id;
+    const cookieStore = await cookies();
+    const headerStore = await headers();
+    const authCookie = cookieStore.get("auth_token");
+    const authHeader = headerStore.get("authorization");
+    const token = authCookie?.value || (authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null);
 
-    if (!userId) {
-      const cookieStore = await cookies();
-      const headerStore = await headers();
-      const authCookie = cookieStore.get("auth_token");
-      const authHeader = headerStore.get("authorization");
-      const token = authCookie?.value || (authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null);
+    if (!token) return { error: "Non authentifié", status: 401 };
 
-      if (token) {
-        try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-          userId = decoded.userId;
-        } catch (err) {}
-      }
-    }
-
-    if (!userId) return { error: "Non authentifié", status: 401 };
-
-    const user = await User.findById(userId).lean();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const user = await User.findById(decoded.userId).lean();
     if (!user || user.role !== "ADMIN") {
       return { error: "Accès réservé aux administrateurs", status: 403 };
     }
-
     return { user };
   } catch (err) {
     return { error: "Erreur d'authentification", status: 500 };
   }
 }
 
-// Need User for the lean() or populated fields, let's import it correctly
-import User from "@/models/User";
-
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthAdmin();
-    if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
+    if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status || 500 });
 
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const limit = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || "";
-    const statut = searchParams.get("statut") || "";
 
     await connectDB();
 
@@ -66,52 +52,87 @@ export async function GET(req: Request) {
         { ville: { $regex: search, $options: "i" } },
       ];
     }
-    if (statut) {
-      query.statut = statut;
-    }
 
-    const [annonces, total] = await Promise.all([
+    // 1. Récupérer les Annonces (Missions clients)
+    const [clientAnnonces, totalAnnonces] = await Promise.all([
       Annonce.find(query)
-        .populate("clientId", "name email prenom nom")
-        .populate("categoryId", "nom")
+        .populate({ path: "clientId", model: User, select: "name email" })
+        .populate({ path: "categoryId", model: Category, select: "nom" })
         .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
         .lean(),
       Annonce.countDocuments(query)
     ]);
 
+    // 2. Récupérer les Services (Annonces artisans)
+    const [artisanServices, totalServices] = await Promise.all([
+      ProductService.find(query)
+        .populate({ path: "artisanId", model: ArtisanProfile, populate: { path: "userId", model: User, select: "name" } })
+        .populate({ path: "categoryId", model: Category, select: "nom" })
+        .sort({ createdAt: -1 })
+        .lean(),
+      ProductService.countDocuments(query)
+    ]);
+
+    // Combiner les deux types pour l'admin
+    const combined = [
+        ...clientAnnonces.map((a: any) => ({
+            ...a,
+            id: a._id.toString(),
+            type: "MISSION",
+            ownerName: a.clientId?.name || "Client",
+            categoryName: a.categoryId?.nom || "Non classé"
+        })),
+        ...artisanServices.map((s: any) => ({
+            ...s,
+            id: s._id.toString(),
+            type: "SERVICE",
+            ownerName: s.artisanId?.nomComplet || s.artisanId?.userId?.name || "Artisan",
+            categoryName: s.categoryId?.nom || "Non classé"
+        }))
+    ];
+
+    // Tri global par date de création
+    combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // Pagination manuelle du tableau combiné
+    const paginated = combined.slice((page - 1) * limit, page * limit);
+
     return NextResponse.json({
       success: true,
-      annonces,
+      annonces: paginated,
       pagination: {
-        total,
+        total: totalAnnonces + totalServices,
         page,
         limit,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil((totalAnnonces + totalServices) / limit)
       }
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error("Annonces Admin API Error:", error);
+    return NextResponse.json({ success: false, message: "Erreur lors du chargement des annonces" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request) {
     try {
         const ctx = await getAuthAdmin();
-        if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status });
+        if (ctx.error) return NextResponse.json({ success: false, message: ctx.error }, { status: ctx.status || 500 });
 
         const { searchParams } = new URL(req.url);
         const id = searchParams.get("id");
+        const type = searchParams.get("type"); // MISSION or SERVICE
 
-        if (!id) return NextResponse.json({ success: false, message: "ID annonce requis" }, { status: 400 });
+        if (!id) return NextResponse.json({ success: false, message: "ID requis" }, { status: 400 });
 
         await connectDB();
-        const deleted = await Annonce.findByIdAndDelete(id);
+        
+        if (type === "SERVICE") {
+            await ProductService.findByIdAndDelete(id);
+        } else {
+            await Annonce.findByIdAndDelete(id);
+        }
 
-        if (!deleted) return NextResponse.json({ success: false, message: "Annonce non trouvée" }, { status: 404 });
-
-        return NextResponse.json({ success: true, message: "Annonce supprimée" });
+        return NextResponse.json({ success: true, message: "Supprimé avec succès" });
     } catch (error: any) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }

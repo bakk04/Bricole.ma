@@ -163,19 +163,6 @@ const CAT_COLORS = ["#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626", "#089
 const ART_GRADS  = ["linear-gradient(135deg,#1d4ed8,#60a5fa)","linear-gradient(135deg,#059669,#34d399)","linear-gradient(135deg,#7c3aed,#a78bfa)","linear-gradient(135deg,#d97706,#fbbf24)"];
 const HMAP_COLORS= ["#f1f5f9","#bfdbfe","#93c5fd","#3b82f6","#1d4ed8"];
 
-const ACTS = [
-    { icon: "👤", bg: "#eff6ff", title: "Youssef B. inscrit", sub: "Client · Casablanca", time: "2min", status: "ACTIVE" },
-    { icon: "🔨", bg: "#ecfdf5", title: "Khalid M. vérifié", sub: "Artisan · Rabat",     time: "15min", status: "ACTIVE" },
-    { icon: "📋", bg: "#fffbeb", title: "Annonce #4821 créée", sub: "Plomberie · Fès",    time: "28min", status: "IN_PROGRESS" },
-    { icon: "⭐", bg: "#f5f3ff", title: "Avis 5★ reçu",      sub: "Hamza R. · Marrakech",time: "1h",   status: "OPEN" },
-];
-const TOP_ARTS = [
-    { name:"Hamza Radi",   job:"Plombier",      stars:"4.9", g:ART_GRADS[0], init:"HR" },
-    { name:"Sara Amrani",  job:"Électricienne", stars:"4.8", g:ART_GRADS[1], init:"SA" },
-    { name:"Mehdi Tazi",   job:"Maçon",         stars:"4.7", g:ART_GRADS[2], init:"MT" },
-    { name:"Fatima Zohra", job:"Peintre",        stars:"4.6", g:ART_GRADS[3], init:"FZ" },
-];
-
 function OverviewSection({ stats }: { stats: any }) {
     const [period, setPeriod] = useState("30j");
     const total = stats.totalAnnonces || 1;
@@ -294,7 +281,7 @@ function OverviewSection({ stats }: { stats: any }) {
                     <div className={styles.catDivider} />
                     <div className={styles.cardTitle} style={{ marginBottom: 8 }}>Top Catégories</div>
                     {stats.topCategories?.map((cat: any, i: number) => (
-                        <div key={cat._id} className={styles.catItem}>
+                        <div key={i} className={styles.catItem}>
                             <span className={styles.catName}>
                                 <span className={styles.catDot} style={{ background: CAT_COLORS[i % CAT_COLORS.length] }} />
                                 {cat.name}
@@ -337,50 +324,50 @@ function OverviewSection({ stats }: { stats: any }) {
                 <div className={styles.card}>
                     <div className={styles.cardHdr}>
                         <div className={styles.cardTitle}>Activité récente</div>
-                        <div className={styles.cardMeta} style={{ cursor:"pointer",color:"var(--blue)",fontWeight:600 }}>Tout voir →</div>
+                        <div className={styles.cardMeta} style={{ cursor:"pointer",color:"var(--blue)",fontWeight:600 }}>Live</div>
                     </div>
-                    {ACTS.map((a, i) => (
+                    {(stats.recentActivity || []).map((a: any, i: number) => (
                         <div key={i} className={styles.actItem}>
-                            <div className={styles.actIcon} style={{ background: a.bg }}>{a.icon}</div>
+                            <div className={styles.actIcon} style={{ background: a.type === "user" ? "#eff6ff" : "#fffbeb" }}>
+                                {a.type === "user" ? "👤" : "🔨"}
+                            </div>
                             <div className={styles.actMain}>
                                 <div className={styles.actTitle}>{a.title}</div>
                                 <div className={styles.actSub}>{a.sub}</div>
                             </div>
                             <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3 }}>
                                 <StatusBadge status={a.status} />
-                                <div className={styles.actTime}>{a.time}</div>
+                                <div className={styles.actTime}>{timeAgo(a.createdAt)}</div>
                             </div>
                         </div>
                     ))}
+                    {(!stats.recentActivity || stats.recentActivity.length === 0) && (
+                        <div style={{ padding: 20, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Aucune activité récente</div>
+                    )}
                 </div>
 
-                {/* Top artisans + heatmap */}
+                {/* Top artisans */}
                 <div className={styles.card}>
                     <div className={styles.cardHdr}>
                         <div className={styles.cardTitle}>Top Artisans</div>
-                        <div className={styles.cardMeta}>par note</div>
+                        <div className={styles.cardMeta}>par note moyenne</div>
                     </div>
-                    {TOP_ARTS.map((a, i) => (
+                    {(stats.topArtisans || []).map((a: any, i: number) => (
                         <div key={i} className={styles.artItem}>
-                            <div className={styles.artAv} style={{ background: a.g }}>{a.init}</div>
-                            <div>
-                                <div className={styles.artName}>{a.name}</div>
+                            <Avatar name={a.name} id={a.id} />
+                            <div style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
+                                <div className={styles.artName} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
                                 <div className={styles.artJob}>{a.job}</div>
                             </div>
-                            <div className={styles.artStars}>★ {a.stars}</div>
+                            <div className={styles.artStars}>★ {a.stars.toFixed(1)}</div>
                         </div>
                     ))}
+                    {(!stats.topArtisans || stats.topArtisans.length === 0) && (
+                        <div style={{ padding: 20, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Aucun artisan vérifié</div>
+                    )}
                     <div className={styles.catDivider} />
-                    <div className={styles.cardMeta} style={{ marginBottom:6 }}>Activité · 12 semaines</div>
-                    <div className={styles.heatmapGrid}>
-                        {Array.from({length:84},(_,i)=>{
-                            const v = Math.random();
-                            return (
-                                <div key={i} className={styles.heatCell}
-                                     style={{ background: HMAP_COLORS[Math.floor(v*HMAP_COLORS.length)] }} />
-                            );
-                        })}
-                    </div>
+                    <div className={styles.cardMeta} style={{ marginBottom:6, fontWeight: 600 }}>Performance Système</div>
+                    <div style={{ fontSize: 11, color: '#64748b' }}>Tous les signaux sont au vert.</div>
                 </div>
             </div>
         </>
@@ -405,6 +392,7 @@ export default function AdminDashboard() {
     const [stats,  setStats]      = useState<any>(null);
     const [users,  setUsers]      = useState<any[]>([]);
     const [annonces, setAnnonces] = useState<any[]>([]);
+    const [artisans, setArtisans] = useState<any[]>([]);
     const [loading, setLoading]   = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch]     = useState("");
@@ -429,18 +417,20 @@ export default function AdminDashboard() {
         try { const r = await getData(`/admin/annonces?page=${page}&search=${encodeURIComponent(search)}`); if(r.success){setAnnonces(r.annonces);setTotalPages(r.pagination.pages);} } catch(e){console.error(e);}
     };
     const loadArtisans = async () => {
-        try { const r = await getData(`/admin/artisans?filter=all`); if(r.success) setUsers(r.artisans); } catch(e){console.error(e);}
+        try { const r = await getData(`/admin/artisans?filter=all`); if(r.success) setArtisans(r.artisans); } catch(e){console.error(e);}
     };
     const handleUpdateUser = async (userId:string, newStatus:string) => {
         try { const r = await patchData("/admin/users",{userId,status:newStatus}); if(r.success) setUsers(p=>p.map(u=>u._id===userId?{...u,status:newStatus}:u)); } catch{alert("Erreur");}
     };
-    const handleDeleteAnnonce = async (id:string) => {
+    const handleDeleteAnnonce = async (id:string, type:string) => {
         if(!confirm("Supprimer cette annonce ?")) return;
-        try { const r = await deleteData(`/admin/annonces?id=${id}`); if(r.success) setAnnonces(p=>p.filter(a=>a._id!==id)); } catch{alert("Erreur");}
+        try { const r = await deleteData(`/admin/annonces?id=${id}&type=${type}`); if(r.success) setAnnonces(p=>p.filter(a=>a._id!==id && a.id!==id)); } catch{alert("Erreur");}
     };
     const handleToggleArtisan = async (artisan:any) => {
-        const r = await patchData("/admin/artisans",{artisanId:artisan._id,estVerifie:!artisan.estVerifie});
-        if(r.success) setUsers(p=>p.map(a=>a._id===artisan._id?{...a,estVerifie:!artisan.estVerifie}:a));
+        try {
+            const r = await patchData("/admin/artisans",{artisanId:artisan._id,estVerifie:!artisan.estVerifie});
+            if(r.success) setArtisans(p=>p.map(a=>a._id===artisan._id?{...a,estVerifie:!artisan.estVerifie}:a));
+        } catch(e) { alert("Erreur lors de la vérification"); }
     };
 
     const navigate = (key:string) => { setNavKey(key); setPage(1); setSearch(""); };
@@ -582,15 +572,28 @@ export default function AdminDashboard() {
                                 <thead><tr><th>Titre</th><th>Client</th><th>Catégorie</th><th>Ville</th><th>Statut</th><th>Actions</th></tr></thead>
                                 <tbody>
                                 {annonces.map(a=>(
-                                    <tr key={a._id}>
-                                        <td><div className={styles.textClamp} style={{fontWeight:600,fontSize:12.5,maxWidth:170}}>{a.titre}</div><div style={{fontSize:11,color:"var(--s4)",marginTop:2}}>{timeAgo(a.createdAt)}</div></td>
-                                        <td><div className={styles.avatarGroup}><Avatar name={a.clientId?.name} id={a.clientId?._id}/><span style={{fontSize:12}}>{a.clientId?.name??"Client"}</span></div></td>
-                                        <td style={{fontSize:12,color:"var(--s3)"}}>{a.categoryId?.nom??"—"}</td>
+                                    <tr key={a.id || a._id}>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <span className={`${styles.typeBadge} ${a.type === 'MISSION' ? styles.typeMission : styles.typeService}`}>
+                                                    {a.type === 'MISSION' ? 'Mission' : 'Service'}
+                                                </span>
+                                                <div className={styles.textClamp} style={{fontWeight:600,fontSize:12.5,maxWidth:170}}>{a.titre}</div>
+                                            </div>
+                                            <div style={{fontSize:11,color:"var(--s4)",marginTop:2}}>{timeAgo(a.createdAt)}</div>
+                                        </td>
+                                        <td>
+                                            <div className={styles.avatarGroup}>
+                                                <Avatar name={a.ownerName} id={a.clientId?._id || a.artisanId?._id}/>
+                                                <span style={{fontSize:12}}>{a.ownerName}</span>
+                                            </div>
+                                        </td>
+                                        <td style={{fontSize:12,color:"var(--s3)"}}>{a.categoryName}</td>
                                         <td style={{fontSize:12,color:"var(--s3)"}}>{a.ville}</td>
-                                        <td><StatusBadge status={a.statut}/></td>
+                                        <td><StatusBadge status={a.statut || a.status || "ACTIVE"}/></td>
                                         <td><div className={styles.flexRow}>
-                                            <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={()=>handleDeleteAnnonce(a._id)}><Trash2 size={12}/></button>
-                                            <button className={styles.actionBtn}><Eye size={12}/></button>
+                                            <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={()=>handleDeleteAnnonce(a.id || a._id, a.type)}><Trash2 size={12}/></button>
+                                            <button className={styles.actionBtn} onClick={() => router.push(a.type === 'SERVICE' ? `/explore/details/${a.id || a._id}` : '#')}><Eye size={12}/></button>
                                         </div></td>
                                     </tr>
                                 ))}
@@ -611,7 +614,7 @@ export default function AdminDashboard() {
                             <table className={styles.table}>
                                 <thead><tr><th>Artisan</th><th>Métier</th><th>Ville</th><th>Statut</th><th>Actions</th></tr></thead>
                                 <tbody>
-                                {users.map(art=>(
+                                {artisans.map(art=>(
                                     <tr key={art._id}>
                                         <td><div className={styles.avatarGroup}>
                                             <Avatar src={art.photoProfil} name={art.nomComplet} id={art._id}/>
@@ -630,7 +633,7 @@ export default function AdminDashboard() {
                                 ))}
                                 </tbody>
                             </table>
-                            {users.length===0 && <div className={styles.emptyState}><div className={styles.emptyIcon}><UserCheck size={20}/></div><div className={styles.emptyTitle}>Aucun artisan</div></div>}
+                            {artisans.length===0 && <div className={styles.emptyState}><div className={styles.emptyIcon}><UserCheck size={20}/></div><div className={styles.emptyTitle}>Aucun artisan</div></div>}
                         </div>
                     )}
                 </main>
